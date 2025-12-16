@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Details</title>
+    <style>
+        :root {
+            --bg-color: #fbfbfd;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .nav-header {
+            margin-bottom: 24px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            overflow: hidden;
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-section {
+            position: relative;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 32px;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+            color: white;
+        }
+
+        .recipe-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .recipe-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 32px;
+        }
+
+        .description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .cols { grid-template-columns: 1fr; }
+        }
+
+        h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: var(--text-main);
+        }
+
+        ul, ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .tag-pill {
+            display: inline-block;
+            background: rgba(0,0,0,0.05);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-right: 8px;
+            color: var(--text-secondary);
+        }
+
+        .source-link {
+            display: block;
+            margin-top: 40px;
+            text-align: center;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <a href="/recipes.html" class="back-btn">← Back to Recipes</a>
+        </div>
+
+        <div id="recipeContainer">
+            <div style="text-align: center; color: #86868b; margin-top: 40px;">Loading details...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = ''; 
+
+        async function fetchRecipeDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) {
+                document.getElementById('recipeContainer').innerHTML = 'No recipe ID provided.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/recipes/${id}`);
+                const recipe = await res.json();
+
+                if (res.status === 404) {
+                    document.getElementById('recipeContainer').innerHTML = 'Recipe not found.';
+                    return;
+                }
+
+                renderRecipe(recipe);
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('recipeContainer').innerHTML = 'Failed to load recipe.';
+            }
+        }
+
+        function renderRecipe(recipe) {
+            const container = document.getElementById('recipeContainer');
+            
+            const imageUrl = recipe.image || 'https://via.placeholder.com/800x400?text=No+Image';
+            const prepTime = formatDuration(recipe.prep_time);
+            const cookTime = formatDuration(recipe.cook_time);
+            const totalTime = formatDuration(recipe.total_time);
+            const yieldInfo = recipe.recipe_yield || '';
+
+            // Handle Ingredients (String[], String, or Object)
+            let ingredientsHtml = '';
+            if (Array.isArray(recipe.recipe_ingredients)) {
+                ingredientsHtml = `<ul>${recipe.recipe_ingredients.map(i => `<li>${i}</li>`).join('')}</ul>`;
+            } else if (typeof recipe.recipe_ingredients === 'string') {
+                ingredientsHtml = `<p>${recipe.recipe_ingredients}</p>`;
+            } else {
+                ingredientsHtml = '<p>No ingredients listed.</p>';
+            }
+
+            // Handle Instructions (Array of steps, or string)
+            let instructionsHtml = '';
+            if (Array.isArray(recipe.recipe_instructions)) {
+                // Sometimes standard schema is [{ "@type": "HowToStep", "text": "..." }]
+                instructionsHtml = `<ol>${recipe.recipe_instructions.map(step => {
+                    const text = typeof step === 'object' ? (step.text || step.name || JSON.stringify(step)) : step;
+                    return `<li>${text}</li>`;
+                }).join('')}</ol>`;
+            } else if (typeof recipe.recipe_instructions === 'string') {
+                instructionsHtml = `<p>${recipe.recipe_instructions}</p>`;
+            } else {
+                instructionsHtml = '<p>No instructions listed.</p>';
+            }
+
+            const metaItems = [];
+            if (prepTime) metaItems.push(`Prep: ${prepTime}`);
+            if (cookTime) metaItems.push(`Cook: ${cookTime}`);
+            if (yieldInfo) metaItems.push(`Yields: ${yieldInfo}`);
+
+            container.innerHTML = `
+                <div class="glass-card">
+                    <div class="hero-section">
+                        <img src="${imageUrl}" alt="${recipe.name}" class="hero-img" onerror="this.src='https://via.placeholder.com/800x400?text=No+Image'">
+                        <div class="hero-overlay">
+                            <h1 class="recipe-title">${recipe.name}</h1>
+                            <div class="recipe-meta">
+                                ${metaItems.join(' • ')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-section">
+                        <div class="description">
+                            ${recipe.description || ''}
+                        </div>
+
+                        <div class="cols">
+                            <div>
+                                <h3>Ingredients</h3>
+                                ${ingredientsHtml}
+                            </div>
+                            <div>
+                                <h3>Instructions</h3>
+                                ${instructionsHtml}
+                            </div>
+                        </div>
+
+                        <a href="${recipe.url}" target="_blank" class="source-link">View original source →</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatDuration(iso) {
+            if (!iso) return '';
+            return iso.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase();
+        }
+
+        fetchRecipeDetails();
+    </script>
+</body>
+</html>

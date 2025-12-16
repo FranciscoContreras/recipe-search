@@ -1,0 +1,133 @@
+0 verbose cli /opt/homebrew/Cellar/node/24.8.0/bin/node /opt/homebrew/bin/npm
+1 info using npm@11.6.0
+2 info using node@v24.8.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/francisco/Documents/Projects/Apps/recipe-base/recipe-api/.npmrc
+5 silly config load:file:/Users/francisco/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm install express @supabase/supabase-js dotenv cors
+8 verbose argv "install" "express" "@supabase/supabase-js" "dotenv" "cors" "--cache" "./.npm-cache"
+9 verbose logfile logs-max:10 dir:/Users/francisco/Documents/Projects/Apps/recipe-base/recipe-api/.npm-cache/_logs/2025-12-14T10_36_16_356Z-
+10 verbose logfile /Users/francisco/Documents/Projects/Apps/recipe-base/recipe-api/.npm-cache/_logs/2025-12-14T10_36_16_356Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 silly idealTree buildDeps
+14 silly fetch manifest @supabase/supabase-js@^2.87.1
+15 silly packumentCache full:https://registry.npmjs.org/@supabase%2fsupabase-js cache-miss
+16 verbose shrinkwrap failed to load node_modules/.package-lock.json out of date, updated: node_modules
+17 http fetch GET 200 https://registry.npmjs.org/@supabase%2fsupabase-js 201ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/@supabase%2fsupabase-js set size:undefined disposed:false
+19 silly fetch manifest cors@^2.8.5
+20 silly packumentCache full:https://registry.npmjs.org/cors cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/npm 259ms
+22 http fetch GET 200 https://registry.npmjs.org/cors 47ms (cache miss)
+23 silly packumentCache full:https://registry.npmjs.org/cors set size:undefined disposed:false
+24 silly fetch manifest dotenv@^17.2.3
+25 silly packumentCache full:https://registry.npmjs.org/dotenv cache-miss
+26 http fetch GET 200 https://registry.npmjs.org/dotenv 64ms (cache miss)
+27 silly packumentCache full:https://registry.npmjs.org/dotenv set size:undefined disposed:false
+28 silly fetch manifest express@^5.2.1
+29 silly packumentCache full:https://registry.npmjs.org/express cache-miss
+30 http fetch GET 200 https://registry.npmjs.org/express 45ms (cache miss)
+31 silly packumentCache full:https://registry.npmjs.org/express set size:undefined disposed:false
+32 silly placeDep ROOT @supabase/supabase-js@2.87.1 REPLACE for: recipe-api@1.0.0 want: ^2.87.1
+33 silly placeDep ROOT cors@2.8.5 REPLACE for: recipe-api@1.0.0 want: ^2.8.5
+34 silly placeDep ROOT dotenv@17.2.3 REPLACE for: recipe-api@1.0.0 want: ^17.2.3
+35 silly placeDep ROOT express@5.2.1 REPLACE for: recipe-api@1.0.0 want: ^5.2.1
+36 silly reify moves {}
+37 silly audit bulk request {
+37 silly audit   '@supabase/auth-js': [ '2.87.1' ],
+37 silly audit   '@supabase/functions-js': [ '2.87.1' ],
+37 silly audit   '@supabase/postgrest-js': [ '2.87.1' ],
+37 silly audit   '@supabase/realtime-js': [ '2.87.1' ],
+37 silly audit   '@supabase/storage-js': [ '2.87.1' ],
+37 silly audit   '@types/node': [ '25.0.2' ],
+37 silly audit   '@types/phoenix': [ '1.6.7' ],
+37 silly audit   '@types/ws': [ '8.18.1' ],
+37 silly audit   accepts: [ '2.0.0' ],
+37 silly audit   'body-parser': [ '2.2.1' ],
+37 silly audit   bytes: [ '3.1.2' ],
+37 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
+37 silly audit   'call-bound': [ '1.0.4' ],
+37 silly audit   'content-disposition': [ '1.0.1' ],
+37 silly audit   'content-type': [ '1.0.5' ],
+37 silly audit   cookie: [ '0.7.2' ],
+37 silly audit   'cookie-signature': [ '1.2.2' ],
+37 silly audit   debug: [ '4.4.3' ],
+37 silly audit   depd: [ '2.0.0' ],
+37 silly audit   'dunder-proto': [ '1.0.1' ],
+37 silly audit   'ee-first': [ '1.1.1' ],
+37 silly audit   encodeurl: [ '2.0.0' ],
+37 silly audit   'es-define-property': [ '1.0.1' ],
+37 silly audit   'es-errors': [ '1.3.0' ],
+37 silly audit   'es-object-atoms': [ '1.1.1' ],
+37 silly audit   'escape-html': [ '1.0.3' ],
+37 silly audit   etag: [ '1.8.1' ],
+37 silly audit   finalhandler: [ '2.1.1' ],
+37 silly audit   forwarded: [ '0.2.0' ],
+37 silly audit   fresh: [ '2.0.0' ],
+37 silly audit   'function-bind': [ '1.1.2' ],
+37 silly audit   'get-intrinsic': [ '1.3.0' ],
+37 silly audit   'get-proto': [ '1.0.1' ],
+37 silly audit   gopd: [ '1.2.0' ],
+37 silly audit   'has-symbols': [ '1.1.0' ],
+37 silly audit   hasown: [ '2.0.2' ],
+37 silly audit   'http-errors': [ '2.0.1' ],
+37 silly audit   'iceberg-js': [ '0.8.1' ],
+37 silly audit   'iconv-lite': [ '0.7.1' ],
+37 silly audit   inherits: [ '2.0.4' ],
+37 silly audit   'ipaddr.js': [ '1.9.1' ],
+37 silly audit   'is-promise': [ '4.0.0' ],
+37 silly audit   'math-intrinsics': [ '1.1.0' ],
+37 silly audit   'media-typer': [ '1.1.0' ],
+37 silly audit   'merge-descriptors': [ '2.0.0' ],
+37 silly audit   'mime-db': [ '1.54.0' ],
+37 silly audit   'mime-types': [ '3.0.2' ],
+37 silly audit   ms: [ '2.1.3' ],
+37 silly audit   negotiator: [ '1.0.0' ],
+37 silly audit   'object-assign': [ '4.1.1' ],
+37 silly audit   'object-inspect': [ '1.13.4' ],
+37 silly audit   'on-finished': [ '2.4.1' ],
+37 silly audit   once: [ '1.4.0' ],
+37 silly audit   parseurl: [ '1.3.3' ],
+37 silly audit   'path-to-regexp': [ '8.3.0' ],
+37 silly audit   'proxy-addr': [ '2.0.7' ],
+37 silly audit   qs: [ '6.14.0' ],
+37 silly audit   'range-parser': [ '1.2.1' ],
+37 silly audit   'raw-body': [ '3.0.2' ],
+37 silly audit   router: [ '2.2.0' ],
+37 silly audit   'safer-buffer': [ '2.1.2' ],
+37 silly audit   send: [ '1.2.0' ],
+37 silly audit   'serve-static': [ '2.2.0' ],
+37 silly audit   setprototypeof: [ '1.2.0' ],
+37 silly audit   'side-channel': [ '1.1.0' ],
+37 silly audit   'side-channel-list': [ '1.0.0' ],
+37 silly audit   'side-channel-map': [ '1.0.1' ],
+37 silly audit   'side-channel-weakmap': [ '1.0.2' ],
+37 silly audit   statuses: [ '2.0.2' ],
+37 silly audit   toidentifier: [ '1.0.1' ],
+37 silly audit   tslib: [ '2.8.1' ],
+37 silly audit   'type-is': [ '2.0.1' ],
+37 silly audit   'undici-types': [ '7.16.0' ],
+37 silly audit   unpipe: [ '1.0.0' ],
+37 silly audit   vary: [ '1.1.2' ],
+37 silly audit   wrappy: [ '1.0.2' ],
+37 silly audit   ws: [ '8.18.3' ],
+37 silly audit   '@supabase/supabase-js': [ '2.87.1' ],
+37 silly audit   cors: [ '2.8.5' ],
+37 silly audit   dotenv: [ '17.2.3' ],
+37 silly audit   express: [ '5.2.1' ]
+37 silly audit }
+38 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 86ms
+39 silly audit report {}
+40 verbose cwd /Users/francisco/Documents/Projects/Apps/recipe-base/recipe-api
+41 verbose os Darwin 24.6.0
+42 verbose node v24.8.0
+43 verbose npm  v11.6.0
+44 notice
+44 notice New [33mminor[39m version of npm available! [33m11.6.0[39m -> [34m11.7.0[39m
+44 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.7.0[39m
+44 notice To update run: [4mnpm install -g npm@11.7.0[24m
+44 notice  { force: true, Symbol(proc-log.meta): true }
+45 verbose exit 0
+46 info ok

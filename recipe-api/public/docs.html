@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Recipe Base</title>
+    <style>
+        :root {
+            --bg-color: #fbfbfd;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --code-bg: rgba(0,0,0,0.03);
+            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 60px 20px;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 40px;
+            margin: 0 0 40px 0;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 { 
+            font-size: 24px; 
+            margin-top: 60px; 
+            margin-bottom: 24px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        h3 { 
+            font-size: 18px; 
+            margin: 0 0 12px 0; 
+            font-weight: 600;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.2s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+
+        .method {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .get { background: rgba(6, 122, 70, 0.1); color: #067a46; border: 1px solid rgba(6, 122, 70, 0.1); }
+        .post { background: rgba(0, 86, 179, 0.1); color: #0056b3; border: 1px solid rgba(0, 86, 179, 0.1); }
+
+        .url {
+            font-family: "SF Mono", "Menlo", monospace;
+            font-size: 15px;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin: 0 0 16px 0;
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 16px;
+            overflow-x: auto;
+            font-size: 13px;
+            border: 1px solid rgba(0,0,0,0.03);
+            font-family: "SF Mono", "Menlo", monospace;
+            margin-top: 16px;
+            color: #333;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateX(-2px);
+        }
+
+        ul {
+            padding-left: 20px;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            font-family: "SF Mono", "Menlo", monospace;
+            background: rgba(0,0,0,0.04);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="nav-link">← Back to Hub</a>
+    
+    <h1>API Documentation</h1>
+
+    <div class="endpoint-card">
+        <h3><span class="method get">GET</span> <span class="url">/recipes</span></h3>
+        <p>Retrieve a paginated list of recipes. Supports <code>full=true</code> parameter to fetch complete details (ingredients, instructions) in the list view.</p>
+        
+        <h4>Response Example</h4>
+        <pre>{
+  "recipes": [ ... ],
+  "count": 150
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <h3><span class="method get">GET</span> <span class="url">/recipes/:id</span></h3>
+        <p>Get full details for a specific recipe. Includes Just-In-Time (JIT) nutrition enrichment via FatSecret.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <h3><span class="method post">POST</span> <span class="url">/recipes/enrich</span></h3>
+        <p>Batch retrieve and hydrate multiple recipes by ID. Automatically fetches missing nutrition data for all requested items.</p>
+        <h4>Payload</h4>
+        <pre>{ "ids": ["uuid-1", "uuid-2", ...] }</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <h3><span class="method get">GET</span> <span class="url">/search</span></h3>
+        <p>Hybrid intelligent search.</p>
+        <h4>Parameters</h4>
+        <ul>
+            <li><code>q</code>: (string) Search term.</li>
+            <li><code>ingredients</code>: (string) Filter by ingredients.</li>
+            <li><code>full</code>: (boolean) If <code>true</code>, returns full recipe objects (ingredients, instructions) instead of summaries. Default <code>false</code>.</li>
+        </ul>
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="method get">GET</span> <span class="url">/health</span></h3>
+        <p>Returns real-time system health statistics, including the number of verified vs. flagged recipes and recent automated audit logs.</p>
+    </div>
+
+    <h2>Integration Guide</h2>
+    <div class="glass-card">
+        <p>You can fetch data directly from your frontend or mobile app. No authentication is required for read operations.</p>
+        <pre>
+// Example: Fetching recipes with 'chicken'
+const res = await fetch('https://recipe-base.wearemachina.com/search?q=chicken');
+const data = await res.json();
+console.log(data.recipes);
+        </pre>
+    </div>
+</body>
+</html>

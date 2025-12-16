@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Base</title>
+    <style>
+        :root {
+            --bg-color: #fbfbfd;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 48px;
+            margin: 0 0 16px 0;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .hub-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 100%;
+            opacity: 0;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .hub-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .card-icon {
+            font-size: 32px;
+            margin-bottom: 24px;
+            background: rgba(0, 113, 227, 0.1);
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            color: var(--accent);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .arrow {
+            margin-top: auto;
+            padding-top: 24px;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 15px;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .hub-card:hover .arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Recipe Base</h1>
+        <div class="subtitle">The intelligent, scalable recipe engine.</div>
+    </div>
+
+    <div class="cards-grid">
+        <!-- Card 1: Database -->
+        <a href="/recipes.html" class="hub-card" style="animation-delay: 0.1s;">
+            <div class="card-icon">🍳</div>
+            <h2 class="card-title">Browse Recipes</h2>
+            <p class="card-desc">Search and explore the curated collection of recipes harvested from the web.</p>
+            <div class="arrow">Explore Database →</div>
+        </a>
+
+        <!-- Card 2: Documentation -->
+        <a href="/docs.html" class="hub-card" style="animation-delay: 0.2s;">
+            <div class="card-icon">📚</div>
+            <h2 class="card-title">API Docs</h2>
+            <p class="card-desc">Comprehensive documentation for developers integrating with the Recipe API.</p>
+            <div class="arrow">Read Docs →</div>
+        </a>
+
+        <!-- Card 3: AI Spec -->
+        <a href="/llms.txt" class="hub-card" style="animation-delay: 0.3s;">
+            <div class="card-icon">🤖</div>
+            <h2 class="card-title">For AI Agents</h2>
+            <p class="card-desc">Machine-readable specifications (llms.txt) for LLM integration and context.</p>
+            <div class="arrow">View Spec →</div>
+        </a>
+    </div>
+</body>
+</html>

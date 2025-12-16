@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Health - Recipe Base</title>
+    <style>
+        :root {
+            --bg-color: #fbfbfd;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+        }
+
+        .header-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 32px;
+            margin: 0;
+            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-btn {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 15px;
+            padding: 8px 16px;
+            background: rgba(0, 113, 227, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover { background: rgba(0, 113, 227, 0.15); transform: translateX(-2px); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--glass-shadow);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            text-align: left;
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 16px;
+            font-size: 14px;
+            color: var(--text-main);
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-verified { background: #d1fae5; color: #065f46; }
+        .status-flagged { background: #fee2e2; color: #b91c1c; }
+        .status-repaired { background: #dbeafe; color: #1e40af; }
+        .status-pending { background: #f3f4f6; color: #4b5563; }
+
+        .score-good { color: #059669; font-weight: 600; }
+        .score-bad { color: #dc2626; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1>Data Health</h1>
+        <a href="/admin.html" class="nav-btn">← Back to Admin</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-total">-</div>
+            <div class="stat-label">Total Recipes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-verified" style="color: #059669;">-</div>
+            <div class="stat-label">Verified</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-flagged" style="color: #dc2626;">-</div>
+            <div class="stat-label">Flagged Issues</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-score" style="color: #0071e3;">-</div>
+            <div class="stat-label">Avg Quality</div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <h2 style="margin: 0 0 20px 0; font-size: 18px;">Recently Audited</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th width="40%">Recipe</th>
+                    <th width="15%">QA Status</th>
+                    <th width="15%">Quality Score</th>
+                    <th width="30%">Last Action</th>
+                </tr>
+            </thead>
+            <tbody id="audit-table">
+                <tr><td colspan="4" style="text-align:center; padding: 20px;">Loading data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = '';
+
+        async function fetchHealth() {
+            try {
+                // Fetch stats (we need a new endpoint ideally, or just infer from a list call)
+                // For MVP, we'll fetch recently audited items and some counts
+                const res = await fetch(`${API_URL}/health`);
+                const data = await res.json();
+
+                document.getElementById('stat-total').textContent = data.stats.total;
+                document.getElementById('stat-verified').textContent = data.stats.verified;
+                document.getElementById('stat-flagged').textContent = data.stats.flagged;
+                document.getElementById('stat-score').textContent = Math.round(data.stats.avg_score);
+
+                const tbody = document.getElementById('audit-table');
+                tbody.innerHTML = '';
+
+                data.recent.forEach(r => {
+                    const log = r.audit_log && r.audit_log.length > 0 ? r.audit_log[r.audit_log.length - 1] : 'Routine check';
+                    const scoreClass = r.quality_score >= 80 ? 'score-good' : 'score-bad';
+                    
+                    const row = `
+                        <tr>
+                            <td><a href="/recipe-details.html?id=${r.id}" target="_blank" style="color: inherit; text-decoration: none; font-weight:500;">${r.name}</a></td>
+                            <td><span class="status-pill status-${r.qa_status}">${r.qa_status}</span></td>
+                            <td class="${scoreClass}">${r.quality_score}/100</td>
+                            <td style="color: #666; font-size: 13px;">${log}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        fetchHealth();
+        setInterval(fetchHealth, 5000);
+    </script>
+</body>
+</html>
