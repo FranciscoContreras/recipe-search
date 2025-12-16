@@ -135,6 +135,14 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
 });
 
 // --- NUTRITION ANALYSIS ENDPOINT ---
+app.get('/nutrition/analyze', (req: Request, res: Response) => {
+    res.status(405).send(`
+      <h1>Method Not Allowed</h1>
+      <p>This endpoint requires a <b>POST</b> request with a JSON body.</p>
+      <p>Try the <a href="/lab.html">Developer Lab</a> to test this feature interactively.</p>
+    `);
+});
+
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
   const { ingredients } = req.body;
 
