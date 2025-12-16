@@ -27,6 +27,7 @@ export interface UsdaNutrition {
 }
 
 export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
+    console.log(`DEBUG: USDA Searching for "${query}"`);
     if (!API_KEY) {
         console.warn('USDA API Key missing.');
         return null;
@@ -34,14 +35,16 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
 
     try {
         // 1. Search for the food
+        // Removing dataType filter to avoid axios array serialization issues and broaden search
         const searchRes = await axios.get(`${BASE_URL}/foods/search`, {
             params: {
                 api_key: API_KEY,
                 query: query,
-                dataType: ['Foundation', 'SR Legacy'], // Best for raw ingredients
                 pageSize: 1
             }
         });
+
+        console.log(`DEBUG: USDA Response Status: ${searchRes.status}, Items: ${searchRes.data.foods?.length}`);
 
         const food = searchRes.data.foods?.[0];
         if (!food) return null;

@@ -111,3 +111,77 @@ export async function findNutritionForRecipe(recipeName: string): Promise<any | 
         return null;
     }
 }
+
+export interface SimpleNutrition {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
+    sugar: number;
+    serving_size_g: number;
+}
+
+export async function searchFatSecret(query: string): Promise<SimpleNutrition | null> {
+    const token = await getAccessToken();
+    if (!token) return null;
+
+    try {
+        const params = new URLSearchParams({
+            method: 'foods.search',
+            search_expression: query,
+            format: 'json',
+            max_results: '1'
+        });
+
+        const res = await fetch(SEARCH_URL, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: params
+        });
+
+        const data = await res.json();
+        const food = data.foods?.food?.[0] || data.foods?.food;
+        if (!food) return null;
+
+        const detailsParams = new URLSearchParams({
+            method: 'food.get.v2',
+            food_id: food.food_id,
+            format: 'json'
+        });
+
+        const detailsRes = await fetch(SEARCH_URL, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: detailsParams
+        });
+
+        const details = await detailsRes.json();
+        const servings = details.food?.servings?.serving;
+        // Prefer 100g serving if available, else first
+        let serving = Array.isArray(servings) 
+            ? servings.find((s: any) => s.metric_serving_unit === 'g' && s.metric_serving_amount === '100.000') || servings[0]
+            : servings;
+
+        if (!serving) return null;
+
+        let servingWeight = 100;
+        if (serving.metric_serving_unit === 'g' || serving.metric_serving_unit === 'ml') {
+             servingWeight = parseFloat(serving.metric_serving_amount) || 100;
+        }
+
+        return {
+            calories: parseFloat(serving.calories) || 0,
+            protein: parseFloat(serving.protein) || 0,
+            fat: parseFloat(serving.fat) || 0,
+            carbs: parseFloat(serving.carbohydrate) || 0,
+            fiber: parseFloat(serving.fiber) || 0,
+            sugar: parseFloat(serving.sugar) || 0,
+            serving_size_g: servingWeight
+        };
+
+    } catch (e) {
+        console.error('FatSecret Search Error:', e);
+        return null;
+    }
+}

@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
-import { searchUsda } from './usda';
+import { searchUsda, UsdaNutrition } from './usda';
+import { searchFatSecret, SimpleNutrition } from './fatsecret';
 // @ts-ignore
 import { parse } from 'parse-ingredient';
 
@@ -34,10 +35,12 @@ export class NutritionEngine {
     }
 
     static async analyze(ingredients: string[]): Promise<{ total: NutritionTotal, breakdown: any[] }> {
+        console.log('DEBUG: Analyzing ingredients:', JSON.stringify(ingredients));
         const total: NutritionTotal = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0 };
         const breakdown = [];
 
         for (const line of ingredients) {
+            console.log('DEBUG: Processing line:', line);
             // 1. Parse
             let parsed;
             try {
@@ -53,7 +56,9 @@ export class NutritionEngine {
             const weightGrams = this.unitToGrams(unit, qty);
 
             // 2. Check Cache
-            let nutritionInfo = null;
+            let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
+            let source = 'usda';
+
             const { data: cached } = await supabase
                 .from('ingredient_cache')
                 .select('*')
@@ -61,24 +66,41 @@ export class NutritionEngine {
                 .single();
 
             if (cached) {
-                nutritionInfo = cached.nutrition;
+                nutritionInfo = cached.nutrition as any;
+                source = cached.source;
             } else {
                 // 3. Fetch from USDA
                 const usdaData = await searchUsda(name);
                 if (usdaData) {
                     nutritionInfo = usdaData;
+                    source = 'usda';
                     // Cache it
                     await supabase.from('ingredient_cache').upsert({
                         term: name.toLowerCase(),
-                        nutrition: usdaData,
+                        nutrition: usdaData as any,
                         source: 'usda'
                     });
+                } else {
+                    // 4. Fallback to FatSecret
+                    console.log(`DEBUG: USDA failed for "${name}", trying FatSecret...`);
+                    const fsData = await searchFatSecret(name);
+                    if (fsData) {
+                        nutritionInfo = fsData;
+                        source = 'fatsecret';
+                         await supabase.from('ingredient_cache').upsert({
+                            term: name.toLowerCase(),
+                            nutrition: fsData as any,
+                            source: 'fatsecret'
+                        });
+                    }
                 }
             }
 
-            // 4. Calculate contribution
+            // 5. Calculate contribution
             if (nutritionInfo) {
-                const ratio = weightGrams / 100; // Standard is 100g
+                const baseWeight = nutritionInfo.serving_size_g || 100;
+                const ratio = weightGrams / baseWeight;
+                
                 const itemStats = {
                     calories: nutritionInfo.calories * ratio,
                     protein: nutritionInfo.protein * ratio,
@@ -100,7 +122,7 @@ export class NutritionEngine {
                     ingredient: line,
                     parsed: { name, weightGrams },
                     stats: itemStats,
-                    source: cached ? 'cache' : 'usda'
+                    source: source
                 });
             } else {
                 breakdown.push({ ingredient: line, status: 'not_found' });
