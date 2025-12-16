@@ -184,10 +184,18 @@ export class RecipeCrawlerService {
 
                 // Image Object Fix
                 const imageUrl = (() => {
-                    if (typeof item.image === 'string') return item.image;
-                    if (Array.isArray(item.image)) return item.image[0];
-                    if (item.image && typeof item.image === 'object' && item.image.url) return item.image.url;
-                    return null;
+                    const extractUrl = (img: any) => {
+                        if (typeof img === 'string') return img;
+                        if (img && typeof img === 'object') {
+                             return img.url || img.contentUrl || null;
+                        }
+                        return null;
+                    };
+
+                    if (Array.isArray(item.image)) {
+                        return extractUrl(item.image[0]);
+                    }
+                    return extractUrl(item.image);
                 })();
 
                 const recipeData = {

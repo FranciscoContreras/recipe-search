@@ -50,10 +50,28 @@ async function startAuditor() {
                 let nutritionUpdate = null;
                 
                 // A. Image Check
-                if (recipe.image) {
-                    const isImageValid = await checkImage(recipe.image);
+                let imageUrl = recipe.image;
+                let imageUpdate = null;
+
+                // Auto-repair JSON blob in image field
+                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(imageUrl);
+                        const extracted = parsed.url || parsed.contentUrl;
+                        if (extracted) {
+                            imageUrl = extracted;
+                            imageUpdate = extracted;
+                            logs.push('Auto-repaired image URL from JSON object.');
+                        }
+                    } catch (e) {
+                        // Ignore parse error
+                    }
+                }
+
+                if (imageUrl) {
+                    const isImageValid = await checkImage(imageUrl);
                     if (!isImageValid) {
-                        logs.push(`Image URL failed validation: ${recipe.image}`);
+                        logs.push(`Image URL failed validation: ${imageUrl}`);
                         status = 'flagged';
                     }
                 } else {
@@ -145,6 +163,10 @@ async function startAuditor() {
 
                 if (nutritionUpdate) {
                     updatePayload.nutrition = nutritionUpdate;
+                }
+
+                if (imageUpdate) {
+                    updatePayload.image = imageUpdate;
                 }
 
                 await supabase.from('recipes').update(updatePayload).eq('id', recipe.id);
