@@ -47,7 +47,10 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
         console.log(`DEBUG: USDA Response Status: ${searchRes.status}, Items: ${searchRes.data.foods?.length}`);
 
         const food = searchRes.data.foods?.[0];
-        if (!food) return null;
+        if (!food) {
+            console.log(`DEBUG: USDA found no results for "${query}"`);
+            return null;
+        }
 
         // 2. Extract Nutrients (Search results usually contain them, no need for second call often)
         // The search result format flattens nutrients slightly differently than detailed view,

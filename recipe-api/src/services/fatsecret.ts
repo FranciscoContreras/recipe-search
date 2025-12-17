@@ -142,7 +142,10 @@ export async function searchFatSecret(query: string): Promise<SimpleNutrition | 
 
         const data = await res.json();
         const food = data.foods?.food?.[0] || data.foods?.food;
-        if (!food) return null;
+        if (!food) {
+            console.log(`DEBUG: FatSecret found no results for "${query}"`);
+            return null;
+        }
 
         const detailsParams = new URLSearchParams({
             method: 'food.get.v2',

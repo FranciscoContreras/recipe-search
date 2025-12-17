@@ -8,7 +8,7 @@ import { NutritionEngine } from './services/nutritionEngine';
 import { RecipeCrawlerService } from './crawler';
 import path from 'path';
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -143,7 +143,24 @@ app.get('/nutrition/analyze', (req: Request, res: Response) => {
     `);
 });
 
+import fs from 'fs';
+
+// ... (existing imports)
+
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
+  const status = `DEBUG: HIT /nutrition/analyze POST Endpoint
+  timestamp: ${new Date().toISOString()}
+  USDA_API_KEY: ${process.env.USDA_API_KEY ? 'Present' : 'Missing'}
+  FATSECRET_CLIENT_ID: ${process.env.FATSECRET_CLIENT_ID ? 'Present' : 'Missing'}
+  cwd: ${process.cwd()}
+  __dirname: ${__dirname}
+  env_path: ${path.resolve(__dirname, '../.env')}
+  `;
+  
+  fs.appendFileSync(path.join(process.cwd(), 'debug_keys.log'), status + '\n');
+
+  console.error(status); // Keep trying console
+  
   const { ingredients } = req.body;
 
   if (!ingredients || !Array.isArray(ingredients)) {

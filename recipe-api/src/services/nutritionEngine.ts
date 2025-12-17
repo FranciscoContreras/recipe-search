@@ -1,8 +1,9 @@
 import { supabase } from '../supabaseClient';
 import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
-// @ts-ignore
-import { parse } from 'parse-ingredient';
+
+// Bypass TS import issues for this specific library
+const parse = require('parse-ingredient');
 
 interface NutritionTotal {
     calories: number;
@@ -18,7 +19,7 @@ export class NutritionEngine {
     // Normalize to grams. Very basic map.
     // Real implementation would use a library like 'convert-units'
     private static unitToGrams(unit: string, qty: number): number {
-        const u = unit.toLowerCase();
+        const u = unit ? unit.toLowerCase() : '';
         if (['g', 'gram', 'grams'].includes(u)) return qty;
         if (['kg', 'kilogram'].includes(u)) return qty * 1000;
         if (['oz', 'ounce', 'ounces'].includes(u)) return qty * 28.35;
@@ -44,16 +45,34 @@ export class NutritionEngine {
             // 1. Parse
             let parsed;
             try {
-                parsed = parse(line)[0]; // parse-ingredient returns array
+                const results = parse(line);
+                parsed = Array.isArray(results) ? results[0] : results; 
             } catch (e) {
-                // Fallback: assume the whole string is the ingredient name
-                parsed = { description: line, quantity: 1, unitOfMeasure: null };
+                parsed = null;
+            }
+
+            // Manual Regex Fallback if library fails
+            if (!parsed || !parsed.description) {
+                // Try to capture "200g Item" or "200 g Item" or "2 cups Item"
+                const regex = /^(\d+(?:\.\d+)?)\s*([a-zA-Z]+)?\s+(.*)$/;
+                const match = line.match(regex);
+                if (match) {
+                    parsed = {
+                        quantity: parseFloat(match[1]),
+                        unitOfMeasure: match[2] || null,
+                        description: match[3]
+                    };
+                } else {
+                    parsed = { description: line, quantity: 1, unitOfMeasure: null };
+                }
             }
 
             const name = parsed.description || line; // Clean name
             const qty = parsed.quantity || 1;
             const unit = parsed.unitOfMeasure || '';
             const weightGrams = this.unitToGrams(unit, qty);
+
+            console.log(`DEBUG: Parsed "${line}" -> Name: "${name}", Qty: ${qty}, Unit: "${unit}", Weight: ${weightGrams}g`);
 
             // 2. Check Cache
             let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
