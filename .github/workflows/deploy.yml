@@ -1,0 +1,51 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: recipe-api/package-lock.json
+
+      - name: 📦 Install Dependencies & Build
+        run: |
+          cd recipe-api
+          npm ci
+          npm run build
+
+      - name: 🔑 Setup SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H server.wearemachina.com >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy Files (rsync)
+        run: |
+          rsync -avz --exclude 'node_modules' --exclude '.git' --exclude '.env' --exclude '.DS_Store' \
+            recipe-api/ root@server.wearemachina.com:/home/wearemachina-recipe-base/htdocs/recipe-base.wearemachina.com/
+
+      - name: 🔄 Restart Server
+        run: |
+          ssh root@server.wearemachina.com << 'EOF'
+            cd /home/wearemachina-recipe-base/htdocs/recipe-base.wearemachina.com
+            
+            # Ensure permissions
+            chown -R wearemachina-recipe-base:wearemachina-recipe-base .
+            
+            # Switch user to run PM2 and npm commands safely
+            su - wearemachina-recipe-base -c "cd /home/wearemachina-recipe-base/htdocs/recipe-base.wearemachina.com && npm install --production && pm2 reload ecosystem.config.js"
+          EOF
