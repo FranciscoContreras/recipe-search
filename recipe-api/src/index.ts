@@ -179,7 +179,7 @@ app.delete('/jobs', async (req: Request, res: Response) => {
   res.status(200).json({ message: 'All jobs archived.' });
 });
 
-// Test comment for auto-deployment verification
+// New test comment after SSH key update - YYYY-MM-DD HH:MM
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
