@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,11 +31,27 @@
     </script>
     <style>
         body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
-        .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.75rem; border-radius: 9999px; background-color: #254a31; color: #ffffff; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); cursor: pointer; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        
+        /* --- Component System: Buttons --- */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'Poppins', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+        
+        .btn-primary { background-color: #254a31; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); border-color: transparent; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
-        .btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.75rem; border-radius: 9999px; background-color: #ffffff; color: #254a31; border: 1px solid #e5e0d8; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s ease; }
-        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; }
+        
+        .btn-secondary { background-color: #ffffff; color: #254a31; border-color: #e5e0d8; }
+        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; transform: translateY(-1px); }
+
+        .btn-ghost { background-color: transparent; color: #5c5446; border-color: transparent; padding-left: 1rem; padding-right: 1rem; }
+        .btn-ghost:hover { color: #254a31; background-color: rgba(37, 74, 49, 0.05); }
+
+        .btn-white { background-color: #ffffff; color: #254a31; border-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-white:hover { background-color: #f2f0ea; border-color: #f2f0ea; transform: translateY(-1px); }
+
+        .btn-white-outline { background-color: transparent; color: #ffffff; border-color: rgba(255, 255, 255, 0.3); }
+        .btn-white-outline:hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.6); }
+
+        /* --- Components: Cards & Chips --- */
         .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.25rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); transition: all 0.4s ease; }
         .card-ceramic:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -4px rgba(37, 74, 49, 0.08); border-color: #d1ccbc; }
         .chip { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; background-color: #fcfaf7; border: 1px solid #e5e0d8; border-radius: 9999px; font-size: 0.75rem; color: #5c5446; cursor: pointer; transition: all 0.2s; }
@@ -48,19 +65,19 @@
     <canvas id="bg-canvas"></canvas>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 transition-all duration-300" id="navbar">
-        <div class="w-full flex justify-between items-center bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm px-6 py-4">
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
             </a>
             <div class="hidden md:flex items-center gap-8">
-                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Products</a>
-                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Solutions</a>
-                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Developers</a>
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Recipes</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Nutrition Lab</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">API Docs</a>
             </div>
             <div class="flex items-center gap-3">
-                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
-                <a href="/lab.html" class="hidden md:block px-5 py-2 bg-primary text-white text-sm font-medium rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20">Launch App</a>
+                <a href="/admin.html" class="hidden md:inline-flex btn btn-ghost border border-border">Admin</a>
+                <a href="/lab.html" class="hidden md:inline-flex btn btn-primary">Launch App</a>
                 <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>
@@ -69,9 +86,9 @@
     <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
         <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
         <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
-        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
-        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
-        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Nutrition Lab</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">API Docs</a>
     </div>
 
     <main class="pt-32">
@@ -85,8 +102,8 @@
                     <h1 class="font-display font-medium text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-6">Structure the <br><span class="italic text-text-muted">culinary chaos.</span></h1>
                     <p class="text-lg text-text-muted leading-relaxed mb-10 max-w-lg font-light">The infrastructure for food data. Parse unstructured recipes, normalize units, and enrich ingredients with USDA-verified nutrition in milliseconds.</p>
                     <div class="flex flex-wrap gap-4">
-                        <a href="#demo" class="btn-primary">Try the Engine <i data-lucide="arrow-down" class="w-4 h-4"></i></a>
-                        <a href="/docs.html" class="btn-secondary">Documentation</a>
+                        <a href="#demo" class="btn btn-primary">Try the Engine <i data-lucide="arrow-down" class="w-4 h-4"></i></a>
+                        <a href="/docs.html" class="btn btn-secondary">Documentation</a>
                     </div>
                 </div>
                 <div class="relative">
@@ -112,24 +129,83 @@
         </section>
 
         <!-- DEMO SECTION -->
-        <section id="demo" class="py-24 px-6 relative">
-            <div class="max-w-5xl mx-auto">
-                <div class="text-center mb-12">
+        <section id="demo" class="py-24 px-6 relative bg-white border-t border-border">
+            <div class="max-w-7xl mx-auto">
+                <div class="text-center mb-16">
                     <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Live Sandbox</span>
-                    <h2 class="font-display font-medium text-3xl md:text-4xl text-primary mb-4">Experience the Engine</h2>
-                    <p class="text-text-muted">Select a scenario or type your own recipe.</p>
+                    <h2 class="font-display font-medium text-4xl md:text-5xl text-primary mb-6">Experience the Engine</h2>
+                    <p class="text-text-muted text-lg font-light max-w-2xl mx-auto">See how our NLP engine transforms raw text into structured nutritional data in real-time. Select a preset or type your own.</p>
                 </div>
-                <div class="bg-white rounded-3xl shadow-ceramic border border-border overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-                    <div class="md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-border flex flex-col bg-[#fcfaf7]">
-                        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide"><button onclick="setPreset('keto')" class="chip active" id="chip-keto">Keto Breakfast</button><button onclick="setPreset('vegan')" class="chip" id="chip-vegan">Vegan Salad</button><button onclick="setPreset('baking')" class="chip" id="chip-baking">Baking</button></div>
-                        <textarea id="demo-input" class="flex-1 w-full bg-white border border-border rounded-xl p-5 font-mono text-sm text-text-main resize-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all mb-6" placeholder="Enter ingredients...">2 eggs
+                
+                <div class="grid lg:grid-cols-2 gap-8 items-start">
+                    <!-- Input Column -->
+                    <div class="space-y-6">
+                        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                            <button onclick="setPreset('keto')" class="chip active group" id="chip-keto">
+                                <span class="w-2 h-2 rounded-full bg-green-500 group-hover:animate-pulse"></span> Keto Breakfast
+                            </button>
+                            <button onclick="setPreset('vegan')" class="chip group" id="chip-vegan">
+                                <span class="w-2 h-2 rounded-full bg-orange-400"></span> Vegan Salad
+                            </button>
+                            <button onclick="setPreset('baking')" class="chip group" id="chip-baking">
+                                <span class="w-2 h-2 rounded-full bg-blue-400"></span> Baking
+                            </button>
+                        </div>
+                        
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-primary/20 to-green-100 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                            <div class="relative bg-[#fcfaf7] border border-border rounded-xl p-1 shadow-sm">
+                                <div class="flex items-center justify-between px-4 py-2 border-b border-border/50 text-xs text-text-light font-mono">
+                                    <span>input.txt</span>
+                                    <span>UTF-8</span>
+                                </div>
+                                <textarea id="demo-input" class="w-full bg-transparent border-none p-5 font-mono text-sm text-text-main resize-none focus:ring-0 min-h-[300px] leading-relaxed" placeholder="Enter ingredients...">2 eggs
 1 avocado
 2 slices bacon</textarea>
-                        <button id="run-demo-btn" class="btn-primary w-full shadow-lg shadow-primary/20">Analyze Ingredients <i data-lucide="play" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+
+                        <button id="run-demo-btn" class="btn btn-primary w-full group">
+                            Run Analysis <i data-lucide="sparkles" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                        </button>
                     </div>
-                    <div class="md:w-1/2 p-8 bg-white relative flex flex-col">
-                        <div class="flex justify-end mb-6"><div class="bg-gray-100 p-1 rounded-lg flex text-xs font-medium"><button onclick="setView('visual')" id="btn-visual" class="px-3 py-1 rounded-md bg-white shadow-sm text-primary transition-all">Visual</button><button onclick="setView('json')" id="btn-json" class="px-3 py-1 rounded-md text-text-muted hover:text-primary transition-all">JSON</button></div></div>
-                        <div id="output-area" class="flex-1 overflow-auto custom-scrollbar relative"><div id="view-visual" class="space-y-6 animate-fade-in"><div class="text-center opacity-40 mt-20"><i data-lucide="arrow-left" class="w-6 h-6 mx-auto mb-2"></i><p class="text-sm">Run analysis to see results</p></div></div><pre id="view-json" class="hidden font-mono text-xs text-text-muted bg-gray-50 p-4 rounded-xl border border-border h-full overflow-auto">// JSON output will appear here...</pre></div>
+
+                    <!-- Output Column -->
+                    <div class="relative h-full min-h-[500px] bg-[#f8f9fa] border border-border rounded-2xl overflow-hidden flex flex-col shadow-inner">
+                        <div class="flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-400/20 border border-red-400/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-400/20 border border-yellow-400/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-400/20 border border-green-400/50"></div>
+                            </div>
+                            <div class="flex bg-gray-100 p-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                                <button onclick="setView('visual')" id="btn-visual" class="px-3 py-1 rounded-md bg-white shadow-sm text-primary transition-all">Visual</button>
+                                <button onclick="setView('json')" id="btn-json" class="px-3 py-1 rounded-md text-text-muted hover:text-primary transition-all">JSON</button>
+                            </div>
+                        </div>
+
+                        <div id="output-area" class="flex-1 overflow-auto relative p-6">
+                            <!-- Visual View -->
+                            <div id="view-visual" class="h-full flex flex-col">
+                                <div class="flex-1 flex flex-col items-center justify-center text-center opacity-60 space-y-4">
+                                    <div class="w-16 h-16 bg-white rounded-2xl border border-border shadow-sm flex items-center justify-center text-primary/40">
+                                        <i data-lucide="cpu" class="w-8 h-8"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-text-muted">Ready to process</p>
+                                </div>
+                            </div>
+                            
+                            <!-- JSON View -->
+                            <pre id="view-json" class="hidden font-mono text-xs text-text-muted leading-relaxed whitespace-pre-wrap">
+// JSON output will appear here...
+                            </pre>
+                        </div>
+                        
+                        <!-- Status Bar -->
+                        <div class="bg-white border-t border-border px-4 py-2 flex justify-between items-center text-[10px] text-text-light font-mono">
+                            <span id="status-text">Idle</span>
+                            <span id="status-time">0ms</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -253,8 +329,8 @@
                 <h2 class="font-display font-medium text-4xl md:text-5xl mb-6">Start building with Recipe Base.</h2>
                 <p class="text-lg text-white/80 mb-10 max-w-xl mx-auto font-light">Get your API key today and structure the culinary world.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/admin.html" class="px-8 py-4 bg-white text-primary rounded-full font-bold hover:bg-earth-100 transition-colors">Get API Key</a>
-                    <a href="mailto:sales@wearemachina.com" class="px-8 py-4 border border-white/30 text-white rounded-full font-bold hover:bg-white/10 transition-colors">Contact Sales</a>
+                    <a href="/admin.html" class="btn btn-white">Get API Key</a>
+                    <a href="mailto:sales@wearemachina.com" class="btn btn-white-outline">Contact Sales</a>
                 </div>
             </div>
         </section>
@@ -301,8 +377,13 @@
 
         function setPreset(key) {
             document.getElementById('demo-input').value = presets[key];
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            document.getElementById('chip-' + key).classList.add('active');
+            document.querySelectorAll('.chip').forEach(c => {
+                c.classList.remove('active');
+                if (c.querySelector('span')) c.querySelector('span').classList.remove('animate-pulse');
+            });
+            const active = document.getElementById('chip-' + key);
+            active.classList.add('active');
+            if (active.querySelector('span')) active.querySelector('span').classList.add('animate-pulse');
         }
 
         function setView(mode) {
@@ -324,9 +405,19 @@
             const input = document.getElementById('demo-input').value;
             const visual = document.getElementById('view-visual');
             const json = document.getElementById('view-json');
+            const statusText = document.getElementById('status-text');
+            const statusTime = document.getElementById('status-time');
             
             // Loading State
-            visual.innerHTML = '<div class="h-full flex items-center justify-center opacity-60"><div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>';
+            if (statusText) statusText.textContent = "Processing...";
+            const startTime = performance.now();
+            
+            visual.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center space-y-4 animate-pulse">
+                    <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <span class="text-xs font-mono text-primary uppercase tracking-widest">Parsing Ingredients...</span>
+                </div>
+            `;
             json.textContent = '// Processing...';
 
             const ingredients = input.split('\n').map(l => l.trim()).filter(l => l);
@@ -336,44 +427,101 @@
                 });
                 const data = await res.json();
                 const t = data.total;
+                const endTime = performance.now();
+
+                if (statusText) {
+                    statusText.textContent = "Complete";
+                    statusText.classList.add('text-green-600');
+                    statusTime.textContent = `${Math.round(endTime - startTime)}ms`;
+                }
 
                 // Render JSON
                 json.textContent = JSON.stringify(data, null, 2);
 
-                // Render Visual
+                // Render Visual (Enhanced)
                 visual.innerHTML = `
-                    <div class="space-y-6 animate-fade-in">
+                    <div class="space-y-8 animate-fade-in p-2">
+                        <!-- Macromolecule Dashboard -->
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-earth-50 rounded-xl border border-border">
-                                <span class="text-xs text-text-light uppercase tracking-wide">Calories</span>
-                                <span class="block text-2xl font-mono text-primary font-bold">${Math.round(t.calories)}</span>
+                            <div class="col-span-2 p-5 bg-white rounded-xl border border-border shadow-sm">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-xs font-bold uppercase tracking-widest text-text-light">Total Energy</span>
+                                    <span class="text-3xl font-display font-medium text-primary">${Math.round(t.calories)} <span class="text-sm text-text-muted font-normal">kcal</span></span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" style="width: 100%"></div>
+                                </div>
                             </div>
-                            <div class="p-4 bg-earth-50 rounded-xl border border-border">
-                                <span class="text-xs text-text-light uppercase tracking-wide">Protein</span>
-                                <span class="block text-2xl font-mono text-primary font-bold">${Math.round(t.protein)}g</span>
+                            
+                            <div class="p-4 bg-white rounded-xl border border-border shadow-sm space-y-3">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-text-muted">Protein</span>
+                                    <span class="font-mono">${Math.round(t.protein)}g</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                                    <div class="bg-blue-500 h-full rounded-full" style="width: ${Math.min((t.protein/50)*100, 100)}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-white rounded-xl border border-border shadow-sm space-y-3">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-bold text-text-muted">Fats</span>
+                                    <span class="font-mono">${Math.round(t.fat)}g</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                                    <div class="bg-yellow-500 h-full rounded-full" style="width: ${Math.min((t.fat/65)*100, 100)}%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                            <div class="p-2 bg-white border border-border rounded-lg"><span class="block text-text-light">Carbs</span><span class="font-bold">${Math.round(t.carbs)}g</span></div>
-                            <div class="p-2 bg-white border border-border rounded-lg"><span class="block text-text-light">Fats</span><span class="font-bold">${Math.round(t.fat)}g</span></div>
-                            <div class="p-2 bg-white border border-border rounded-lg border-green-100 bg-green-50/50"><span class="block text-green-700">Vit C</span><span class="font-bold text-green-800">${Math.round(t.vitamin_c_mg)}mg</span></div>
+
+                        <!-- Micronutrients -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="text-center p-2 bg-green-50/50 rounded-lg border border-green-100">
+                                <span class="block text-[10px] uppercase text-green-700 font-bold mb-1">Vit C</span>
+                                <span class="font-mono text-sm text-green-800">${Math.round(t.vitamin_c_mg)}mg</span>
+                            </div>
+                            <div class="text-center p-2 bg-orange-50/50 rounded-lg border border-orange-100">
+                                <span class="block text-[10px] uppercase text-orange-700 font-bold mb-1">Iron</span>
+                                <span class="font-mono text-sm text-orange-800">${Math.round(t.iron_mg || 0)}mg</span>
+                            </div>
+                             <div class="text-center p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                                <span class="block text-[10px] uppercase text-blue-700 font-bold mb-1">Calc</span>
+                                <span class="font-mono text-sm text-blue-800">${Math.round(t.calcium_mg || 0)}mg</span>
+                            </div>
                         </div>
-                        <div class="border-t border-border pt-4">
-                            <h4 class="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">Item Breakdown</h4>
-                            <div class="space-y-2 max-h-[200px] overflow-auto pr-2 custom-scrollbar">
+
+                        <!-- Item Breakdown List -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-text-muted mb-4 flex items-center gap-2">
+                                <i data-lucide="layers" class="w-3 h-3"></i> Breakdown
+                            </h4>
+                            <div class="space-y-2">
                                 ${data.breakdown.map(b => `
-                                    <div class="flex justify-between text-sm py-2 border-b border-border/50 last:border-0">
-                                        <span class="text-text-main">${b.parsed.name}</span>
-                                        <span class="font-mono text-text-muted">${Math.round(b.stats.calories)} kcal</span>
+                                    <div class="group flex items-center justify-between p-3 bg-white border border-border rounded-lg hover:border-primary/30 transition-all">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-text-light text-xs font-mono font-bold">
+                                                ${Math.round(b.stats.calories)}
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-text-main">${b.parsed.name}</p>
+                                                <p class="text-[10px] text-text-muted">${b.parsed.quantity} ${b.parsed.unit || 'unit'}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-1">
+                                            ${b.stats.protein > 5 ? '<span class="w-1.5 h-1.5 rounded-full bg-blue-500" title="High Protein"></span>' : ''}
+                                            ${b.stats.fat > 5 ? '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500" title="High Fat"></span>' : ''}
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
                         </div>
                     </div>
                 `;
+                lucide.createIcons();
             } catch (e) {
-                visual.innerHTML = `<div class="text-red-500 text-center p-4">Error: ${e.message}</div>`;
+                visual.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-red-500 p-4 text-center"><i data-lucide="alert-circle" class="w-8 h-8 mb-2"></i><p>Error: ${e.message}</p></div>`;
                 json.textContent = '// Error: ' + e.message;
+                lucide.createIcons();
             }
         });
 
@@ -385,8 +533,143 @@
         toggle.addEventListener('click', toggleMenu);
         close.addEventListener('click', toggleMenu);
 
+
         // Shader
-        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+        class GodRaysBackground {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                if (!this.canvas) return;
+                
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true, antialias: true });
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                
+                this.uniforms = {
+                    uTime: { value: 0 },
+                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+                };
+                
+                // Shader: Polar coordinate noise for rays + radial mask
+                const material = new THREE.ShaderMaterial({
+                    uniforms: this.uniforms,
+                    transparent: true,
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float uTime;
+                        uniform vec2 uResolution;
+                        varying vec2 vUv;
+
+                        // Simplex noise function
+                        vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+                        float snoise(vec2 v){
+                            const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                            vec2 i  = floor(v + dot(v, C.yy) );
+                            vec2 x0 = v - i + dot(i, C.xx);
+                            vec2 i1;
+                            i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                            vec4 x12 = x0.xyxy + C.xxzz;
+                            x12.xy -= i1;
+                            i = mod(i, 289.0);
+                            vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                            vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                            m = m*m ;
+                            m = m*m ;
+                            vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                            vec3 h = abs(x) - 0.5;
+                            vec3 ox = floor(x + 0.5);
+                            vec3 a0 = x - ox;
+                            m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                            vec3 g;
+                            g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                            return 130.0 * dot(m, g);
+                        }
+
+                        void main() {
+                            vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
+                            float aspect = uResolution.x / uResolution.y;
+                            
+                            // ORIGIN: Slightly Left, Above Title
+                            vec2 lightPos = vec2(-aspect * 0.25, 0.55);
+                            
+                            // Vector from light to pixel
+                            vec2 p = uv - lightPos;
+                            
+                            // Polar coordinates
+                            float angle = atan(p.y, p.x);
+                            float dist = length(p);
+                            
+                            // Time factor
+                            float t = uTime * 0.245;
+                            
+                            // Layer 1: Base broad beams (Low frequency)
+                            // Rotate slowly and flow outwards
+                            float n1 = snoise(vec2(angle * 4.0 + t * 0.2, dist * 0.5 - t));
+                            
+                            // Layer 2: Wispy details (Higher frequency)
+                            // Warped by the first layer for fluid motion
+                            float n2 = snoise(vec2(angle * 8.0 - t * 0.5, dist * 1.5 + n1 * 0.5 - t * 0.5));
+                            
+                            // Combine layers
+                            float rays = n1 * 0.6 + n2 * 0.4;
+                            
+                            // Normalize to 0..1 range
+                            rays = rays * 0.5 + 0.5;
+                            
+                            // Volumetric contrast curve (Softness)
+                            // Squaring the value pushes mids to darks, creating defined but soft light paths
+                            rays = pow(rays, 2.5);
+                            
+                            // Spotlight Mask
+                            // Smooth falloff from origin (fade out)
+                            float fadeOut = 1.0 - smoothstep(0.4, 1.4, dist);
+                            // Soft fade in near the source (increased effect)
+                            float fadeIn = smoothstep(0.1, 0.45, dist);
+                            
+                            float spotlight = fadeIn * fadeOut;
+                            
+                            // Opacity & Color
+                            float finalAlpha = rays * spotlight * 0.5; 
+                            
+                            // Realistic Dusty Light Color (Warm/Neutral)
+                            vec3 rayColor = vec3(0.82, 0.80, 0.70);
+
+                            gl_FragColor = vec4(rayColor, finalAlpha);
+                        }
+                    `
+                });
+
+                this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+                
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.animate();
+            }
+
+            resize() {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                this.renderer.setSize(w, h);
+                this.uniforms.uResolution.value.set(w, h);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.uniforms.uTime.value += 0.0098;
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+        
+        // Initialize
+        new GodRaysBackground('bg-canvas');
     </script>
 </body>
 </html>

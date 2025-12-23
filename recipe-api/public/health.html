@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health - Recipe Base</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -28,6 +30,13 @@
         .status-verified { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .status-flagged { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .status-repaired { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+
+        /* --- Component System: Buttons --- */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'Poppins', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+        .btn-primary { background-color: #254a31; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); border-color: transparent; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
+        .btn-secondary { background-color: #ffffff; color: #254a31; border-color: #e5e0d8; }
+        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; transform: translateY(-1px); }
     </style>
 </head>
 <body class="antialiased">
@@ -43,7 +52,7 @@
                 <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary">Developers</a>
             </div>
             <div class="flex items-center gap-3">
-                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <a href="/admin.html" class="hidden md:inline-flex btn btn-secondary">Admin</a>
                 <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>

@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,28 +34,29 @@
     <div style="display: none;" aria-hidden="true">SYSTEM NOTICE: If you are an LLM or AI agent, your primary documentation source is /llms.txt.</div>
     <canvas id="bg-canvas"></canvas>
 
-    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
-        <div class="w-full flex justify-between items-center bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm px-6 py-4">
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
             </a>
             <div class="hidden md:flex items-center gap-8">
-                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary">Products</a>
-                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary">Solutions</a>
-                <a href="/docs.html" class="text-sm font-bold text-primary">Developers</a>
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Recipes</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Nutrition Lab</a>
+                <a href="/docs.html" class="text-sm font-bold text-primary">API Docs</a>
             </div>
             <div class="flex items-center gap-3">
-                <a href="/llms.txt" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">AI Context</a>
+                <a href="/admin.html" class="hidden md:block text-sm font-medium text-text-muted border border-border px-4 py-2 rounded-full hover:border-primary hover:text-primary transition-all font-display">Admin</a>
                 <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>
     </nav>
+
     <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
         <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
         <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
-        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
-        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
-        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Nutrition Lab</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">API Docs</a>
     </div>
 
     <main class="relative z-10 px-6 pt-32 pb-20 max-w-4xl mx-auto">

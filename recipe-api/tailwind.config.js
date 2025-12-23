@@ -12,7 +12,12 @@ module.exports = {
           900: '#1e1b4b', // Deep Indigo
           800: '#312e81',
         }
-      }
+      },
+      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
+        display: ['Grenda', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
     },
   },
   plugins: [

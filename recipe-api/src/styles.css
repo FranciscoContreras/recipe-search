@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Grenda';
+  src: url('../assets/Grenda.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
