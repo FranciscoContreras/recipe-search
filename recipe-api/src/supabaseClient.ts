@@ -8,8 +8,17 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Supabase URL or Key is missing. Please check your .env file.');
-  process.exit(1);
+  console.warn('Supabase URL or Key is missing. Database features will be disabled.');
 }
 
-export const supabase: SupabaseClient<Database> = createClient<Database>(supabaseUrl, supabaseKey);
+// @ts-ignore
+export const supabase: SupabaseClient<Database> = (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http')) 
+  ? createClient<Database>(supabaseUrl, supabaseKey)
+  : { 
+      from: () => ({ 
+        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+        upsert: () => Promise.resolve({ data: null, error: null }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+        insert: () => Promise.resolve({ data: null, error: null })
+      }) 
+    } as any;

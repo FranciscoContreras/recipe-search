@@ -1,0 +1,1120 @@
+[dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+DEBUG: USDA Searching for "all-purpose flour"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=all-purpose%20flour&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Flour, wheat, all-purpose, enriched, bleached (Foundation)
+DEBUG: USDA Searching for "baking powder"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=baking%20powder&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Leavening agents, baking powder, low-sodium (SR Legacy)
+DEBUG: USDA Searching for "salt"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=salt&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Pecans, salted (Survey (FNDDS))
+DEBUG: USDA Searching for "white sugar"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=white%20sugar&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Sugar, white, granulated or lump (Survey (FNDDS))
+DEBUG: USDA Searching for "milk"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=milk&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Milk, human (Survey (FNDDS))
+DEBUG: USDA Searching for "egg"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=egg&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Eggs, Grade A, Large, egg white (Foundation)
+DEBUG: USDA Searching for "butter melted"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=butter%20melted&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Baby Toddler yogurt melts (Survey (FNDDS))
+DEBUG: USDA Searching for "eggs"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=eggs&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Eggs, Grade A, Large, egg white (Foundation)
+DEBUG: USDA Searching for "milk"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=milk&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Milk, human (Survey (FNDDS))
+DEBUG: USDA Searching for "salt"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=salt&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Pecans, salted (Survey (FNDDS))
+DEBUG: USDA Searching for "butter"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=butter&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Butter, Clarified butter (ghee) (SR Legacy)
+DEBUG: USDA Searching for "rolled oats"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=rolled%20oats&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Rolls, dinner, oat bran (SR Legacy)
+DEBUG: USDA Searching for "water"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=water&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Water, tap (Survey (FNDDS))
+DEBUG: USDA Searching for "brown sugar"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=brown%20sugar&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Sugar, brown (Survey (FNDDS))
+DEBUG: USDA Searching for "salt"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=salt&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Pecans, salted (Survey (FNDDS))
+DEBUG: USDA Searching for "breasts"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=breasts&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Turkey breast, sliced, prepackaged (SR Legacy)
+DEBUG: USDA Searching for "olive oil"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=olive%20oil&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Olive oil (Survey (FNDDS))
+DEBUG: USDA Searching for "salt"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=salt&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Pecans, salted (Survey (FNDDS))
+DEBUG: USDA Searching for "black pepper"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=black%20pepper&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Spices, pepper, black (SR Legacy)
+DEBUG: USDA Searching for "white rice"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=white%20rice&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Beans and white rice (Survey (FNDDS))
+DEBUG: USDA Searching for "water"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=water&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Water, tap (Survey (FNDDS))
+DEBUG: USDA Searching for "salt"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=salt&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Pecans, salted (Survey (FNDDS))
+DEBUG: USDA Searching for "apple"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=apple&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Apple, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "banana"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=banana&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Banana, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "grapes"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=grapes&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Grapes, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "strawberries"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=strawberries&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Strawberries, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "wheat bread"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=wheat%20bread&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Bread, wheat (SR Legacy)
+DEBUG: USDA Searching for "peanut butter"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=peanut%20butter&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Peanut butter (Survey (FNDDS))
+DEBUG: USDA Searching for "jelly"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=jelly&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Jelly (Survey (FNDDS))
+DEBUG: USDA Searching for "pasta"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=pasta&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Flavored pasta (Survey (FNDDS))
+DEBUG: USDA Searching for "tomato sauce"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=tomato%20sauce&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Tomato chili sauce (Survey (FNDDS))
+DEBUG: USDA Searching for "parmesan cheese"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=parmesan%20cheese&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Cheese, parmesan, grated (SR Legacy)
+DEBUG: USDA Searching for "spinach"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=spinach&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Spinach, creamed (Survey (FNDDS))
+DEBUG: USDA Searching for "banana"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=banana&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Banana, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "almond milk"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=almond%20milk&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Almond milk, chocolate (Survey (FNDDS))
+DEBUG: USDA Searching for "lettuce"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=lettuce&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Lettuce, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "tomato"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=tomato&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Tomatoes, raw (Survey (FNDDS))
+DEBUG: USDA Searching for "cucumber"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=cucumber&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Cucumber salad made with cucumber and vinegar (Survey (FNDDS))
+DEBUG: USDA Searching for "olive oil"
+DEBUG: Fetching URL: https://api.nal.usda.gov/fdc/v1/foods/search?api_key=***&query=olive%20oil&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5
+DEBUG: USDA Response Status: 200, Items: 5
+DEBUG: Selected Food: Olive oil (Survey (FNDDS))
+[
+  {
+    "id": "1",
+    "name": "Fluffy Pancakes",
+    "ingredients": [
+      "1 1/2 cups all-purpose flour",
+      "3 1/2 tsp baking powder",
+      "1 tsp salt",
+      "1 tbsp white sugar",
+      "1 1/4 cups milk",
+      "1 egg",
+      "3 tbsp butter melted"
+    ],
+    "system_nutrition": {
+      "calories": 1636,
+      "protein": 56,
+      "fat": 11,
+      "carbs": 332
+    },
+    "breakdown": [
+      {
+        "ingredient": "1 1/2 cups all-purpose flour",
+        "parsed": {
+          "name": "all-purpose flour",
+          "weightGrams": 354
+        },
+        "stats": {
+          "calories": 1295.64,
+          "protein": 38.586,
+          "fat": 5.2392,
+          "carbs": 273.642,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 67.26,
+          "iron_mg": 19.8948,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "3 1/2 tsp baking powder",
+        "parsed": {
+          "name": "baking powder",
+          "weightGrams": 17.5
+        },
+        "stats": {
+          "calories": 16.974999999999998,
+          "protein": 0.017499999999999998,
+          "fat": 0.06999999999999999,
+          "carbs": 8.2075,
+          "fiber": 0.385,
+          "sugar": 0,
+          "calcium_mg": 757.75,
+          "iron_mg": 1.4297499999999999,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tsp salt",
+        "parsed": {
+          "name": "salt",
+          "weightGrams": 5
+        },
+        "stats": {
+          "calories": 37.35,
+          "protein": 0.47850000000000004,
+          "fat": 3.6675,
+          "carbs": 0.61,
+          "fiber": 0.27999999999999997,
+          "sugar": 0.1905,
+          "calcium_mg": 2.6500000000000004,
+          "iron_mg": 0.11399999999999999,
+          "vitamin_a_mcg": 0.15000000000000002,
+          "vitamin_c_mg": 0.05500000000000001
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp white sugar",
+        "parsed": {
+          "name": "white sugar",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 60.15,
+          "protein": 0,
+          "fat": 0.048,
+          "carbs": 14.939999999999998,
+          "fiber": 0,
+          "sugar": 14.969999999999999,
+          "calcium_mg": 0.15,
+          "iron_mg": 0.0075,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 1/4 cups milk",
+        "parsed": {
+          "name": "milk",
+          "weightGrams": 295
+        },
+        "stats": {
+          "calories": 0,
+          "protein": 0,
+          "fat": 0,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 egg",
+        "parsed": {
+          "name": "egg",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 55,
+          "protein": 10.7,
+          "fat": 0,
+          "carbs": 2.36,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "3 tbsp butter melted",
+        "parsed": {
+          "name": "butter melted",
+          "weightGrams": 45
+        },
+        "stats": {
+          "calories": 171,
+          "protein": 6.430499999999999,
+          "fat": 1.8,
+          "carbs": 32.318999999999996,
+          "fiber": 1.035,
+          "sugar": 25.713,
+          "calcium_mg": 205.65,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 48.15,
+          "vitamin_c_mg": 25.695
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Scrambled Eggs",
+    "ingredients": [
+      "4 eggs",
+      "1/4 cup milk",
+      "1 tsp salt",
+      "1 tbsp butter"
+    ],
+    "system_nutrition": {
+      "calories": 227,
+      "protein": 11,
+      "fat": 19,
+      "carbs": 3
+    },
+    "breakdown": [
+      {
+        "ingredient": "4 eggs",
+        "parsed": {
+          "name": "eggs",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 55,
+          "protein": 10.7,
+          "fat": 0,
+          "carbs": 2.36,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1/4 cup milk",
+        "parsed": {
+          "name": "milk",
+          "weightGrams": 59
+        },
+        "stats": {
+          "calories": 0,
+          "protein": 0,
+          "fat": 0,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tsp salt",
+        "parsed": {
+          "name": "salt",
+          "weightGrams": 5
+        },
+        "stats": {
+          "calories": 37.35,
+          "protein": 0.47850000000000004,
+          "fat": 3.6675,
+          "carbs": 0.61,
+          "fiber": 0.27999999999999997,
+          "sugar": 0.1905,
+          "calcium_mg": 2.6500000000000004,
+          "iron_mg": 0.11399999999999999,
+          "vitamin_a_mcg": 0.15000000000000002,
+          "vitamin_c_mg": 0.05500000000000001
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp butter",
+        "parsed": {
+          "name": "butter",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 135,
+          "protein": 0,
+          "fat": 15,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "Oatmeal",
+    "ingredients": [
+      "1/2 cup rolled oats",
+      "1 cup water",
+      "1 tsp brown sugar",
+      "1 pinch salt"
+    ],
+    "system_nutrition": {
+      "calories": 300,
+      "protein": 11,
+      "fat": 6,
+      "carbs": 52
+    },
+    "breakdown": [
+      {
+        "ingredient": "1/2 cup rolled oats",
+        "parsed": {
+          "name": "rolled oats",
+          "weightGrams": 118
+        },
+        "stats": {
+          "calories": 278.47999999999996,
+          "protein": 11.209999999999999,
+          "fat": 5.427999999999999,
+          "carbs": 47.436,
+          "fiber": 4.837999999999999,
+          "sugar": 7.8706,
+          "calcium_mg": 100.3,
+          "iron_mg": 4.885199999999999,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cup water",
+        "parsed": {
+          "name": "water",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 0,
+          "protein": 0,
+          "fat": 0,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 7.08,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tsp brown sugar",
+        "parsed": {
+          "name": "brown sugar",
+          "weightGrams": 5
+        },
+        "stats": {
+          "calories": 19,
+          "protein": 0.006,
+          "fat": 0,
+          "carbs": 4.9045000000000005,
+          "fiber": 0,
+          "sugar": 4.851,
+          "calcium_mg": 4.15,
+          "iron_mg": 0.0355,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 pinch salt",
+        "parsed": {
+          "name": "salt",
+          "weightGrams": 0.3
+        },
+        "stats": {
+          "calories": 2.241,
+          "protein": 0.028710000000000003,
+          "fat": 0.22005,
+          "carbs": 0.0366,
+          "fiber": 0.0168,
+          "sugar": 0.011430000000000001,
+          "calcium_mg": 0.159,
+          "iron_mg": 0.00684,
+          "vitamin_a_mcg": 0.009000000000000001,
+          "vitamin_c_mg": 0.0033000000000000004
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "name": "Grilled Chicken",
+    "ingredients": [
+      "2 chicken breasts",
+      "1 tbsp olive oil",
+      "1 tsp salt",
+      "1/2 tsp black pepper"
+    ],
+    "system_nutrition": {
+      "calories": 285,
+      "protein": 16,
+      "fat": 23,
+      "carbs": 4
+    },
+    "breakdown": [
+      {
+        "ingredient": "2 chicken breasts",
+        "parsed": {
+          "name": "breasts",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 106,
+          "protein": 14.8,
+          "fat": 3.77,
+          "carbs": 2.2,
+          "fiber": 0,
+          "sugar": 0.91,
+          "calcium_mg": 14,
+          "iron_mg": 0.42,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp olive oil",
+        "parsed": {
+          "name": "olive oil",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 135,
+          "protein": 0,
+          "fat": 15,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0.15,
+          "iron_mg": 0.084,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tsp salt",
+        "parsed": {
+          "name": "salt",
+          "weightGrams": 5
+        },
+        "stats": {
+          "calories": 37.35,
+          "protein": 0.47850000000000004,
+          "fat": 3.6675,
+          "carbs": 0.61,
+          "fiber": 0.27999999999999997,
+          "sugar": 0.1905,
+          "calcium_mg": 2.6500000000000004,
+          "iron_mg": 0.11399999999999999,
+          "vitamin_a_mcg": 0.15000000000000002,
+          "vitamin_c_mg": 0.05500000000000001
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1/2 tsp black pepper",
+        "parsed": {
+          "name": "black pepper",
+          "weightGrams": 2.5
+        },
+        "stats": {
+          "calories": 6.275,
+          "protein": 0.26,
+          "fat": 0.0815,
+          "carbs": 1.6,
+          "fiber": 0.6325000000000001,
+          "sugar": 0.016,
+          "calcium_mg": 11.075000000000001,
+          "iron_mg": 0.24275000000000002,
+          "vitamin_a_mcg": 0.675,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Steamed Rice",
+    "ingredients": [
+      "1 cup white rice",
+      "2 cups water",
+      "1/2 tsp salt"
+    ],
+    "system_nutrition": {
+      "calories": 406,
+      "protein": 16,
+      "fat": 12,
+      "carbs": 60
+    },
+    "breakdown": [
+      {
+        "ingredient": "1 cup white rice",
+        "parsed": {
+          "name": "white rice",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 387.03999999999996,
+          "protein": 15.34,
+          "fat": 9.935599999999999,
+          "carbs": 59.4484,
+          "fiber": 8.732,
+          "sugar": 0.49559999999999993,
+          "calcium_mg": 127.44,
+          "iron_mg": 6.017999999999999,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "2 cups water",
+        "parsed": {
+          "name": "water",
+          "weightGrams": 472
+        },
+        "stats": {
+          "calories": 0,
+          "protein": 0,
+          "fat": 0,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 14.16,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1/2 tsp salt",
+        "parsed": {
+          "name": "salt",
+          "weightGrams": 2.5
+        },
+        "stats": {
+          "calories": 18.675,
+          "protein": 0.23925000000000002,
+          "fat": 1.83375,
+          "carbs": 0.305,
+          "fiber": 0.13999999999999999,
+          "sugar": 0.09525,
+          "calcium_mg": 1.3250000000000002,
+          "iron_mg": 0.056999999999999995,
+          "vitamin_a_mcg": 0.07500000000000001,
+          "vitamin_c_mg": 0.027500000000000004
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "name": "Fruit Salad",
+    "ingredients": [
+      "1 apple",
+      "1 banana",
+      "1 cup grapes",
+      "1 cup strawberries"
+    ],
+    "system_nutrition": {
+      "calories": 439,
+      "protein": 5,
+      "fat": 1,
+      "carbs": 102
+    },
+    "breakdown": [
+      {
+        "ingredient": "1 apple",
+        "parsed": {
+          "name": "apple",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 61,
+          "protein": 0.17,
+          "fat": 0.15,
+          "carbs": 14.8,
+          "fiber": 2.1,
+          "sugar": 12.08,
+          "calcium_mg": 5,
+          "iron_mg": 0.03,
+          "vitamin_a_mcg": 3,
+          "vitamin_c_mg": 4.6
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 banana",
+        "parsed": {
+          "name": "banana",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 97,
+          "protein": 0.74,
+          "fat": 0.28,
+          "carbs": 22.71,
+          "fiber": 1.7,
+          "sugar": 15.8,
+          "calcium_mg": 5,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 1,
+          "vitamin_c_mg": 12
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cup grapes",
+        "parsed": {
+          "name": "grapes",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 195.88,
+          "protein": 2.124,
+          "fat": 0.472,
+          "carbs": 45.78399999999999,
+          "fiber": 2.124,
+          "sugar": 39.50639999999999,
+          "calcium_mg": 23.599999999999998,
+          "iron_mg": 0.42479999999999996,
+          "vitamin_a_mcg": 7.08,
+          "vitamin_c_mg": 7.552
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cup strawberries",
+        "parsed": {
+          "name": "strawberries",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 84.96,
+          "protein": 1.5104,
+          "fat": 0.5192,
+          "carbs": 18.7856,
+          "fiber": 4.248,
+          "sugar": 11.4696,
+          "calcium_mg": 40.12,
+          "iron_mg": 0.6136,
+          "vitamin_a_mcg": 2.36,
+          "vitamin_c_mg": 140.656
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "Peanut Butter Sandwich",
+    "ingredients": [
+      "2 slices wheat bread",
+      "2 tbsp peanut butter",
+      "1 tbsp jelly"
+    ],
+    "system_nutrition": {
+      "calories": 384,
+      "protein": 13,
+      "fat": 18,
+      "carbs": 46
+    },
+    "breakdown": [
+      {
+        "ingredient": "2 slices wheat bread",
+        "parsed": {
+          "name": "wheat bread",
+          "weightGrams": 60
+        },
+        "stats": {
+          "calories": 164.4,
+          "protein": 6.419999999999999,
+          "fat": 2.718,
+          "carbs": 28.5,
+          "fiber": 2.4,
+          "sugar": 3.438,
+          "calcium_mg": 75,
+          "iron_mg": 2.16,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0.12
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "2 tbsp peanut butter",
+        "parsed": {
+          "name": "peanut butter",
+          "weightGrams": 30
+        },
+        "stats": {
+          "calories": 179.4,
+          "protein": 6.663,
+          "fat": 15.408,
+          "carbs": 6.693,
+          "fiber": 1.5,
+          "sugar": 3.147,
+          "calcium_mg": 14.7,
+          "iron_mg": 0.522,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp jelly",
+        "parsed": {
+          "name": "jelly",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 39.9,
+          "protein": 0.0225,
+          "fat": 0.003,
+          "carbs": 10.4925,
+          "fiber": 0.15,
+          "sugar": 7.683,
+          "calcium_mg": 1.05,
+          "iron_mg": 0.028499999999999998,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0.135
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "8",
+    "name": "Pasta with Tomato Sauce",
+    "ingredients": [
+      "200g pasta",
+      "1 cup tomato sauce",
+      "1 tbsp parmesan cheese"
+    ],
+    "system_nutrition": {
+      "calories": 454,
+      "protein": 15,
+      "fat": 9,
+      "carbs": 78
+    },
+    "breakdown": [
+      {
+        "ingredient": "200g pasta",
+        "parsed": {
+          "name": "pasta",
+          "weightGrams": 200
+        },
+        "stats": {
+          "calories": 174,
+          "protein": 4.94,
+          "fat": 4.42,
+          "carbs": 28.9,
+          "fiber": 0.8,
+          "sugar": 1.98,
+          "calcium_mg": 12,
+          "iron_mg": 0.82,
+          "vitamin_a_mcg": 38,
+          "vitamin_c_mg": 0.8
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cup tomato sauce",
+        "parsed": {
+          "name": "tomato sauce",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 217.11999999999998,
+          "protein": 5.8999999999999995,
+          "fat": 0.708,
+          "carbs": 46.70439999999999,
+          "fiber": 5.664,
+          "sugar": 31.4588,
+          "calcium_mg": 47.199999999999996,
+          "iron_mg": 1.888,
+          "vitamin_a_mcg": 80.24,
+          "vitamin_c_mg": 37.76
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp parmesan cheese",
+        "parsed": {
+          "name": "parmesan cheese",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 63,
+          "protein": 4.26,
+          "fat": 4.17,
+          "carbs": 2.085,
+          "fiber": 0,
+          "sugar": 0.0105,
+          "calcium_mg": 127.94999999999999,
+          "iron_mg": 0.0735,
+          "vitamin_a_mcg": 39.3,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "name": "Green Smoothie",
+    "ingredients": [
+      "1 cup spinach",
+      "1 banana",
+      "1 cup almond milk"
+    ],
+    "system_nutrition": {
+      "calories": 411,
+      "protein": 8,
+      "fat": 17,
+      "carbs": 55
+    },
+    "breakdown": [
+      {
+        "ingredient": "1 cup spinach",
+        "parsed": {
+          "name": "spinach",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 212.39999999999998,
+          "protein": 5.6404,
+          "fat": 14.372399999999999,
+          "carbs": 14.4196,
+          "fiber": 2.832,
+          "sugar": 1.7935999999999999,
+          "calcium_mg": 136.88,
+          "iron_mg": 1.7935999999999999,
+          "vitamin_a_mcg": 606.52,
+          "vitamin_c_mg": 35.635999999999996
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 banana",
+        "parsed": {
+          "name": "banana",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 97,
+          "protein": 0.74,
+          "fat": 0.28,
+          "carbs": 22.71,
+          "fiber": 1.7,
+          "sugar": 15.8,
+          "calcium_mg": 5,
+          "iron_mg": 0,
+          "vitamin_a_mcg": 1,
+          "vitamin_c_mg": 12
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cup almond milk",
+        "parsed": {
+          "name": "almond milk",
+          "weightGrams": 236
+        },
+        "stats": {
+          "calories": 101.47999999999999,
+          "protein": 1.3451999999999997,
+          "fat": 2.832,
+          "carbs": 17.5584,
+          "fiber": 0.236,
+          "sugar": 16.449199999999998,
+          "calcium_mg": 379.96,
+          "iron_mg": 0.7315999999999999,
+          "vitamin_a_mcg": 89.67999999999999,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      }
+    ]
+  },
+  {
+    "id": "10",
+    "name": "Basic Salad",
+    "ingredients": [
+      "2 cups lettuce",
+      "1 tomato",
+      "1 cucumber",
+      "1 tbsp olive oil"
+    ],
+    "system_nutrition": {
+      "calories": 283,
+      "protein": 6,
+      "fat": 16,
+      "carbs": 28
+    },
+    "breakdown": [
+      {
+        "ingredient": "2 cups lettuce",
+        "parsed": {
+          "name": "lettuce",
+          "weightGrams": 472
+        },
+        "stats": {
+          "calories": 94.39999999999999,
+          "protein": 4.3424,
+          "fat": 0.472,
+          "carbs": 17.4168,
+          "fiber": 6.136,
+          "sugar": 5.192,
+          "calcium_mg": 146.32,
+          "iron_mg": 1.2272,
+          "vitamin_a_mcg": 1425.4399999999998,
+          "vitamin_c_mg": 37.76
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tomato",
+        "parsed": {
+          "name": "tomato",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 20,
+          "protein": 0.82,
+          "fat": 0.31,
+          "carbs": 4.04,
+          "fiber": 1.2,
+          "sugar": 2.63,
+          "calcium_mg": 10,
+          "iron_mg": 0.22,
+          "vitamin_a_mcg": 32,
+          "vitamin_c_mg": 16.3
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 cucumber",
+        "parsed": {
+          "name": "cucumber",
+          "weightGrams": 100
+        },
+        "stats": {
+          "calories": 34,
+          "protein": 0.5,
+          "fat": 0.13,
+          "carbs": 6.79,
+          "fiber": 0.5,
+          "sugar": 5.33,
+          "calcium_mg": 14,
+          "iron_mg": 0.07,
+          "vitamin_a_mcg": 3,
+          "vitamin_c_mg": 2.5
+        },
+        "source": "usda"
+      },
+      {
+        "ingredient": "1 tbsp olive oil",
+        "parsed": {
+          "name": "olive oil",
+          "weightGrams": 15
+        },
+        "stats": {
+          "calories": 135,
+          "protein": 0,
+          "fat": 15,
+          "carbs": 0,
+          "fiber": 0,
+          "sugar": 0,
+          "calcium_mg": 0.15,
+          "iron_mg": 0.084,
+          "vitamin_a_mcg": 0,
+          "vitamin_c_mg": 0
+        },
+        "source": "usda"
+      }
+    ]
+  }
+]
