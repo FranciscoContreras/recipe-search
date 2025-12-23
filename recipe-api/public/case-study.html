@@ -87,20 +87,49 @@
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-primary text-xs font-bold uppercase tracking-wider mb-6 shadow-sm reveal">
                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Engineering Case Study
             </div>
-            <h1 class="font-display font-medium text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-8 reveal">Structuring the <br><span class="italic text-text-muted">Unstructured.</span></h1>
-            <p class="text-xl text-text-muted leading-relaxed mb-10 max-w-2xl mx-auto font-light reveal">How we built an intelligent pipeline to turn messy recipe text into precision nutritional data, handling scale, ambiguity, and automated compliance.</p>
+            <h1 class="font-display font-medium text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-8 reveal">From Database <br><span class="italic text-text-muted">to Intelligence.</span></h1>
+            <p class="text-xl text-text-muted leading-relaxed mb-10 max-w-2xl mx-auto font-light reveal">We started with millions of raw recipes—a digital library of culinary chaos. This is the story of how we built the infrastructure to structure, analyze, and unlock that data.</p>
+        </section>
+
+        <!-- ORIGIN STORY -->
+        <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center">
+            <div class="reveal order-2 lg:order-1 relative">
+                <div class="absolute -inset-4 bg-gradient-to-tr from-primary/5 to-transparent rounded-3xl transform -rotate-2"></div>
+                <div class="card-ceramic p-8 relative z-10 h-full flex flex-col justify-center">
+                    <div class="flex items-center justify-center gap-4 mb-8">
+                        <div class="text-center">
+                            <span class="block text-4xl font-display font-bold text-primary">2.4M+</span>
+                            <span class="text-xs uppercase tracking-widest text-text-light">Recipes Indexed</span>
+                        </div>
+                        <div class="h-12 w-[1px] bg-border"></div>
+                        <div class="text-center">
+                            <span class="block text-4xl font-display font-bold text-primary">150+</span>
+                            <span class="text-xs uppercase tracking-widest text-text-light">Sources</span>
+                        </div>
+                    </div>
+                    <p class="text-center text-sm text-text-muted italic">"We had the world's largest cookbook, but we couldn't read it."</p>
+                </div>
+            </div>
+            <div class="reveal order-1 lg:order-2">
+                <h2 class="font-display text-3xl text-primary mb-6">The Origin: A Massive Library</h2>
+                <p class="prose-p">Recipe Base began as an ambitious archiving project. We scraped, curated, and centralized millions of recipes from across the open web. We built a robust, scalable database that could ingest thousands of new culinary creations daily.</p>
+                <p class="prose-p">But we quickly hit a wall. A database of text strings is just an archive. It isn't <strong>data</strong>.</p>
+                <div class="highlight-box">
+                    <p class="text-sm text-primary font-medium italic">"Searching for 'High Protein' in a text blob is impossible. We needed to understand the physics of the food, not just index the words."</p>
+                </div>
+                <p class="prose-p">We realized that to make this massive library truly valuable for developers, health apps, and researchers, we needed an interpretive layer. We needed to turn "2 cups of flour" into precise nutritional vectors.</p>
+            </div>
         </section>
 
         <!-- THE CHALLENGE -->
-        <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center">
+        <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center border-t border-border">
             <div class="reveal">
-                <h2 class="font-display text-3xl text-primary mb-6">The Challenge: Culinary Chaos</h2>
-                <p class="prose-p">The internet is flooded with recipes, but 90% of them exist as unstructured "blobs" of text. A human understands that "1 large ripe avocado, pitted" is an ingredient. A machine sees a string of characters.</p>
-                <p class="prose-p">We faced three core problems:</p>
+                <h2 class="font-display text-3xl text-primary mb-6">The Challenge: Structuring Chaos</h2>
+                <p class="prose-p">With millions of records, manual tagging was impossible. We needed an automated pipeline to handle the extreme variance of natural language ingredients.</p>
                 <ul class="space-y-4 mb-8">
                     <li class="flex items-start gap-3">
                         <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
-                        <span class="text-text-muted text-sm leading-relaxed"><strong>Unit Variance:</strong> "Cups", "grams", "pinch", "handful". Normalizing these to a standard mass for calculation is non-trivial.</span>
+                        <span class="text-text-muted text-sm leading-relaxed"><strong>Unit Variance:</strong> "Cups", "grams", "pinch", "handful". Normalizing these to a standard mass for calculation is non-trivial at scale.</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
@@ -108,24 +137,23 @@
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
-                        <span class="text-text-muted text-sm leading-relaxed"><strong>Scale:</strong> Processing one recipe is easy. Processing 10,000/hour requires a distributed, fault-tolerant architecture.</span>
+                        <span class="text-text-muted text-sm leading-relaxed"><strong>Latency:</strong> Processing one recipe is easy. Enriching a database of millions requires a distributed, low-latency architecture.</span>
                     </li>
                 </ul>
             </div>
             <div class="relative reveal">
                 <div class="absolute -inset-4 bg-gradient-to-tr from-red-50 to-transparent rounded-3xl transform rotate-2"></div>
                 <div class="card-ceramic p-8 relative z-10">
-                    <div class="font-mono text-xs text-text-light mb-4 border-b border-border pb-2">Input: raw_text_blob</div>
+                    <div class="font-mono text-xs text-text-light mb-4 border-b border-border pb-2">Legacy Search Failure</div>
                     <div class="space-y-2 opacity-60">
-                        <p class="line-through decoration-red-400/50">2 lg eggs (room temp)</p>
-                        <p class="line-through decoration-red-400/50">1/2 c. almond flour</p>
-                        <p class="line-through decoration-red-400/50">pinch of himalayan salt</p>
+                        <div class="flex justify-between"><p class="line-through decoration-red-400/50">Query: "Keto Dinner"</p><span class="text-red-500 text-xs">0 matches</span></div>
+                        <div class="flex justify-between"><p class="line-through decoration-red-400/50">Query: "Gluten Free"</p><span class="text-red-500 text-xs">Inaccurate</span></div>
                     </div>
                     <div class="mt-8 pt-6 border-t border-dashed border-red-200">
                         <div class="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-widest">
-                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> Parsing Failed
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> The Data Gap
                         </div>
-                        <p class="text-xs text-text-muted mt-2">Legacy regex parsers fail on 40% of complex ingredient strings.</p>
+                        <p class="text-xs text-text-muted mt-2">Without structured data, our massive database was effectively silent.</p>
                     </div>
                 </div>
             </div>
@@ -135,8 +163,8 @@
         <section class="bg-white border-y border-border py-24">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center max-w-3xl mx-auto mb-20 reveal">
-                    <h2 class="font-display text-3xl md:text-4xl text-primary mb-6">The Solution: Intelligent Pipeline</h2>
-                    <p class="text-text-muted font-light text-lg">We didn't just build a parser. We built a context-aware nutrition engine backed by USDA Foundation data.</p>
+                    <h2 class="font-display text-3xl md:text-4xl text-primary mb-6">The Solution: The Analysis Engine</h2>
+                    <p class="text-text-muted font-light text-lg">We built a proprietary NLP engine to crawl, parse, and enrich our database, turning static text into dynamic, queryable insights.</p>
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-8 relative">
@@ -166,8 +194,8 @@
                         <div class="w-16 h-16 mx-auto bg-green-50 rounded-2xl flex items-center justify-center text-green-700 mb-6">
                             <i data-lucide="check-circle-2" class="w-8 h-8"></i>
                         </div>
-                        <h3 class="font-display text-xl text-primary mb-3">3. Compliance Check</h3>
-                        <p class="text-sm text-text-muted leading-relaxed">Once identified, the engine scans the molecular profile for 14 major allergens and calculates macro/micro splits instantly.</p>
+                        <h3 class="font-display text-xl text-primary mb-3">3. Database Enrichment</h3>
+                        <p class="text-sm text-text-muted leading-relaxed">The enriched data flows back into our core database, allowing us to serve millions of recipes with fully calculated macro/micro splits and allergen flags.</p>
                     </div>
                 </div>
             </div>
@@ -210,29 +238,29 @@
             <div class="max-w-6xl mx-auto px-6 relative z-10">
                 <div class="text-center mb-16 reveal">
                     <h2 class="font-display text-3xl md:text-4xl mb-6">Capabilities at Scale</h2>
-                    <p class="text-white/80 max-w-2xl mx-auto font-light">From a single recipe to an enterprise database.</p>
+                    <p class="text-white/80 max-w-2xl mx-auto font-light">From a massive database to precision API.</p>
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 reveal">
                         <div class="flex justify-between items-start mb-6">
-                            <h3 class="font-display text-2xl">Automated Tagging</h3>
-                            <i data-lucide="tag" class="w-6 h-6 opacity-70"></i>
+                            <h3 class="font-display text-2xl">The Database</h3>
+                            <i data-lucide="layers" class="w-6 h-6 opacity-70"></i>
                         </div>
-                        <p class="text-sm text-white/70 mb-6">Instantly generate dietary flags based on composition, not just user tags.</p>
-                        <div class="flex gap-3">
-                            <span class="px-3 py-1 rounded bg-green-500/20 border border-green-500/50 text-green-300 text-xs font-bold uppercase">Vegan</span>
-                            <span class="px-3 py-1 rounded bg-blue-500/20 border border-blue-500/50 text-blue-300 text-xs font-bold uppercase">Gluten-Free</span>
-                            <span class="px-3 py-1 rounded bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-xs font-bold uppercase">High Protein</span>
+                        <p class="text-sm text-white/70 mb-6">Access millions of curated, categorized recipes. Search by ingredient, cuisine, or generated nutritional tag.</p>
+                        <div class="flex gap-3 flex-wrap">
+                            <span class="px-3 py-1 rounded bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase">2.4M+ Items</span>
+                            <span class="px-3 py-1 rounded bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase">Full History</span>
+                            <span class="px-3 py-1 rounded bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase">Auto-Updated</span>
                         </div>
                     </div>
 
                     <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 reveal">
                         <div class="flex justify-between items-start mb-6">
-                            <h3 class="font-display text-2xl">Micronutrient Audit</h3>
+                            <h3 class="font-display text-2xl">The Intelligence</h3>
                             <i data-lucide="microscope" class="w-6 h-6 opacity-70"></i>
                         </div>
-                        <p class="text-sm text-white/70 mb-6">Go beyond calories. Track iron, calcium, Vitamin D, and more for clinical applications.</p>
+                        <p class="text-sm text-white/70 mb-6">Go beyond calories. Our API calculates micronutrients, generates allergen flags, and audits compliance in real-time.</p>
                         <div class="grid grid-cols-3 gap-4 text-center">
                             <div><span class="block text-xl font-mono font-bold">12mg</span><span class="text-[10px] uppercase tracking-wider opacity-60">Iron</span></div>
                             <div><span class="block text-xl font-mono font-bold">800mg</span><span class="text-[10px] uppercase tracking-wider opacity-60">Calcium</span></div>
@@ -246,9 +274,12 @@
         <!-- CTA -->
         <section class="py-24 bg-white">
             <div class="max-w-4xl mx-auto px-6 text-center reveal">
-                <h2 class="font-display font-medium text-4xl text-primary mb-6">Ready to upgrade your data?</h2>
-                <p class="text-text-muted mb-10 text-lg font-light">See the engine in action with our interactive lab.</p>
-                <a href="/lab.html" class="btn btn-primary">Try the Nutrition Lab</a>
+                <h2 class="font-display font-medium text-4xl text-primary mb-6">Explore the Collection</h2>
+                <p class="text-text-muted mb-10 text-lg font-light">See how our database and intelligence engine work together.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/recipes.html" class="btn btn-primary">Browse Recipes</a>
+                    <a href="/lab.html" class="btn btn-secondary">Try Nutrition Lab</a>
+                </div>
             </div>
         </section>
 
