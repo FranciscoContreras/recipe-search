@@ -7,7 +7,8 @@ https://recipe-base.wearemachina.com
 
 ### 1. Get Recipes (List)
 - **GET** `/recipes`
-- **Description:** Retrieve a paginated list of recipes with lightweight metadata (id, name, image, description, times). Excludes quarantined items.
+- **Description:** Retrieve a paginated list of recipes with lightweight metadata.
+- **Parameters:** `limit` (default 50), `offset` (default 0)
 - **Response:**
   ```json
   {
@@ -27,37 +28,22 @@ https://recipe-base.wearemachina.com
 
 ### 2. Get Recipe Details
 - **GET** `/recipes/:id`
-- **Description:** Retrieve full details for a specific recipe. Includes ingredients, instructions, and nutrition.
-- **Features:** 
-  - **JIT Enrichment:** If nutrition data is missing, the API automatically fetches it from FatSecret before returning the response.
+- **Description:** Retrieve full details for a specific recipe. Includes ingredients, instructions, and JIT nutrition enrichment.
 - **Parameters:** `id` (UUID)
 - **Response:**
   ```json
   {
     "id": "uuid",
-    "url": "Original Source URL",
     "name": "Recipe Title",
-    "image": "https://example.com/image.jpg",
-    "description": "Full description...",
-    "cook_time": "PT1H",
-    "prep_time": "PT15M",
-    "total_time": "PT1H15M",
-    "recipe_yield": "4 servings",
     "recipe_ingredients": ["1 cup flour", "2 eggs"],
     "recipe_instructions": ["Mix ingredients.", "Bake at 350F."],
-    "recipe_category": "Dessert",
-    "recipe_cuisine": "American",
     "nutrition": { 
-      "@type": "NutritionInformation", 
-      "calories": "200 kcal",
-      "proteinContent": "10 g",
-      "fatContent": "5 g",
-      "carbohydrateContent": "30 g"
+      "calories": 200,
+      "protein": 10,
+      "fat": 5,
+      "carbohydrate": 30
     },
-    "qa_status": "verified",
-    "quality_score": 95,
-    "created_at": "ISO-8601",
-    "updated_at": "ISO-8601"
+    "qa_status": "verified"
   }
   ```
 
@@ -68,42 +54,32 @@ https://recipe-base.wearemachina.com
   - `q` (string): Fuzzy search term.
   - `ingredients` (string): Ingredient filter.
   - `match_all` (boolean): `true` = AND logic.
-  - `full` (boolean): `true` = Return full recipe details (ingredients, instructions, nutrition). Default `false`.
+  - `full` (boolean): `true` = Return full recipe details.
 - **Response:** List of recipes.
 
-### 4. Batch Enrich (Hydration)
+### 4. Nutrition Analysis (Natural Language)
+- **POST** `/nutrition/analyze`
+- **Description:** Analyze a list of ingredients using USDA Foundation Data.
+- **Body:** `{ "ingredients": ["200g chicken breast", "1 cup rice"] }`
+- **Response:**
+  ```json
+  {
+    "total": { "calories": 500, "protein": 40, ... },
+    "breakdown": [
+      { "ingredient": "200g chicken breast", "stats": { ... } }
+    ]
+  }
+  ```
+
+### 5. Batch Enrich
 - **POST** `/recipes/enrich`
-- **Description:** Retrieve full details for a list of IDs. Triggers JIT nutrition enrichment.
+- **Description:** Retrieve full details for a list of IDs.
 - **Body:** `{ "ids": ["uuid", "uuid"] }`
-- **Response:** List of full recipe objects.
 
-### 5. System Health (Admin)
+### 6. System Health (Admin)
 - **GET** `/health`
+- **Response:** `{ "stats": { "total": 100, "verified": 80 }, "recent": [ ... ] }`
 
-### 5. Start Crawl (Admin)
+### 7. Start Crawl (Admin)
 - **POST** `/crawl`
 - **Body:** `{ "url": "https://example.com/recipes" }`
-- **Response:** `{ "message": "Crawl queued", "job": { ... } }`
-
-## Database Schema (Supabase)
-
-### Table: `recipes`
-- `id` (uuid, pk)
-- `url` (text, unique)
-- `name` (text)
-- `image` (text)
-- `description` (text)
-- `cook_time` (text)
-- `prep_time` (text)
-- `total_time` (text)
-- `recipe_yield` (text)
-- `recipe_ingredients` (jsonb array)
-- `recipe_instructions` (jsonb array)
-- `recipe_category` (text)
-- `recipe_cuisine` (text)
-- `nutrition` (jsonb)
-- `qa_status` (text: pending, verified, flagged, quarantined, repaired)
-- `quality_score` (int)
-- `last_audited_at` (timestamp)
-- `fts` (tsvector, generated)
-- `ingredients_flat` (text[], generated)

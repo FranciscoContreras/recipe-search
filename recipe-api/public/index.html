@@ -1,175 +1,401 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Base</title>
+    <title>Recipe Base - Culinary Intelligence</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 60px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 48px;
-            margin: 0 0 16px 0;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-            font-size: 20px;
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .hub-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: var(--glass-shadow);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            height: 100%;
-            opacity: 0;
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .hub-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            background: rgba(255, 255, 255, 0.85);
-        }
-
-        .card-icon {
-            font-size: 32px;
-            margin-bottom: 24px;
-            background: rgba(0, 113, 227, 0.1);
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 16px;
-            color: var(--accent);
-        }
-
-        .card-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin: 0 0 12px 0;
-            color: var(--text-main);
-        }
-
-        .card-desc {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin: 0;
-        }
-
-        .arrow {
-            margin-top: auto;
-            padding-top: 24px;
-            color: var(--accent);
-            font-weight: 600;
-            font-size: 15px;
-            opacity: 0;
-            transform: translateX(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .hub-card:hover .arrow {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.75rem; border-radius: 9999px; background-color: #254a31; color: #ffffff; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); cursor: pointer; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
+        .btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.75rem; border-radius: 9999px; background-color: #ffffff; color: #254a31; border: 1px solid #e5e0d8; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.3s ease; }
+        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; }
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.25rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); transition: all 0.4s ease; }
+        .card-ceramic:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -4px rgba(37, 74, 49, 0.08); border-color: #d1ccbc; }
+        .chip { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; background-color: #fcfaf7; border: 1px solid #e5e0d8; border-radius: 9999px; font-size: 0.75rem; color: #5c5446; cursor: pointer; transition: all 0.2s; }
+        .chip:hover { border-color: #254a31; color: #254a31; background-color: #ffffff; }
+        .chip.active { background-color: #254a31; color: #ffffff; border-color: #254a31; }
+        .mock-app { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #e5e0d8; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>Recipe Base</h1>
-        <div class="subtitle">The intelligent, scalable recipe engine.</div>
+<body class="antialiased">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <svg viewBox="0 0 1775.5 475.77" class="h-8 w-auto fill-current text-primary">
+                    <path d="M841.2,156.69c21.51,55.27-1,180.22-66.42,199.21-19.81,5.75-39.12-.19-48.35-18.56-7.19,43.47-11.86,83.81-15.81,126.49-1.68,18.1-29.18,11.59-38.9,6.37-9.61-5.16-12.66-14.21-11.08-24.4l18.07-116.55c-9.41,8.55-15.56,16.05-24.89,22.48-12.73,8.78-32.39,8.83-43.82-1.71-9.48-8.74-9.69-21.66-13.12-35.35-15.83,21.32-36.35,38.59-62.46,42.81-41.5,6.72-67.17-12.27-81.58-50.49-23.9,33.5-46.5,52.51-87.41,51.5-29.86-.74-52.48-19.72-61.48-49.46-9.79,20.52-23,38.18-42.77,46.97-44.11,19.63-65.31-42.95-76.17-73.53l-28.62-80.55c-4.95,10.35-6.17,18.68-7.63,28.67l-17.73,122.13c-12.77,5.21-26.88,4.47-39.79-.63-7.14-2.82-12.8-12.04-11.35-20.76l24.17-145.64,18.15-107.86c1.23-7.33-.87-15.02,6.69-19.33,11.48-6.53,26.29-6.73,38.35-2.21,10.19,3.81,11.52,11.4,9.81,20.73l-20.78,114.01c8.64-3.11,16.53-6.01,24.84-8.14,39.94-10.26,64.16-44.43,65.37-85.16.85-28.66-14.32-52.12-43.65-59.54-38.72-9.8-72.73-1.06-106.07,20.04-35.73,22.62-60.14,70.96-43.2,110.21,10.08,23.36,32.73,13,26.48,35.55-4.37,15.77-29.34,17.94-48.1,7.65-18.67-10.24-29.44-28.98-31.44-50.13-3.26-34.52,8.34-66.6,30.57-93.21C62.38,30.91,106.29,9.63,154.49,2.32c34.14-5.18,66.93-2.04,97.68,13.21,50.15,24.89,60.87,85.07,36.77,126.91-19.81,34.38-38.66,48.14-76.22,63.22,10.97,35.32,24.75,67.76,41.31,100.27,1.34,2.62,5.02,5.52,7.28,6.02,2.64.58,9.56-1.5,11.08-3.8,37.14-56.03,17.74-49.66,33.32-98.73,13.85-43.63,47.7-91.29,98.75-80.3,18.57,4,30.86,18,33.74,37.04,3.99,26.37-4.78,51.77-20.45,73.37-16.59,22.87-40.58,36.21-68.02,44.02,1.52,14.64,7.48,27.39,18.87,35.72,7.31,5.34,18.65,5.29,26.88,2,20.05-8.03,32.44-23.96,42.71-41.83,6.59-11.48,10.37-21.88,11.17-35.41,2.17-36.65,16.27-72.73,43.2-97.4,15.78-14.47,36.23-21.25,56.13-18.02,17.27,2.81,30.16,12.75,35.35,29.46s3.89,35.76-3.78,52.07c-7.02,14.92-27.55,22.15-39.72,11.79-11.15-9.5-12.77-24.77-2.97-34.84,6.01-6.18,11.92-22.57,2.44-26.97-24.46-11.36-52.34,89.64-34.15,143.36,4.98,14.69,18.29,23.81,33.78,19.39,27.14-7.75,51.6-45.22,55.13-63.97l22.19-118.02c10.37-9.81,38.11-10.29,46.57.49,3.44,4.39,4.4,12.71,3.19,18.76l-17.15,85.44c-2.66,13.27-11.74,63.44-3.43,71.31,11.41,10.8,42.25-64.45,44.8-74.05,9.25-34.84,10.94-70.25,14.33-105.6,11.81-10.03,31.33-10.62,44.47-2.87,5.6,3.31,4.92,12.47,5.16,19.21,7.19-6.25,14.1-13.54,22.04-18.81,23.33-15.47,54.06-4.3,64.27,21.93ZM351.03,250.87c30.85-17.9,43.18-48.98,43.26-81.44.1-3.11-2.95-11.35-6.07-11.17-23.73.95-39.16,74.41-37.19,92.6ZM762.94,318.81c25.68-25.1,32.72-76.77,34.12-110.59.39-9.52,1.38-38.12-11.26-40.17-12.86-2.09-28.4,35.72-31.54,45.39-6.68,20.62-11.54,40.89-16.38,62.12-3.02,13.27-2.18,27.08,3.35,39.15,3.6,7.86,14.32,11.32,21.71,4.1Z"/>
+                    <path d="M1603.63,274.1c-16.65-3.63-2.48,22.75-23.81,55.49-14.92,22.91-41.01,32.12-67.81,30.29-22.6-1.54-39.14-16.66-40.63-40.16l-18.75,22.61c-12.7,15.32-36.21,21.78-52.65,9.48-12.39-9.27-13.37-25.33-14.55-40.75-15.95,25.77-32.58,53.14-65.32,45.98-26.25-5.75-35.33-50.44-35.73-73.31-.75-43.15,11.13-84.85,35.97-119.39,10.59-14.73,24.41-26.38,41.37-30.96s31.61.52,41.67,14.4c2.46-4.19,5.31-10.68,8.3-12.67,12.1-8.03,29.74-7.87,42.41.84,3.48,2.39,5.53,11.12,4.07,15.68-12.74,39.53-20.02,78.2-25.22,119.33-1.38,10.89-6.33,40.49,1.14,46.27,7.72,5.97,27.85-36.13,30.51-42.85l30.68-77.42c5.84-14.73,8.18-26.14,3.86-41.73-3.63-13.11.54-27.69,9.24-37.55,14.32-16.21,39.1-19.75,47.24-8.48,11.8,16.33-7.61,33.97-4.65,49.87,3.25,17.41,32.12,60.83,36.69,86.94l17.29-8.31,4.39-20.38c8.24-38.23,38.69-85.62,82.53-89.58,22.2-2.01,43.49,9.14,50.15,30.29,16.84,53.43-30.17,112.54-84.12,124.54-.39,16.66,7.62,35.22,24.99,40,13.66,3.76,27.56-3.48,37.77-12.35,31.53-27.37,33.2-60.42,41-63.6,4.08-1.67,20.32,9.7,10.94,33.81-9.89,25.4-24.69,47.14-46.86,63.03-28.57,20.48-75.55,24.21-101.1-8.41-13.68-17.47-20-38.92-21.03-60.96ZM1658.19,248.68c43.11-17.49,49.6-94.7,35.28-90.68-24.53,6.88-36.35,66.08-35.28,90.68ZM1359.74,305.96c12.15-20.63,18.59-41.64,24.52-64.12,4.15-15.72,16.68-63.48,1.51-73.34-10.59-6.88-25.44,9.54-30.6,22.71-11.12,28.34-29.03,94.27-14.03,119.65,4.34,7.34,14.92,1.35,18.61-4.9ZM1537.4,267.42l-1.22-14.96-17.45-43.49-30.36,80.08c16.07-9.88,29.45-16.53,49.03-21.64ZM1533.19,317.29c3.05-6.23,4.3-12.14,4.8-20.01-5.83,2.12-41.05,18.53-30.45,26.03,11.23,7.95,22.97-.55,25.64-6.02Z"/>
+      <path d="M1125.39,309.1c-13.01,6.66-27.06,2.44-37.65-5.08-6.43-4.57-11.41-13.89-9.91-22.76l37.27-220.36c14.75-16.44,55.6-7.38,52.75,6.71l-19.23,95.09,19.92-4.35c16.24-3.54,30.29-10.13,40.33-24.19,13.42-18.79,18.27-43.51,11.13-65.93-4.87-15.28-17.15-26.04-32.83-30.05-43.68-11.18-90.78,4.17-118.96,39.38-14.78,18.47-19.78,41.83-13.62,63.88,3.25,11.63,13.73,15.39,22.73,21.6,5.88,4.06,2.82,15.03-.86,19.67-4.37,5.51-11.88,9.28-20.69,9.01-24.87-.75-46.48-21.13-49.67-45.95-8.83-68.63,48.45-121.69,108.71-137.46,45.37-11.87,89.34-13.72,129.51,12.71,22.94,15.24,33.82,39.25,32.69,66.88-1.46,35.59-22.28,66.06-56.27,81.85,35.56,12.37,55.38,41.8,53.75,78.18-1.89,42.27-26.21,77.04-64.25,96.4-34.47,16.32-74.35,19.88-112.36,11.84-24.86-5.26-59.24-24.91-62.13-54.39-1.16-11.86,8.08-23.32,20.45-21.93,10.23,24.71,30.99,41.06,57.95,44.37,16.75,2.05,33.13,2.15,49.62-2.85,34.99-10.62,55.84-43.41,54.7-79.82-.55-17.77-6.67-34.55-23.15-42.94-25.23-12.85-38.98,1.93-50.1-13.14-7.78,35.61-12.69,70.24-15.29,106.35-.34,4.67-.09,15-4.54,17.28Z"/>
+      <path d="M980.64,306.11c25.07-26.65,32.02-64.43,39.16-59.56,29.31,20-12.49,74.35-30.78,90.12-22.76,19.62-53.44,28.43-82.17,17.9-24.39-8.95-39.74-31.8-44.72-56.61-10.48-52.19,4.01-117.64,44.8-152.98,15.73-13.62,36.13-19.99,55.95-16.08,17.99,3.55,30.44,15.15,35.73,32.51,11.55,54.82-34.45,109.42-86.8,121.77,1.84,15.84,8.22,33.51,23.36,39.08,16.4,6.03,34-3.94,45.48-16.14ZM950.87,159.32c-20.22-9.83-42.09,73.1-38.81,90.06,33.58-9.48,54.42-82.47,38.81-90.06Z"/>
+      <path d="M663.18,107.42c-13.61,2.55-27.6-1.14-34.57-12.07-8.48-13.3-5.28-31.49,6.11-41.64,11.14-9.93,29.55-13.38,42.36-2.87,9.67,7.93,12.53,20.4,9.72,32.24-2.43,10.23-9.88,21.77-23.62,24.35Z"/>
+    </g>
+  </g>
+</svg>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Products</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Solutions</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Developers</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <a href="/lab.html" class="hidden md:block px-5 py-2 bg-primary text-white text-sm font-medium rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20">Launch App</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
     </div>
 
-    <div class="cards-grid">
-        <!-- Card 1: Database -->
-        <a href="/recipes.html" class="hub-card" style="animation-delay: 0.1s;">
-            <div class="card-icon">🍳</div>
-            <h2 class="card-title">Browse Recipes</h2>
-            <p class="card-desc">Search and explore the curated collection of recipes harvested from the web.</p>
-            <div class="arrow">Explore Database →</div>
-        </a>
+    <main class="pt-32">
+        <!-- HERO -->
+        <section class="max-w-6xl mx-auto px-6 py-12 md:py-20">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-primary text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> API v1.2 Live
+                    </div>
+                    <h1 class="font-display font-medium text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-6">Structure the <br><span class="italic text-text-muted">culinary chaos.</span></h1>
+                    <p class="text-lg text-text-muted leading-relaxed mb-10 max-w-lg font-light">The infrastructure for food data. Parse unstructured recipes, normalize units, and enrich ingredients with USDA-verified nutrition in milliseconds.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#demo" class="btn-primary">Try the Engine <i data-lucide="arrow-down" class="w-4 h-4"></i></a>
+                        <a href="/docs.html" class="btn-secondary">Documentation</a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-white border border-border rounded-3xl p-8 shadow-ceramic relative z-10 max-w-md mx-auto">
+                        <div class="flex items-center justify-between mb-8 pb-4 border-b border-border">
+                            <div class="flex items-center gap-3"><div class="w-10 h-10 bg-primary/5 rounded-full flex items-center justify-center text-primary"><i data-lucide="scan-line" class="w-5 h-5"></i></div><div><h3 class="font-display font-semibold text-primary">Analysis Complete</h3><p class="text-xs text-text-muted">USDA Foundation Verified</p></div></div>
+                            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-100"><div class="w-1.5 h-1.5 rounded-full bg-green-500"></div><span class="text-[10px] font-bold uppercase tracking-widest text-green-700">Live</span></div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4"><div class="w-16 h-16 rounded-xl overflow-hidden bg-earth-50 border border-border shrink-0 shadow-sm"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover opacity-90"></div><div class="flex-1 space-y-2 pt-1"><h4 class="font-display font-medium text-lg text-primary leading-tight">Salmon & Avocado Bowl</h4><div class="flex flex-wrap gap-2"><span class="text-[10px] font-bold uppercase tracking-wider text-text-muted bg-earth-50 px-2 py-1 rounded-md border border-border">Healthy Fats</span><span class="text-[10px] font-bold uppercase tracking-wider text-text-muted bg-earth-50 px-2 py-1 rounded-md border border-border">High Protein</span></div></div></div>
+                            <div class="space-y-3 pt-2">
+                                <div class="flex justify-between items-center py-2 border-b border-earth-50 text-sm"><span class="text-text-muted font-medium">Calories</span><span class="font-mono font-bold text-primary">360 kcal</span></div>
+                                <div class="flex justify-between items-center py-2 border-b border-earth-50 text-sm"><span class="text-text-muted font-medium">Protein</span><span class="font-mono font-bold text-primary">42g</span></div>
+                                <div class="flex justify-between items-center py-2 border-b border-earth-50 text-sm"><span class="text-text-muted font-medium">Healthy Fats</span><span class="font-mono font-bold text-primary">18g</span></div>
+                                <div class="flex justify-between items-center py-2 text-sm"><span class="text-text-muted font-medium">Iron</span><span class="font-mono font-bold text-primary">15% DV</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -top-4 -right-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl -z-10"></div>
+                    <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl -z-10"></div>
+                </div>
+            </div>
+        </section>
 
-        <!-- Card 2: Documentation -->
-        <a href="/docs.html" class="hub-card" style="animation-delay: 0.2s;">
-            <div class="card-icon">📚</div>
-            <h2 class="card-title">API Docs</h2>
-            <p class="card-desc">Comprehensive documentation for developers integrating with the Recipe API.</p>
-            <div class="arrow">Read Docs →</div>
-        </a>
+        <!-- DEMO SECTION -->
+        <section id="demo" class="py-24 px-6 relative">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Live Sandbox</span>
+                    <h2 class="font-display font-medium text-3xl md:text-4xl text-primary mb-4">Experience the Engine</h2>
+                    <p class="text-text-muted">Select a scenario or type your own recipe.</p>
+                </div>
+                <div class="bg-white rounded-3xl shadow-ceramic border border-border overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+                    <div class="md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-border flex flex-col bg-[#fcfaf7]">
+                        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide"><button onclick="setPreset('keto')" class="chip active" id="chip-keto">Keto Breakfast</button><button onclick="setPreset('vegan')" class="chip" id="chip-vegan">Vegan Salad</button><button onclick="setPreset('baking')" class="chip" id="chip-baking">Baking</button></div>
+                        <textarea id="demo-input" class="flex-1 w-full bg-white border border-border rounded-xl p-5 font-mono text-sm text-text-main resize-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all mb-6" placeholder="Enter ingredients...">2 eggs
+1 avocado
+2 slices bacon</textarea>
+                        <button id="run-demo-btn" class="btn-primary w-full shadow-lg shadow-primary/20">Analyze Ingredients <i data-lucide="play" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="md:w-1/2 p-8 bg-white relative flex flex-col">
+                        <div class="flex justify-end mb-6"><div class="bg-gray-100 p-1 rounded-lg flex text-xs font-medium"><button onclick="setView('visual')" id="btn-visual" class="px-3 py-1 rounded-md bg-white shadow-sm text-primary transition-all">Visual</button><button onclick="setView('json')" id="btn-json" class="px-3 py-1 rounded-md text-text-muted hover:text-primary transition-all">JSON</button></div></div>
+                        <div id="output-area" class="flex-1 overflow-auto custom-scrollbar relative"><div id="view-visual" class="space-y-6 animate-fade-in"><div class="text-center opacity-40 mt-20"><i data-lucide="arrow-left" class="w-6 h-6 mx-auto mb-2"></i><p class="text-sm">Run analysis to see results</p></div></div><pre id="view-json" class="hidden font-mono text-xs text-text-muted bg-gray-50 p-4 rounded-xl border border-border h-full overflow-auto">// JSON output will appear here...</pre></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <!-- Card 3: AI Spec -->
-        <a href="/llms.txt" class="hub-card" style="animation-delay: 0.3s;">
-            <div class="card-icon">🤖</div>
-            <h2 class="card-title">For AI Agents</h2>
-            <p class="card-desc">Machine-readable specifications (llms.txt) for LLM integration and context.</p>
-            <div class="arrow">View Spec →</div>
-        </a>
+        <!-- USE CASES (New Section) -->
+        <section class="py-32 bg-white border-y border-border">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-24">
+                    <h2 class="font-display font-medium text-3xl md:text-4xl text-primary mb-4">Built for Innovators</h2>
+                    <p class="text-text-muted max-w-2xl mx-auto font-light">From grocery aggregators to clinical research, see how developers are deploying Recipe Base.</p>
+                </div>
 
-        <!-- Card 4: Lab -->
-        <a href="/lab.html" class="hub-card" style="animation-delay: 0.4s;">
-            <div class="card-icon">🧪</div>
-            <h2 class="card-title">Developer Lab</h2>
-            <p class="card-desc">Interactive playground to test the Nutrition Engine and Batch API.</p>
-            <div class="arrow">Enter Lab →</div>
-        </a>
-    </div>
+                <div class="space-y-32">
+                    
+                    <!-- Case 1: Smart Grocery -->
+                    <div class="grid lg:grid-cols-2 gap-16 items-center group">
+                        <div class="order-2 lg:order-1 relative">
+                            <div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent rounded-3xl transform -rotate-2 scale-105"></div>
+                            <div class="mock-app p-6 relative z-10 bg-white">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h4 class="font-display font-bold text-lg text-primary">Shopping List</h4>
+                                    <i data-lucide="shopping-cart" class="w-5 h-5 text-text-muted"></i>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-border">
+                                        <div class="w-5 h-5 rounded-full border-2 border-primary/30"></div>
+                                        <div class="flex-1"><p class="text-sm font-medium text-text-main">Avocados</p><p class="text-xs text-text-muted">3 medium, ripe</p></div>
+                                        <span class="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">Produce</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-border">
+                                        <div class="w-5 h-5 rounded-full border-2 border-primary/30"></div>
+                                        <div class="flex-1"><p class="text-sm font-medium text-text-main">Quinoa</p><p class="text-xs text-text-muted">500g bag</p></div>
+                                        <span class="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">Grains</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-border opacity-50">
+                                        <div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
+                                        <div class="flex-1"><p class="text-sm font-medium text-text-main line-through">Olive Oil</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-1 lg:order-2">
+                            <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6"><i data-lucide="layers" class="w-6 h-6"></i></div>
+                            <h3 class="font-display font-medium text-3xl text-primary mb-4">Intelligent Aggregation</h3>
+                            <p class="text-text-muted text-lg leading-relaxed mb-6 font-light">Don't just list ingredients. Understand them. Our API normalizes units (cups to grams) and categories, allowing you to build smart shopping lists that automatically combine "2 onions" from one recipe and "1/2 cup onion" from another.</p>
+                            <a href="/docs.html" class="text-primary font-medium hover:underline flex items-center gap-2">View Parsing Logic <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- Case 2: Health Tracker -->
+                    <div class="grid lg:grid-cols-2 gap-16 items-center group">
+                        <div>
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-6"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                            <h3 class="font-display font-medium text-3xl text-primary mb-4">Medical-Grade Precision</h3>
+                            <p class="text-text-muted text-lg leading-relaxed mb-6 font-light">Fitness apps die on data quality. We provide verified micronutrient profiles—Iron, Calcium, Vitamin A, C—so your users can track what actually matters, not just calories.</p>
+                            <ul class="space-y-3 mb-8">
+                                <li class="flex items-center gap-3 text-text-muted"><i data-lucide="check-circle" class="w-5 h-5 text-primary"></i> USDA Foundation Data Source</li>
+                                <li class="flex items-center gap-3 text-text-muted"><i data-lucide="check-circle" class="w-5 h-5 text-primary"></i> Automatic Unit Conversion</li>
+                                <li class="flex items-center gap-3 text-text-muted"><i data-lucide="check-circle" class="w-5 h-5 text-primary"></i> 100+ Nutrients Available</li>
+                            </ul>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-gradient-to-tl from-green-50 to-transparent rounded-3xl transform rotate-2 scale-105"></div>
+                            <div class="mock-app p-8 relative z-10 bg-white">
+                                <div class="flex justify-between items-center mb-8">
+                                    <h4 class="font-display font-bold text-lg text-primary">Daily Goals</h4>
+                                    <span class="text-xs font-mono text-text-light">Today</span>
+                                </div>
+                                <div class="flex justify-center mb-8 relative">
+                                    <svg class="w-40 h-40 transform -rotate-90"><circle cx="80" cy="80" r="70" stroke="#f1f5f9" stroke-width="12" fill="transparent"/><circle cx="80" cy="80" r="70" stroke="#254a31" stroke-width="12" fill="transparent" stroke-dasharray="440" stroke-dashoffset="66" stroke-linecap="round"/></svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span class="text-3xl font-bold text-primary">85%</span>
+                                        <span class="text-xs text-text-muted uppercase tracking-widest">Protein</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div><span class="block text-xs text-text-light mb-1">Iron</span><span class="font-mono font-bold text-primary">12mg</span></div>
+                                    <div><span class="block text-xs text-text-light mb-1">Calcium</span><span class="font-mono font-bold text-primary">800mg</span></div>
+                                    <div><span class="block text-xs text-text-light mb-1">Vit C</span><span class="font-mono font-bold text-primary">90mg</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case 3: Dynamic Menu -->
+                    <div class="grid lg:grid-cols-2 gap-16 items-center group">
+                        <div class="order-2 lg:order-1 relative">
+                            <div class="absolute inset-0 bg-gradient-to-tr from-orange-50 to-transparent rounded-3xl transform -rotate-1 scale-105"></div>
+                            <div class="mock-app p-0 relative z-10 bg-white overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1543353071-873f17a7a088?q=80&w=600&auto=format&fit=crop" class="w-full h-48 object-cover">
+                                <div class="p-6">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div><h4 class="font-display font-bold text-lg text-primary">Spicy Basil Tofu</h4><p class="text-xs text-text-muted">with Jasmine Rice</p></div>
+                                        <span class="text-lg font-bold text-primary">$14</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider text-orange-700 bg-orange-50 px-2 py-1 rounded border border-orange-100">Spicy</span>
+                                        <span class="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-1 rounded border border-green-100">Vegan</span>
+                                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100">GF</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-1 lg:order-2">
+                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-700 mb-6"><i data-lucide="tag" class="w-6 h-6"></i></div>
+                            <h3 class="font-display font-medium text-3xl text-primary mb-4">Automated Labeling</h3>
+                            <p class="text-text-muted text-lg leading-relaxed mb-6 font-light">Generate allergen flags, dietary tags (Vegan, Keto, GF), and calorie counts for thousands of menu items instantly. Keep your menu dynamic and compliant without the manual data entry.</p>
+                            <a href="/docs.html" class="text-primary font-medium hover:underline flex items-center gap-2">Read Case Study <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-24 bg-primary text-white relative overflow-hidden">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div class="max-w-4xl mx-auto px-6 text-center relative z-10">
+                <h2 class="font-display font-medium text-4xl md:text-5xl mb-6">Start building with Recipe Base.</h2>
+                <p class="text-lg text-white/80 mb-10 max-w-xl mx-auto font-light">Get your API key today and structure the culinary world.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/admin.html" class="px-8 py-4 bg-white text-primary rounded-full font-bold hover:bg-earth-100 transition-colors">Get API Key</a>
+                    <a href="mailto:sales@wearemachina.com" class="px-8 py-4 border border-white/30 text-white rounded-full font-bold hover:bg-white/10 transition-colors">Contact Sales</a>
+                </div>
+            </div>
+        </section>
+
+                <!-- Footer -->
+
+                <footer class="bg-white border-t border-border py-16 px-6">
+
+                    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+
+                        <div>
+
+                            <a href="/" class="flex items-center gap-2 mb-4">
+
+                                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+
+                            </a>
+
+                            <p class="text-sm text-text-muted max-w-xs font-light">
+
+                                Building the standard for culinary data.
+
+                            </p>
+
+                        </div>
+                <div class="flex gap-16 text-sm">
+                    <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Product</span><a href="/recipes.html" class="text-text-muted hover:text-primary transition-colors">Database</a><a href="/lab.html" class="text-text-muted hover:text-primary transition-colors">Nutrition Lab</a></div>
+                    <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Developers</span><a href="/docs.html" class="text-text-muted hover:text-primary transition-colors">Documentation</a><a href="/admin.html" class="text-text-muted hover:text-primary transition-colors">Status</a></div>
+                </div>
+            </div>
+            <div class="max-w-6xl mx-auto mt-12 pt-8 border-t border-border text-xs text-text-light flex justify-between"><span>© 2025 Recipe Base Inc.</span><span>v1.6 Ceramic</span></div>
+        </footer>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Demo Logic ---
+        const presets = {
+            keto: "2 eggs\n1 avocado\n2 slices bacon",
+            vegan: "1 cup quinoa\n1 cup chickpeas\n1 tbsp tahini\n1 cup spinach",
+            baking: "2 cups flour\n1 cup sugar\n1/2 cup butter\n2 eggs"
+        };
+
+        function setPreset(key) {
+            document.getElementById('demo-input').value = presets[key];
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('chip-' + key).classList.add('active');
+        }
+
+        function setView(mode) {
+            const visual = document.getElementById('view-visual');
+            const json = document.getElementById('view-json');
+            const btnVisual = document.getElementById('btn-visual');
+            const btnJson = document.getElementById('btn-json');
+
+            if (mode === 'visual') {
+                visual.classList.remove('hidden'); json.classList.add('hidden');
+                btnVisual.classList.add('bg-white', 'shadow-sm', 'text-primary'); btnJson.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+            } else {
+                visual.classList.add('hidden'); json.classList.remove('hidden');
+                btnJson.classList.add('bg-white', 'shadow-sm', 'text-primary'); btnVisual.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+            }
+        }
+
+        document.getElementById('run-demo-btn').addEventListener('click', async () => {
+            const input = document.getElementById('demo-input').value;
+            const visual = document.getElementById('view-visual');
+            const json = document.getElementById('view-json');
+            
+            // Loading State
+            visual.innerHTML = '<div class="h-full flex items-center justify-center opacity-60"><div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div></div>';
+            json.textContent = '// Processing...';
+
+            const ingredients = input.split('\n').map(l => l.trim()).filter(l => l);
+            try {
+                const res = await fetch('/nutrition/analyze', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients })
+                });
+                const data = await res.json();
+                const t = data.total;
+
+                // Render JSON
+                json.textContent = JSON.stringify(data, null, 2);
+
+                // Render Visual
+                visual.innerHTML = `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-earth-50 rounded-xl border border-border">
+                                <span class="text-xs text-text-light uppercase tracking-wide">Calories</span>
+                                <span class="block text-2xl font-mono text-primary font-bold">${Math.round(t.calories)}</span>
+                            </div>
+                            <div class="p-4 bg-earth-50 rounded-xl border border-border">
+                                <span class="text-xs text-text-light uppercase tracking-wide">Protein</span>
+                                <span class="block text-2xl font-mono text-primary font-bold">${Math.round(t.protein)}g</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="p-2 bg-white border border-border rounded-lg"><span class="block text-text-light">Carbs</span><span class="font-bold">${Math.round(t.carbs)}g</span></div>
+                            <div class="p-2 bg-white border border-border rounded-lg"><span class="block text-text-light">Fats</span><span class="font-bold">${Math.round(t.fat)}g</span></div>
+                            <div class="p-2 bg-white border border-border rounded-lg border-green-100 bg-green-50/50"><span class="block text-green-700">Vit C</span><span class="font-bold text-green-800">${Math.round(t.vitamin_c_mg)}mg</span></div>
+                        </div>
+                        <div class="border-t border-border pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">Item Breakdown</h4>
+                            <div class="space-y-2 max-h-[200px] overflow-auto pr-2 custom-scrollbar">
+                                ${data.breakdown.map(b => `
+                                    <div class="flex justify-between text-sm py-2 border-b border-border/50 last:border-0">
+                                        <span class="text-text-main">${b.parsed.name}</span>
+                                        <span class="font-mono text-text-muted">${Math.round(b.stats.calories)} kcal</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                visual.innerHTML = `<div class="text-red-500 text-center p-4">Error: ${e.message}</div>`;
+                json.textContent = '// Error: ' + e.message;
+            }
+        });
+
+        // Mobile Menu
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
+
+        // Shader
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+    </script>
 </body>
 </html>

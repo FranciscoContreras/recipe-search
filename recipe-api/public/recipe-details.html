@@ -3,284 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Details</title>
+    <title>Recipe Details - Recipe Base</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .nav-header {
-            margin-bottom: 24px;
-        }
-
-        .back-btn {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .back-btn:hover {
-            text-decoration: underline;
-        }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            box-shadow: var(--glass-shadow);
-            overflow: hidden;
-            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .hero-section {
-            position: relative;
-            height: 300px;
-            overflow: hidden;
-        }
-
-        .hero-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .hero-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 32px;
-            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-            color: white;
-        }
-
-        .recipe-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .recipe-meta {
-            display: flex;
-            gap: 16px;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.9;
-        }
-
-        .content-section {
-            padding: 32px;
-        }
-
-        .description {
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-        }
-
-        .cols {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 40px;
-        }
-
-        @media (max-width: 768px) {
-            .cols { grid-template-columns: 1fr; }
-        }
-
-        h3 {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0 0 16px 0;
-            color: var(--text-main);
-        }
-
-        ul, ol {
-            padding-left: 20px;
-            margin: 0;
-        }
-
-        li {
-            margin-bottom: 10px;
-            line-height: 1.5;
-            color: var(--text-main);
-        }
-
-        .tag-pill {
-            display: inline-block;
-            background: rgba(0,0,0,0.05);
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            margin-right: 8px;
-            color: var(--text-secondary);
-        }
-
-        .source-link {
-            display: block;
-            margin-top: 40px;
-            text-align: center;
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        .hero-overlay { background: linear-gradient(to top, rgba(26,51,34,0.95) 0%, rgba(26,51,34,0.4) 50%, transparent 100%); }
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); }
+        .btn-primary-outline { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 9999px; border: 1px solid #254a31; color: #254a31; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 0.85rem; transition: all 0.2s ease; }
+        .btn-primary-outline:hover { background-color: #254a31; color: #ffffff; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="nav-header">
-            <a href="/recipes.html" class="back-btn">← Back to Recipes</a>
-        </div>
+<body class="antialiased">
+    <canvas id="bg-canvas"></canvas>
 
-        <div id="recipeContainer">
-            <div style="text-align: center; color: #86868b; margin-top: 40px;">Loading details...</div>
-        </div>
+    <header class="absolute top-0 w-full py-6 md:py-8 px-6 md:px-12 z-20">
+        <nav class="flex justify-between items-center max-w-6xl mx-auto">
+             <a href="/" class="flex items-center gap-2">
+                <img src="/logo-light.svg" alt="Recipe Base" class="h-8 w-auto">
+             </a>
+             <a href="/recipes.html" class="text-xs md:text-sm font-medium text-white/90 hover:text-white transition-colors bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+             </a>
+        </nav>
+    </header>
+
+    <div id="recipeContainer" class="min-h-screen">
+        <div class="h-screen flex items-center justify-center text-primary/60 animate-pulse font-display text-xl">Loading recipe...</div>
     </div>
 
     <script>
+        lucide.createIcons();
         const API_URL = ''; 
 
         async function fetchRecipeDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
-
-            if (!id) {
-                document.getElementById('recipeContainer').innerHTML = 'No recipe ID provided.';
-                return;
-            }
-
+            if (!id) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-red-800">No ID provided.</div>'; return; }
             try {
                 const res = await fetch(`${API_URL}/recipes/${id}`);
+                if (res.status === 404) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-text-muted">Recipe not found.</div>'; return; }
                 const recipe = await res.json();
-
-                if (res.status === 404) {
-                    document.getElementById('recipeContainer').innerHTML = 'Recipe not found.';
-                    return;
-                }
-
                 renderRecipe(recipe);
-            } catch (err) {
-                console.error('Error:', err);
-                document.getElementById('recipeContainer').innerHTML = 'Failed to load recipe.';
-            }
+            } catch (err) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-red-800">Failed to load.</div>'; }
         }
 
         function renderRecipe(recipe) {
             const container = document.getElementById('recipeContainer');
-            
-            const imageUrl = recipe.image || 'https://via.placeholder.com/800x400?text=No+Image';
-            const prepTime = formatDuration(recipe.prep_time);
-            const cookTime = formatDuration(recipe.cook_time);
-            const totalTime = formatDuration(recipe.total_time);
+            const imageUrl = recipe.image || 'https://via.placeholder.com/1200x600?text=No+Image';
+            const prep = formatDuration(recipe.prep_time);
+            const cook = formatDuration(recipe.cook_time);
             const yieldInfo = recipe.recipe_yield || '';
+            const meta = [prep ? `Prep: ${prep}` : null, cook ? `Cook: ${cook}` : null, yieldInfo ? `Yields: ${yieldInfo}` : null].filter(Boolean).join('  •  ');
 
-            // Handle Ingredients (String[], String, or Object)
-            let ingredientsHtml = '';
+            let ingredientsHtml = '<p class="opacity-60 italic">No ingredients listed.</p>';
             if (Array.isArray(recipe.recipe_ingredients)) {
-                ingredientsHtml = `<ul>${recipe.recipe_ingredients.map(i => `<li>${i}</li>`).join('')}</ul>`;
-            } else if (typeof recipe.recipe_ingredients === 'string') {
-                ingredientsHtml = `<p>${recipe.recipe_ingredients}</p>`;
-            } else {
-                ingredientsHtml = '<p>No ingredients listed.</p>';
+                ingredientsHtml = `<ul class="space-y-3 text-sm leading-relaxed text-text-main">${recipe.recipe_ingredients.map(i => `<li class="flex items-start gap-3 pb-3 border-b border-border last:border-0"><div class="w-1.5 h-1.5 rounded-full bg-primary/40 mt-2 shrink-0"></div><span>${i}</span></li>`).join('')}</ul>`;
             }
 
-            // Handle Instructions (Array of steps, or string)
-            let instructionsHtml = '';
+            let instructionsHtml = '<p class="opacity-60 italic">No instructions listed.</p>';
             if (Array.isArray(recipe.recipe_instructions)) {
-                // Sometimes standard schema is [{ "@type": "HowToStep", "text": "..." }]
-                instructionsHtml = `<ol>${recipe.recipe_instructions.map(step => {
+                instructionsHtml = `<div class="space-y-8">${recipe.recipe_instructions.map((step, idx) => {
                     const text = typeof step === 'object' ? (step.text || step.name || JSON.stringify(step)) : step;
-                    return `<li>${text}</li>`;
-                }).join('')}</ol>`;
-            } else if (typeof recipe.recipe_instructions === 'string') {
-                instructionsHtml = `<p>${recipe.recipe_instructions}</p>`;
-            } else {
-                instructionsHtml = '<p>No instructions listed.</p>';
+                    return `<div class="group"><span class="font-display text-2xl text-primary/20 group-hover:text-primary/40 transition-colors mb-2 block font-bold">${String(idx + 1).padStart(2, '0')}</span><p class="text-text-main leading-relaxed text-base md:text-lg">${text}</p></div>`;
+                }).join('')}</div>`;
             }
-
-            const metaItems = [];
-            if (prepTime) metaItems.push(`Prep: ${prepTime}`);
-            if (cookTime) metaItems.push(`Cook: ${cookTime}`);
-            if (yieldInfo) metaItems.push(`Yields: ${yieldInfo}`);
 
             container.innerHTML = `
-                <div class="glass-card">
-                    <div class="hero-section">
-                        <img src="${imageUrl}" alt="${recipe.name}" class="hero-img" onerror="this.src='https://via.placeholder.com/800x400?text=No+Image'">
-                        <div class="hero-overlay">
-                            <h1 class="recipe-title">${recipe.name}</h1>
-                            <div class="recipe-meta">
-                                ${metaItems.join(' • ')}
+                <div class="relative h-[50vh] md:h-[60vh] w-full bg-primary">
+                    <img src="${imageUrl}" class="w-full h-full object-cover opacity-90" alt="${recipe.name}">
+                    <div class="absolute inset-0 hero-overlay"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-6xl mx-auto">
+                        <div class="max-w-4xl">
+                            <span class="text-white/80 uppercase tracking-[0.2em] text-xs font-bold mb-3 block">Recipe</span>
+                            <h1 class="font-display text-3xl sm:text-4xl md:text-6xl text-white leading-[1.1] mb-6 shadow-sm break-words">${recipe.name}</h1>
+                            <div class="flex items-center gap-6 text-white/90 font-mono text-xs uppercase tracking-wider border-t border-white/20 pt-4 inline-block">
+                                ${meta}
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="content-section">
-                        <div class="description">
-                            ${recipe.description || ''}
-                        </div>
-
-                        <div class="cols">
-                            <div>
-                                <h3>Ingredients</h3>
+                </div>
+                <div class="max-w-6xl mx-auto px-6 md:px-12 py-12 md:py-20">
+                    ${recipe.description ? `<div class="max-w-3xl mb-16"><p class="font-display text-xl md:text-2xl text-primary leading-relaxed opacity-90 italic">"${recipe.description}"</p></div>` : ''}
+                    <div class="grid lg:grid-cols-12 gap-10 lg:gap-16">
+                        <div class="lg:col-span-4">
+                            <div class="card-ceramic p-8 sticky top-24">
+                                <h3 class="font-display text-xl text-primary mb-6 pb-3 border-b border-border font-medium">Ingredients</h3>
                                 ${ingredientsHtml}
                             </div>
-                            <div>
-                                <h3>Instructions</h3>
-                                ${instructionsHtml}
+                        </div>
+                        <div class="lg:col-span-8 lg:pl-4">
+                            <h3 class="font-display text-2xl text-primary mb-8 font-medium">Method</h3>
+                            ${instructionsHtml}
+                            <div class="mt-16 pt-8 border-t border-border text-center">
+                                <a href="${recipe.url}" target="_blank" class="btn-primary-outline">View Original Source <i data-lucide="external-link" class="w-4 h-4"></i></a>
                             </div>
                         </div>
-
-                        <a href="${recipe.url}" target="_blank" class="source-link">View original source →</a>
                     </div>
                 </div>
             `;
+            lucide.createIcons();
         }
 
-        function formatDuration(iso) {
-            if (!iso) return '';
-            return iso.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase();
-        }
-
+        function formatDuration(iso) { if (!iso) return ''; return iso.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase(); }
+        
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+        
         fetchRecipeDetails();
     </script>
 </body>

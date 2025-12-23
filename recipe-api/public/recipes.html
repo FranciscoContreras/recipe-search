@@ -3,328 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipes - Recipe Base</title>
+    <title>The Collection - Recipe Base</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#254a31', 
+                        bg: '#fcfaf7', 
+                        border: '#e5e0d8',
+                        text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        
+        .input-ceramic {
+            background-color: #ffffff; border: 1px solid #e5e0d8;
+            border-radius: 9999px; padding: 0.75rem 1.5rem;
+            transition: all 0.3s;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+        .input-ceramic:focus {
+            border-color: #254a31; outline: none; 
+            box-shadow: 0 0 0 3px rgba(37, 74, 49, 0.1);
         }
-
-        .header {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
+        
+        .card-recipe {
+            background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.25rem;
+            box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05);
+            transition: all 0.4s ease;
+            display: flex; flex-direction: column; overflow: hidden;
         }
-
-        h1 {
-            font-weight: 600;
-            font-size: 32px;
-            margin: 0;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-btn {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            padding: 8px 16px;
-            background: rgba(0, 113, 227, 0.1);
-            border-radius: 20px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            background: rgba(0, 113, 227, 0.2);
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        .recipe-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            padding: 0;
-            box-shadow: var(--glass-shadow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            opacity: 0;
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .recipe-card:hover {
+        .card-recipe:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-        }
-
-        .recipe-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            background-color: #eee;
-        }
-
-        .recipe-content {
-            padding: 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .recipe-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0 0 8px 0;
-            line-height: 1.3;
-            color: var(--text-main);
-        }
-
-        .recipe-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            flex: 1;
-        }
-
-        .recipe-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            color: #86868b;
-            margin-bottom: 16px;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .recipe-actions {
-            margin-top: auto;
-        }
-
-        .view-btn {
-            display: block;
-            text-align: center;
-            background: var(--accent);
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .view-btn:hover {
-            background: var(--accent-hover);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            grid-column: 1 / -1;
-            padding: 40px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            box-shadow: 0 12px 30px -4px rgba(37, 74, 49, 0.08);
+            border-color: #d1ccbc;
         }
     </style>
 </head>
-<body>
-    <div class="header">
-        <div style="display:flex; flex-direction:column; align-items:flex-start;">
-            <h1>All Recipes</h1>
-            <span id="resultCount" style="color: #86868b; font-size: 14px; margin-top: 4px; font-weight: 500;">Loading...</span>
+<body class="antialiased">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-bold text-primary border-b-2 border-primary/20 pb-0.5">Products</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary">Solutions</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary">Developers</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
         </div>
-        <div style="flex: 1; margin: 0 40px; display: flex; gap: 12px; align-items: center;">
-            <div style="flex: 2; position: relative;">
-                <input type="text" id="searchInput" placeholder="Search recipes (e.g. 'pasta')..." 
-                       style="width: 100%; padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.5); font-size: 16px; outline: none; transition: all 0.2s;">
-            </div>
-            <div style="flex: 1; position: relative;">
-                <input type="text" id="ingredientInput" placeholder="Ingredients (e.g. egg, flour)..." 
-                       style="width: 100%; padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.5); font-size: 16px; outline: none; transition: all 0.2s;">
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                <input type="checkbox" id="matchAllCheck" style="width: 16px; height: 16px; accent-color: #0071e3;">
-                <label for="matchAllCheck" style="font-size: 14px; color: #1d1d1f; cursor: pointer;">Match All</label>
-            </div>
-        </div>
-        <a href="/" class="nav-btn">← Back to Crawler</a>
+    </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
     </div>
 
-    <div class="grid-container" id="recipesGrid">
-        <div class="empty-state">Loading recipes...</div>
-    </div>
+    <main class="relative z-10 px-6 pt-32 pb-20 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
+            <div>
+                <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-2 block">The Archive</span>
+                <h1 class="font-display font-medium text-4xl md:text-5xl text-primary">All Recipes</h1>
+                <p class="mt-2 text-text-muted text-sm pl-1 opacity-80" id="resultCount">Loading archive...</p>
+            </div>
+            <div class="w-full md:w-auto flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="searchInput" class="input-ceramic w-full sm:w-64" placeholder="Search (e.g. 'pasta')">
+                    <input type="text" id="ingredientInput" class="input-ceramic w-full sm:w-48" placeholder="Ingredients...">
+                </div>
+                <div class="flex items-center gap-2 px-2">
+                    <input type="checkbox" id="matchAllCheck" class="w-4 h-4 text-primary rounded border-border focus:ring-primary">
+                    <label for="matchAllCheck" class="text-xs font-medium text-text-muted">Match all ingredients</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="recipesGrid">
+            <div class="col-span-full py-20 text-center opacity-50 font-display">Loading collection...</div>
+        </div>
+    </main>
 
     <script>
-        const API_URL = ''; // Relative path
+        lucide.createIcons();
+        // ... (Re-use existing fetch logic but updated class names)
+        const API_URL = ''; 
         let debounceTimer;
 
-        async function fetchRecipes(query = '') {
+        async function fetchRecipes(query = '', ingredients = '', matchAll = false) {
             try {
-                const endpoint = query 
-                    ? `${API_URL}/search?q=${encodeURIComponent(query)}` 
-                    : `${API_URL}/recipes`;
+                let endpoint = `${API_URL}/recipes`;
+                const params = new URLSearchParams();
+                if (query) params.append('q', query);
+                if (ingredients) params.append('ingredients', ingredients);
+                if (matchAll) params.append('match_all', 'true');
+                if (query || ingredients) endpoint = `${API_URL}/search?${params.toString()}`;
                 
                 const res = await fetch(endpoint);
                 const data = await res.json();
-                
-                // Handle new wrapper format
                 const recipes = data.recipes || [];
-                const count = data.count !== undefined ? data.count : recipes.length;
-
                 renderGrid(recipes);
-                updateCount(count, !!query);
+                updateCount(data.count !== undefined ? data.count : recipes.length, !!(query || ingredients));
             } catch (err) {
-                console.error('Error fetching recipes:', err);
-                document.getElementById('recipesGrid').innerHTML = '<div class="empty-state">Failed to load recipes.</div>';
+                document.getElementById('recipesGrid').innerHTML = '<div class="col-span-full text-center py-20 text-red-400">Unable to load archive.</div>';
             }
         }
 
         function updateCount(count, isSearch) {
-            const el = document.getElementById('resultCount');
-            if (isSearch) {
-                el.textContent = `${count} result${count === 1 ? '' : 's'} found`;
-            } else {
-                el.textContent = `${count} total recipe${count === 1 ? '' : 's'}`;
-            }
+            document.getElementById('resultCount').textContent = isSearch ? `${count} result${count === 1 ? '' : 's'} found` : `${count} curated recipe${count === 1 ? '' : 's'}`;
         }
 
         function renderGrid(recipes) {
             const grid = document.getElementById('recipesGrid');
             grid.innerHTML = '';
-
-            if (recipes.length === 0) {
-                grid.innerHTML = '<div class="empty-state">No recipes found.</div>';
-                return;
-            }
-
-            recipes.forEach((recipe, index) => {
-                const card = document.createElement('div');
-                card.className = 'recipe-card';
-                card.style.animationDelay = `${index * 0.05}s`;
-
+            if (recipes.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-20 text-text-muted">No recipes found.</div>'; return; }
+            recipes.forEach((recipe) => {
                 const imageUrl = recipe.image || 'https://via.placeholder.com/400x300?text=No+Image';
                 const description = recipe.description || 'No description available.';
-                const cookTime = recipe.cook_time ? formatDuration(recipe.cook_time) : '';
-                const prepTime = recipe.prep_time ? formatDuration(recipe.prep_time) : '';
+                const cookTime = formatDuration(recipe.cook_time);
+                const prepTime = formatDuration(recipe.prep_time);
 
+                const card = document.createElement('a');
+                card.className = 'card-recipe group h-full';
+                card.href = `/recipe-details.html?id=${recipe.id}`;
                 card.innerHTML = `
-                    <img src="${imageUrl}" alt="${recipe.name}" class="recipe-image" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
-                    <div class="recipe-content">
-                        <h3 class="recipe-title">${recipe.name}</h3>
-                        <div class="recipe-meta">
-                            ${prepTime ? `<span class="meta-item">⏱ ${prepTime}</span>` : ''}
-                            ${cookTime ? `<span class="meta-item">🔥 ${cookTime}</span>` : ''}
+                    <div class="aspect-[4/3] w-full overflow-hidden relative bg-earth-200">
+                        <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${imageUrl}" alt="${recipe.name}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                    </div>
+                    <div class="p-6 flex flex-col flex-1">
+                        <h3 class="font-display text-xl text-primary mb-2 font-medium leading-tight group-hover:text-green-700 transition-colors line-clamp-2">${recipe.name}</h3>
+                        <div class="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-text-light mb-4">
+                            ${prepTime ? `<span>Prep ${prepTime}</span>` : ''}
+                            ${cookTime ? `<span>Cook ${cookTime}</span>` : ''}
                         </div>
-                        <p class="recipe-desc">${description}</p>
-                        <div class="recipe-actions">
-                            <a href="/recipe-details.html?id=${recipe.id}" class="view-btn">View Recipe</a>
+                        <p class="text-text-muted text-sm leading-relaxed line-clamp-3 mb-6 flex-1 opacity-80">${description}</p>
+                        <div class="mt-auto pt-4 border-t border-border flex justify-between items-center">
+                            <span class="text-xs font-bold uppercase tracking-widest text-primary group-hover:underline">View Details</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1"></i>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+            lucide.createIcons();
         }
 
-        // Simple ISO 8601 duration parser
-        function formatDuration(isoDuration) {
-            if (!isoDuration) return '';
-            return isoDuration.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase();
-        }
-
-        // Search Listener with Debounce
-        function handleSearch() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const query = document.getElementById('searchInput').value;
-                const ingredients = document.getElementById('ingredientInput').value;
-                const matchAll = document.getElementById('matchAllCheck').checked;
-                fetchRecipes(query, ingredients, matchAll);
-            }, 300);
-        }
-
-        async function fetchRecipes(query = '', ingredients = '', matchAll = false) {
-            try {
-                let endpoint = `${API_URL}/recipes`;
-                
-                // Build query params
-                const params = new URLSearchParams();
-                if (query) params.append('q', query);
-                if (ingredients) params.append('ingredients', ingredients);
-                if (matchAll) params.append('match_all', 'true');
-
-                if (query || ingredients) {
-                    endpoint = `${API_URL}/search?${params.toString()}`;
-                }
-                
-                const res = await fetch(endpoint);
-                const data = await res.json();
-                
-                // Handle new wrapper format
-                const recipes = data.recipes || [];
-                const count = data.count !== undefined ? data.count : recipes.length;
-
-                renderGrid(recipes);
-                updateCount(count, !!(query || ingredients));
-            } catch (err) {
-                console.error('Error fetching recipes:', err);
-                document.getElementById('recipesGrid').innerHTML = '<div class="empty-state">Failed to load recipes.</div>';
-            }
-        }
+        function formatDuration(iso) { if (!iso) return ''; return iso.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase(); }
+        function handleSearch() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { const query = document.getElementById('searchInput').value; const ingredients = document.getElementById('ingredientInput').value; const matchAll = document.getElementById('matchAllCheck').checked; fetchRecipes(query, ingredients, matchAll); }, 300); }
 
         document.getElementById('searchInput').addEventListener('input', handleSearch);
         document.getElementById('ingredientInput').addEventListener('input', handleSearch);
         document.getElementById('matchAllCheck').addEventListener('change', handleSearch);
-
-        // Initial load
         fetchRecipes();
+
+        // Shader Reused
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
     </script>
 </body>
 </html>

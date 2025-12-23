@@ -3,202 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Developer Lab - Recipe Base</title>
+    <title>Nutrition Lab - Recipe Base</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#254a31', 
+                        bg: '#fcfaf7', 
+                        border: '#e5e0d8',
+                        text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        .header-container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-weight: 600;
-            font-size: 32px;
-            margin: 0;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-btn {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            padding: 8px 16px;
-            background: rgba(0, 113, 227, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        
+        .btn-primary {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.75rem 1.5rem; border-radius: 9999px;
+            background-color: #254a31; color: #ffffff;
+            font-family: 'Poppins', sans-serif; font-weight: 500;
             transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15);
         }
+        .btn-primary:hover { transform: translateY(-1px); background-color: #1e3d28; }
 
-        .nav-btn:hover { background: rgba(0, 113, 227, 0.15); transform: translateX(-2px); }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 900px;
-            box-shadow: var(--glass-shadow);
-            margin-bottom: 30px;
+        .input-ceramic {
+            background-color: #ffffff; border: 1px solid #e5e0d8;
+            border-radius: 1rem; padding: 1rem;
+            transition: all 0.3s; width: 100%;
+            font-family: 'Inter', sans-serif;
         }
-
-        h2 { font-size: 20px; margin: 0 0 20px 0; }
-
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid rgba(0,0,0,0.1);
-            background: rgba(255,255,255,0.5);
-            font-family: monospace;
-            font-size: 14px;
-            resize: vertical;
-            margin-bottom: 16px;
-            box-sizing: border-box;
+        .input-ceramic:focus {
+            border-color: #254a31; outline: none; 
+            box-shadow: 0 0 0 3px rgba(37, 74, 49, 0.1);
         }
-
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        button:hover { background: #0077ed; transform: translateY(-1px); }
-
-        .result-box {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(0,0,0,0.03);
-            border-radius: 16px;
-            font-family: monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            display: none;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        
+        .card-ceramic {
+            background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem;
+            box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05);
         }
     </style>
 </head>
-<body>
-    <div class="header-container">
-        <h1>Developer Lab</h1>
-        <a href="/" class="nav-btn">← Back to Hub</a>
+<body class="antialiased">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary">Products</a>
+                <a href="/lab.html" class="text-sm font-bold text-primary">Solutions</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary">Developers</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
     </div>
 
-    <!-- Nutrition Engine -->
-    <div class="glass-card">
-        <h2>🧪 Nutrition Engine</h2>
-        <p style="color: #666; margin-bottom: 16px; font-size: 14px;">Paste ingredients (one per line) to analyze them using USDA data.</p>
-        <textarea id="nutritionInput" placeholder="200g chicken breast
-1 cup rice
-1 tbsp olive oil"></textarea>
-        <button onclick="analyzeNutrition()">Analyze Ingredients</button>
-        <div id="nutritionResult" class="result-box"></div>
-    </div>
+    <main class="relative z-10 px-6 pt-32 pb-20 max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Molecular Analysis</span>
+            <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-4">The Nutrition Lab</h1>
+            <p class="text-text-muted max-w-2xl mx-auto font-light">Enter raw ingredients to decode their nutritional profile using our dual-source engine.</p>
+        </div>
 
-    <!-- Enrichment Test -->
-    <div class="glass-card">
-        <h2>⚡️ Batch Enrichment</h2>
-        <p style="color: #666; margin-bottom: 16px; font-size: 14px;">Enter Recipe IDs (comma separated) to hydrate them with full details.</p>
-        <textarea id="enrichInput" placeholder="uuid-1, uuid-2" style="height: 60px;"></textarea>
-        <button onclick="testEnrichment()">Hydrate Recipes</button>
-        <div id="enrichResult" class="result-box"></div>
-    </div>
+        <div class="grid md:grid-cols-2 gap-8 items-start">
+            <!-- Input -->
+            <div class="card-ceramic p-8 h-full flex flex-col">
+                <label for="ingredients" class="block font-display font-medium text-lg mb-4 text-primary">Ingredients</label>
+                <textarea id="ingredients" class="input-ceramic flex-1 font-mono text-sm resize-none min-h-[300px] mb-6 focus:ring-primary" placeholder="1 cup rice&#10;200g chicken breast&#10;1 tbsp olive oil"></textarea>
+                <button onclick="analyze()" class="btn-primary w-full">
+                    Analyze Composition <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div class="card-ceramic p-8 bg-primary text-white h-full min-h-[450px] flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <div class="relative z-10 flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                    <h3 class="font-display font-medium text-2xl">Results</h3>
+                    <span id="status" class="text-xs font-bold uppercase tracking-widest opacity-60">Ready</span>
+                </div>
+                <div id="output-container" class="font-mono text-sm flex-1 overflow-auto custom-scrollbar relative z-10">
+                    <div class="h-full flex items-center justify-center opacity-40">Waiting for input...</div>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <script>
-        const API_URL = '';
+        lucide.createIcons();
 
-        async function analyzeNutrition() {
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = 'Analyzing...';
+        async function analyze() {
+            const text = document.getElementById('ingredients').value;
+            const outputContainer = document.getElementById('output-container');
+            const status = document.getElementById('status');
             
-            const input = document.getElementById('nutritionInput').value;
-            const ingredients = input.split('\n').filter(line => line.trim() !== '');
+            if (!text.trim()) { return; }
+
+            status.textContent = "Analyzing...";
+            status.className = "text-xs font-bold uppercase tracking-widest animate-pulse text-green-300";
+            outputContainer.innerHTML = '<div class="h-full flex items-center justify-center opacity-60">Processing...</div>';
+
+            const ingredients = text.split('\n').map(l => l.trim()).filter(l => l);
 
             try {
-                const res = await fetch(`${API_URL}/nutrition/analyze`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ingredients })
-                });
+                const res = await fetch('/nutrition/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients }) });
                 const data = await res.json();
                 
-                const resultBox = document.getElementById('nutritionResult');
-                resultBox.style.display = 'block';
-                resultBox.textContent = JSON.stringify(data, null, 2);
+                const formatNumber = (num, unit = '') => {
+                    if (typeof num !== 'number') return '0' + unit;
+                    const rounded = Math.round(num * 10) / 10;
+                    return rounded + unit;
+                };
+
+                const total = data.total;
+                const html = `
+                    <div class="space-y-8 animate-fade-in">
+                        <div>
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                                    <span class="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Calories</span>
+                                    <span class="font-mono text-3xl">${Math.round(total.calories)}</span>
+                                </div>
+                                <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                                    <span class="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Protein</span>
+                                    <span class="font-mono text-3xl">${formatNumber(total.protein, 'g')}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Carbs</span><span class="font-mono font-bold">${formatNumber(total.carbs, 'g')}</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Fat</span><span class="font-mono font-bold">${formatNumber(total.fat, 'g')}</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Fiber</span><span class="font-mono font-bold">${formatNumber(total.fiber, 'g')}</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Sugar</span><span class="font-mono font-bold">${formatNumber(total.sugar, 'g')}</span></div>
+                                
+                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Calcium</span><span class="font-mono font-bold">${Math.round(total.calcium_mg)}mg</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Iron</span><span class="font-mono font-bold">${formatNumber(total.iron_mg, 'mg')}</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Vit A</span><span class="font-mono font-bold">${Math.round(total.vitamin_a_mcg)}mcg</span></div>
+                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Vit C</span><span class="font-mono font-bold">${formatNumber(total.vitamin_c_mg, 'mg')}</span></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-display font-medium text-lg mb-4 border-b border-white/10 pb-2">Breakdown</h4>
+                            <div class="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                                ${data.breakdown.map(item => `
+                                    <div class="flex justify-between items-center py-2 border-b border-white/5 text-sm">
+                                        <span class="font-medium opacity-90">${item.parsed.name} <span class="opacity-50 text-xs">(${Math.round(item.parsed.weightGrams)}g)</span></span>
+                                        <span class="font-mono opacity-80">${Math.round(item.stats.calories)} kcal</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                outputContainer.innerHTML = html;
+                status.textContent = "Complete"; status.className = "text-xs font-bold uppercase tracking-widest text-green-300";
             } catch (e) {
-                alert('Error: ' + e.message);
-            } finally {
-                btn.textContent = originalText;
+                outputContainer.innerHTML = `<div class="text-red-300 font-mono text-sm">Error: ${e.message}</div>`;
+                status.textContent = "Error"; status.className = "text-xs font-bold uppercase tracking-widest text-red-300";
             }
         }
 
-        async function testEnrichment() {
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = 'Fetching...';
-
-            const input = document.getElementById('enrichInput').value;
-            const ids = input.split(',').map(s => s.trim()).filter(s => s);
-
-            try {
-                const res = await fetch(`${API_URL}/recipes/enrich`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids })
-                });
-                const data = await res.json();
-                
-                const resultBox = document.getElementById('enrichResult');
-                resultBox.style.display = 'block';
-                resultBox.textContent = JSON.stringify(data, null, 2);
-            } catch (e) {
-                alert('Error: ' + e.message);
-            } finally {
-                btn.textContent = originalText;
+        // Shader
+        class GodRaysBackground {
+            constructor(canvasId, color1, color2, speed=0.002) {
+                this.canvas = document.getElementById(canvasId); if (!this.canvas) return;
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true });
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } };
+                this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+                    uniforms: this.uniforms,
+                    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
+                    fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv;
+                        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+                        float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); }
+                        float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; }
+                        void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }
+`
+                })));
+                this.animate = this.animate.bind(this); 
+                this.handleResize = this.handleResize.bind(this);
+                window.addEventListener('resize', this.handleResize);
+                this.handleResize(); this.animate();
             }
+            handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); }
+            animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); }
         }
+        new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
     </script>
 </body>
 </html>

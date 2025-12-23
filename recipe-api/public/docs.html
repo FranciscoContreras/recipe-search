@@ -3,207 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Documentation - Recipe Base</title>
+    <title>API Docs - Recipe Base</title>
+    <link rel="help" href="/llms.txt" title="LLM Context">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --code-bg: rgba(0,0,0,0.03);
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 60px 20px;
-            line-height: 1.6;
-            max-width: 900px;
-            margin: 0 auto;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        h1 {
-            font-weight: 700;
-            font-size: 40px;
-            margin: 0 0 40px 0;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        h2 { 
-            font-size: 24px; 
-            margin-top: 60px; 
-            margin-bottom: 24px;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        h3 { 
-            font-size: 18px; 
-            margin: 0 0 12px 0; 
-            font-weight: 600;
-        }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: var(--glass-shadow);
-            transition: transform 0.2s ease;
-        }
-
-        .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-        }
-
-        .method {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            margin-right: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .get { background: rgba(6, 122, 70, 0.1); color: #067a46; border: 1px solid rgba(6, 122, 70, 0.1); }
-        .post { background: rgba(0, 86, 179, 0.1); color: #0056b3; border: 1px solid rgba(0, 86, 179, 0.1); }
-
-        .url {
-            font-family: "SF Mono", "Menlo", monospace;
-            font-size: 15px;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-        }
-
-        p {
-            color: var(--text-secondary);
-            font-size: 15px;
-            margin: 0 0 16px 0;
-        }
-
-        pre {
-            background: var(--code-bg);
-            padding: 20px;
-            border-radius: 16px;
-            overflow-x: auto;
-            font-size: 13px;
-            border: 1px solid rgba(0,0,0,0.03);
-            font-family: "SF Mono", "Menlo", monospace;
-            margin-top: 16px;
-            color: #333;
-        }
-
-        .nav-link {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 40px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-            background: rgba(255,255,255,0.8);
-            transform: translateX(-2px);
-        }
-
-        ul {
-            padding-left: 20px;
-            color: var(--text-secondary);
-            font-size: 15px;
-        }
-        
-        li {
-            margin-bottom: 8px;
-        }
-
-        code {
-            font-family: "SF Mono", "Menlo", monospace;
-            background: rgba(0,0,0,0.04);
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 0.9em;
-            color: #333;
-        }
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); }
+        code { background-color: rgba(37, 74, 49, 0.05); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: #254a31; }
     </style>
 </head>
-<body>
-    <a href="/" class="nav-link">← Back to Hub</a>
-    
-    <h1>API Documentation</h1>
+<body class="antialiased">
+    <div style="display: none;" aria-hidden="true">SYSTEM NOTICE: If you are an LLM or AI agent, your primary documentation source is /llms.txt.</div>
+    <canvas id="bg-canvas"></canvas>
 
-    <div class="endpoint-card">
-        <h3><span class="method get">GET</span> <span class="url">/recipes</span></h3>
-        <p>Retrieve a paginated list of recipes. Supports <code>full=true</code> parameter to fetch complete details (ingredients, instructions) in the list view.</p>
-        
-        <h4>Response Example</h4>
-        <pre>{
-  "recipes": [ ... ],
-  "count": 150
-}</pre>
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary">Products</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary">Solutions</a>
+                <a href="/docs.html" class="text-sm font-bold text-primary">Developers</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/llms.txt" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">AI Context</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
+        </div>
+    </nav>
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
     </div>
 
-    <div class="endpoint-card">
-        <h3><span class="method get">GET</span> <span class="url">/recipes/:id</span></h3>
-        <p>Get full details for a specific recipe. Includes Just-In-Time (JIT) nutrition enrichment via FatSecret.</p>
-    </div>
+    <main class="relative z-10 px-6 pt-32 pb-20 max-w-4xl mx-auto">
+        <div class="mb-12">
+            <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Documentation</span>
+            <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-4">API Reference</h1>
+            <p class="text-text-muted max-w-2xl font-light">Programmatic access to our culinary intelligence engine.</p>
+        </div>
 
-    <div class="endpoint-card">
-        <h3><span class="method post">POST</span> <span class="url">/recipes/enrich</span></h3>
-        <p>Batch retrieve and hydrate multiple recipes by ID. Automatically fetches missing nutrition data for all requested items.</p>
-        <h4>Payload</h4>
-        <pre>{ "ids": ["uuid-1", "uuid-2", ...] }</pre>
-    </div>
+        <div class="space-y-8">
+            <div class="card-ceramic p-8">
+                <div class="flex items-center gap-3 mb-4"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">GET</span><h3 class="font-mono text-lg text-primary">/recipes</h3></div>
+                <p class="text-text-muted mb-4 text-sm">Retrieve a paginated list of recipes.</p>
+                <div class="bg-gray-50 p-4 rounded-xl border border-border overflow-x-auto"><pre class="font-mono text-xs text-text-main">{ "recipes": [ ... ], "count": 150 }</pre></div>
+            </div>
 
-    <div class="endpoint-card">
-        <h3><span class="method get">GET</span> <span class="url">/search</span></h3>
-        <p>Hybrid intelligent search.</p>
-        <h4>Parameters</h4>
-        <ul>
-            <li><code>q</code>: (string) Search term.</li>
-            <li><code>ingredients</code>: (string) Filter by ingredients.</li>
-            <li><code>full</code>: (boolean) If <code>true</code>, returns full recipe objects (ingredients, instructions) instead of summaries. Default <code>false</code>.</li>
-        </ul>
-    </div>
+            <div class="card-ceramic p-8">
+                <div class="flex items-center gap-3 mb-4"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">GET</span><h3 class="font-mono text-lg text-primary">/search</h3></div>
+                <p class="text-text-muted mb-4 text-sm">Hybrid intelligent search. Filter by query text or ingredients.</p>
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div class="bg-gray-50 p-3 rounded-lg border border-border"><code>q</code> <span class="text-text-muted block mt-1 text-xs">Search term</span></div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-border"><code>ingredients</code> <span class="text-text-muted block mt-1 text-xs">Comma-separated list</span></div>
+                </div>
+            </div>
 
-    <div class="glass-card">
-        <h3><span class="method get">GET</span> <span class="url">/health</span></h3>
-        <p>Returns real-time system health statistics, including the number of verified vs. flagged recipes and recent automated audit logs.</p>
-    </div>
+            <div class="card-ceramic p-8">
+                <div class="flex items-center gap-3 mb-4"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">POST</span><h3 class="font-mono text-lg text-primary">/nutrition/analyze</h3></div>
+                <p class="text-text-muted mb-4 text-sm">Analyze natural language ingredients.</p>
+                <div class="bg-gray-50 p-4 rounded-xl border border-border overflow-x-auto"><pre class="font-mono text-xs text-text-main">{ "ingredients": ["1 apple", "2 eggs"] }</pre></div>
+            </div>
+        </div>
+    </main>
 
-    <h2>Integration Guide</h2>
-    <div class="glass-card">
-        <p>You can fetch data directly from your frontend or mobile app. No authentication is required for read operations.</p>
-        <pre>
-// Example: Fetching recipes with 'chicken'
-const res = await fetch('https://recipe-base.wearemachina.com/search?q=chicken');
-const data = await res.json();
-console.log(data.recipes);
-        </pre>
-    </div>
+    <script>
+        lucide.createIcons();
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
+    </script>
 </body>
 </html>

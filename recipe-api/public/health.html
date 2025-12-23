@@ -3,230 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Health - Recipe Base</title>
-    <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        .header-container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-weight: 600;
-            font-size: 32px;
-            margin: 0;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-btn {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            padding: 8px 16px;
-            background: rgba(0, 113, 227, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover { background: rgba(0, 113, 227, 0.15); transform: translateX(-2px); }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            width: 100%;
-            max-width: 900px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: var(--glass-shadow);
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 900px;
-            box-shadow: var(--glass-shadow);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        th {
-            text-align: left;
-            font-size: 12px;
-            color: var(--text-secondary);
-            padding: 12px 16px;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            text-transform: uppercase;
-        }
-
-        td {
-            padding: 16px;
-            font-size: 14px;
-            color: var(--text-main);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .status-pill {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-verified { background: #d1fae5; color: #065f46; }
-        .status-flagged { background: #fee2e2; color: #b91c1c; }
-        .status-repaired { background: #dbeafe; color: #1e40af; }
-        .status-pending { background: #f3f4f6; color: #4b5563; }
-
-        .score-good { color: #059669; font-weight: 600; }
-        .score-bad { color: #dc2626; font-weight: 600; }
-    </style>
-</head>
-<body>
-    <div class="header-container">
-        <h1>Data Health</h1>
-        <a href="/admin.html" class="nav-btn">← Back to Admin</a>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value" id="stat-total">-</div>
-            <div class="stat-label">Total Recipes</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-verified" style="color: #059669;">-</div>
-            <div class="stat-label">Verified</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-flagged" style="color: #dc2626;">-</div>
-            <div class="stat-label">Flagged Issues</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="stat-score" style="color: #0071e3;">-</div>
-            <div class="stat-label">Avg Quality</div>
-        </div>
-    </div>
-
-    <div class="glass-card">
-        <h2 style="margin: 0 0 20px 0; font-size: 18px;">Recently Audited</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th width="40%">Recipe</th>
-                    <th width="15%">QA Status</th>
-                    <th width="15%">Quality Score</th>
-                    <th width="30%">Last Action</th>
-                </tr>
-            </thead>
-            <tbody id="audit-table">
-                <tr><td colspan="4" style="text-align:center; padding: 20px;">Loading data...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
+    <title>Health - Recipe Base</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        const API_URL = '';
-
-        async function fetchHealth() {
-            try {
-                // Fetch stats (we need a new endpoint ideally, or just infer from a list call)
-                // For MVP, we'll fetch recently audited items and some counts
-                const res = await fetch(`${API_URL}/health`);
-                const data = await res.json();
-
-                document.getElementById('stat-total').textContent = data.stats.total;
-                document.getElementById('stat-verified').textContent = data.stats.verified;
-                document.getElementById('stat-flagged').textContent = data.stats.flagged;
-                document.getElementById('stat-score').textContent = Math.round(data.stats.avg_score);
-
-                const tbody = document.getElementById('audit-table');
-                tbody.innerHTML = '';
-
-                data.recent.forEach(r => {
-                    const log = r.audit_log && r.audit_log.length > 0 ? r.audit_log[r.audit_log.length - 1] : 'Routine check';
-                    const scoreClass = r.quality_score >= 80 ? 'score-good' : 'score-bad';
-                    
-                    const row = `
-                        <tr>
-                            <td><a href="/recipe-details.html?id=${r.id}" target="_blank" style="color: inherit; text-decoration: none; font-weight:500;">${r.name}</a></td>
-                            <td><span class="status-pill status-${r.qa_status}">${r.qa_status}</span></td>
-                            <td class="${scoreClass}">${r.quality_score}/100</td>
-                            <td style="color: #666; font-size: 13px;">${log}</td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
-
-            } catch (err) {
-                console.error(err);
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
             }
         }
+    </script>
+    <style>
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); }
+        .status-pill { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; }
+        .status-verified { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-flagged { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-repaired { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    </style>
+</head>
+<body class="antialiased">
+    <canvas id="bg-canvas"></canvas>
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary">Products</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary">Solutions</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary">Developers</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
+        </div>
+    </nav>
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
+    </div>
 
-        fetchHealth();
-        setInterval(fetchHealth, 5000);
+    <main class="relative z-10 px-6 pt-32 pb-20 max-w-6xl mx-auto">
+        <div class="mb-12">
+            <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Quality Assurance</span>
+            <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-4">System Vitals</h1>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="card-ceramic p-6 flex flex-col items-center justify-center text-center h-40">
+                <span class="text-4xl font-display font-medium text-primary mb-2" id="stat-total">-</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-text-light">Total Recipes</span>
+            </div>
+            <div class="card-ceramic p-6 flex flex-col items-center justify-center text-center h-40">
+                <span class="text-4xl font-display font-medium text-green-700 mb-2" id="stat-verified">-</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-text-light">Verified</span>
+            </div>
+            <div class="card-ceramic p-6 flex flex-col items-center justify-center text-center h-40">
+                <span class="text-4xl font-display font-medium text-red-700 mb-2" id="stat-flagged">-</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-text-light">Flagged</span>
+            </div>
+            <div class="card-ceramic p-6 flex flex-col items-center justify-center text-center h-40">
+                <span class="text-4xl font-display font-medium text-blue-700 mb-2" id="stat-score">-</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-text-light">Avg Quality</span>
+            </div>
+        </div>
+
+        <div class="card-ceramic overflow-hidden">
+            <div class="px-8 py-6 border-b border-border bg-gray-50/50">
+                <h2 class="font-display font-medium text-lg text-primary">Recent Audits</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead class="bg-gray-50/50 border-b border-border">
+                        <tr>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Recipe</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Status</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Score</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Log</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-table" class="divide-y divide-border">
+                        <tr><td colspan="4" class="px-8 py-8 text-center text-text-muted opacity-60">Loading audit logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        const API_URL = '';
+        async function fetchHealth() {
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                const data = await res.json();
+                ['total', 'verified', 'flagged'].forEach(k => document.getElementById(`stat-${k}`).textContent = data.stats[k]);
+                document.getElementById('stat-score').textContent = Math.round(data.stats.avg_score);
+                const tbody = document.getElementById('audit-table'); tbody.innerHTML = '';
+                data.recent.forEach(r => {
+                    const log = r.audit_log?.length > 0 ? r.audit_log[r.audit_log.length - 1] : 'Routine check';
+                    const scoreColor = r.quality_score >= 80 ? 'text-green-700' : 'text-red-700';
+                    const badge = { verified: 'status-verified', flagged: 'status-flagged', repaired: 'status-repaired' }[r.qa_status] || 'bg-gray-100 text-gray-800';
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50/50 transition-colors"><td class="px-8 py-4 font-medium text-primary text-sm"><a href="/recipe-details.html?id=${r.id}" class="hover:underline">${r.name}</a></td><td class="px-8 py-4"><span class="status-pill ${badge}">${r.qa_status}</span></td><td class="px-8 py-4 font-mono font-bold text-sm ${scoreColor}">${r.quality_score}</td><td class="px-8 py-4 text-sm text-text-muted max-w-xs truncate">${log}</td></tr>`;
+                });
+            } catch(e) { console.error(e); }
+        }
+        
+        // Shader Reused
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
+
+        fetchHealth(); setInterval(fetchHealth, 5000);
     </script>
 </body>
 </html>

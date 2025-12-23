@@ -3,541 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crawler Admin - Recipe Base</title>
+    <title>Admin - Recipe Base</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #fbfbfd;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --shadow: 0 10px 30px -10px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.02);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
-        }
-
-        h1 {
-            font-weight: 600;
-            font-size: 32px;
-            margin: 0;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #1d1d1f 0%, #434344 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header-container {
-            width: 100%;
-            max-width: 700px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .nav-btn {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 15px;
-            padding: 8px 16px;
-            background: rgba(0, 113, 227, 0.1);
-            border-radius: 20px;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .nav-btn:hover {
-            background: rgba(0, 113, 227, 0.15);
-            transform: translateX(-2px);
-        }
-
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 700px;
-            box-shadow: var(--glass-shadow);
-            margin-bottom: 24px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            opacity: 0;
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .input-group {
-            position: relative;
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 16px;
-            padding: 6px;
-            box-shadow: inset 0 1px 4px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .input-group:focus-within {
-            border-color: rgba(0, 113, 227, 0.3);
-            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
-        }
-
-        input[type="text"] {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 12px 16px;
-            font-size: 16px;
-            color: var(--text-main);
-            outline: none;
-            font-weight: 400;
-        }
-
-        input[type="text"]::placeholder {
-            color: #a1a1a6;
-        }
-
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
-        }
-
-        button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0, 113, 227, 0.25);
-        }
-
-        button:disabled {
-            background: #d2d2d7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .helper-text {
-            margin-top: 12px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-left: 8px;
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-            color: var(--text-main);
-        }
-
-        .refresh-btn {
-            background: transparent;
-            color: var(--accent);
-            padding: 8px 16px;
-            font-size: 14px;
-            box-shadow: none;
-        }
-
-        .refresh-btn:hover {
-            background: rgba(0, 113, 227, 0.08);
-            color: var(--accent);
-            transform: none;
-            box-shadow: none;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        th {
-            text-align: left;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            padding: 12px 16px;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        td {
-            padding: 16px;
-            font-size: 14px;
-            color: var(--text-main);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
-            vertical-align: middle;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        a {
-            color: var(--text-main);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        a:hover {
-            color: var(--accent);
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-        }
-
-        .status-pending { background: #fff4e5; color: #b45309; }
-        .status-processing { background: #e8f2ff; color: #0056b3; }
-        .status-completed { background: #e6fcf5; color: #067a46; }
-        .status-failed { background: #fee2e2; color: #b91c1c; }
-        .status-blocked { background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }
-        .status-cooling_down { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
-
-        .recipe-count {
-            font-feature-settings: "tnum";
-            font-variant-numeric: tabular-nums;
-            font-weight: 500;
-        }
-
-        .card-delay {
-            animation-delay: 0.1s;
-            opacity: 0;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-card {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            padding: 32px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            transform: scale(0.95);
-            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .modal-overlay.active .modal-card {
-            transform: scale(1);
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--text-main);
-        }
-
-        .modal-desc {
-            font-size: 15px;
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        .btn-cancel {
-            background: rgba(0,0,0,0.05);
-            color: var(--text-main);
-            box-shadow: none;
-        }
-
-        .btn-cancel:hover {
-            background: rgba(0,0,0,0.1);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 9999px; background-color: #254a31; color: #ffffff; font-family: 'Poppins', sans-serif; font-weight: 500; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); }
+        .btn-primary:hover { transform: translateY(-1px); background-color: #1e3d28; }
+        .input-ceramic { background-color: #ffffff; border: 1px solid #e5e0d8; border-radius: 1rem; padding: 1rem; transition: all 0.3s; width: 100%; font-family: 'Inter', sans-serif; }
+        .input-ceramic:focus { border-color: #254a31; outline: none; box-shadow: 0 0 0 3px rgba(37, 74, 49, 0.1); }
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 0.25rem; }
     </style>
 </head>
-<body>
-    <div class="header-container">
-        <h1>Crawler Admin</h1>
-        <div style="display:flex; gap:10px;">
-            <a href="/health.html" class="nav-btn">Data Health</a>
-            <a href="/" class="nav-btn">← Back to Home</a>
-        </div>
-    </div>
-
-    <div class="glass-card">
-        <form id="crawlForm">
-            <div class="input-group">
-                <input type="text" id="urlInput" placeholder="Paste recipe website URL..." required>
-                <button type="submit" id="submitBtn">Start Crawl</button>
+<body class="antialiased">
+    <canvas id="bg-canvas"></canvas>
+    <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
+        <div class="max-w-6xl mx-auto flex justify-between items-center bg-white/70 backdrop-blur-md border border-white/50 shadow-sm rounded-full px-6 py-3">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg" alt="Recipe Base" class="h-8 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary">Products</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary">Solutions</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary">Developers</a>
             </div>
-        </form>
-        <div class="helper-text">
-            Enter a URL to automatically discover and extract recipes.
-        </div>
-    </div>
-
-    <div class="glass-card card-delay">
-        <div class="header-row">
-            <h2>Recent Activity</h2>
-            <div>
-                <button class="refresh-btn" onclick="showClearModal()" style="color: #ef4444;">Clear History</button>
-                <button class="refresh-btn" onclick="fetchJobs()">Refresh</button>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:block text-xs font-bold uppercase tracking-widest text-primary border border-primary/20 px-4 py-2 rounded-full hover:bg-primary hover:text-white transition-all">System</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>
-        <table id="jobsTable">
-            <thead>
-                <tr>
-                    <th width="35%">Source</th>
-                    <th width="15%">Status</th>
-                    <th width="10%">Found</th>
-                    <th width="25%">Started</th>
-                    <th width="15%">Action</th>
-                </tr>
-            </thead>
-            <tbody id="jobsBody">
-                <tr><td colspan="5" style="text-align:center; color: var(--text-secondary);">Loading...</td></tr>
-            </tbody>
-        </table>
+    </nav>
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Solutions</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">Developers</a>
     </div>
 
-    <!-- Archived Jobs Section -->
-    <div class="glass-card card-delay" style="animation-delay: 0.2s; opacity: 0.6; transform: scale(0.98);">
-        <div class="header-row">
-            <h2 style="font-size: 16px; opacity: 0.7;">Recently Cleared</h2>
+    <main class="relative z-10 px-6 pt-32 pb-20 max-w-5xl mx-auto">
+        <div class="mb-12">
+            <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Infrastructure</span>
+            <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-4">Crawler Management</h1>
         </div>
-        <table id="archivedTable" style="opacity: 0.6;">
-            <tbody id="archivedBody">
-                <tr><td colspan="5" style="text-align:center; color: var(--text-secondary); font-size: 13px;">No archived jobs.</td></tr>
-            </tbody>
-        </table>
-    </div>
 
-    <!-- Custom Modal -->
-    <div class="modal-overlay" id="clearModal">
-        <div class="modal-card">
-            <div class="modal-title">Clear History?</div>
-            <div class="modal-desc">This will delete all job records and stop any active crawls. Saved recipes will remain.</div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="hideClearModal()">Cancel</button>
-                <button class="btn-danger" onclick="confirmClearJobs()">Clear All</button>
+        <div class="card-ceramic p-8 mb-12">
+            <h2 class="font-display font-medium text-xl text-primary mb-6">Initialize Crawler</h2>
+            <form id="crawlForm" class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="urlInput" class="input-ceramic flex-1 font-mono text-sm" placeholder="Paste target URL..." required>
+                <button type="submit" id="submitBtn" class="btn-primary whitespace-nowrap">Start Job <i data-lucide="play" class="w-4 h-4"></i></button>
+            </form>
+        </div>
+
+        <div class="card-ceramic overflow-hidden mb-12">
+            <div class="px-8 py-6 border-b border-border flex justify-between items-center bg-gray-50/50">
+                <h2 class="font-display font-medium text-lg text-primary">Active Operations</h2>
+                <div class="flex gap-3">
+                    <button onclick="showClearModal()" class="text-xs font-bold uppercase tracking-wider text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors border border-red-100">Clear History</button>
+                    <button onclick="fetchJobs()" class="text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors border border-primary/10">Refresh</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead class="bg-gray-50/50 border-b border-border">
+                        <tr>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Target</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Status</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Yield</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Started</th>
+                            <th class="px-8 py-4 text-left text-xs font-bold uppercase tracking-wider text-text-light">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsBody" class="divide-y divide-border">
+                        <tr><td colspan="5" class="px-8 py-8 text-center text-text-muted opacity-60 text-sm">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-primary/20 backdrop-blur-sm" onclick="hideClearModal()"></div>
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full relative z-10 shadow-ceramic border border-border">
+            <h3 class="font-display font-medium text-xl mb-4 text-primary">Clear History?</h3>
+            <p class="text-text-muted mb-8 text-sm leading-relaxed">This will stop all active crawlers and purge job history. Database recipes are safe.</p>
+            <div class="flex gap-4">
+                <button onclick="confirmClearJobs()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-medium hover:bg-red-700 transition-colors text-sm">Confirm</button>
+                <button onclick="hideClearModal()" class="flex-1 bg-gray-100 text-primary py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors text-sm">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = ''; // Relative path
-
-        async function startCrawl(e) {
-            e.preventDefault();
-            const urlInput = document.getElementById('urlInput');
-            const submitBtn = document.getElementById('submitBtn');
-            const url = urlInput.value;
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Starting...';
-
-            try {
-                const res = await fetch(`${API_URL}/crawl`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                
-                if (!res.ok) throw new Error(await res.text());
-                
-                urlInput.value = '';
-                fetchJobs();
-            } catch (err) {
-                alert('Failed to start crawl: ' + err.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Start Crawl';
-            }
-        }
-
-        async function fetchJobs() {
-            try {
-                // Fetch Active Jobs
-                const res = await fetch(`${API_URL}/jobs`);
-                const jobs = await res.json();
-                
-                const tbody = document.getElementById('jobsBody');
-                tbody.innerHTML = '';
-
-                if (jobs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-secondary);">No active or recent jobs.</td></tr>';
-                } else {
-                    jobs.forEach(job => tbody.appendChild(createJobRow(job)));
-                }
-
-                // Fetch Archived Jobs
-                const resArchived = await fetch(`${API_URL}/jobs/archived`);
-                const archivedJobs = await resArchived.json();
-                
-                const archivedBody = document.getElementById('archivedBody');
-                archivedBody.innerHTML = '';
-
-                if (archivedJobs.length === 0) {
-                    archivedBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-secondary); font-size: 13px;">No cleared history found.</td></tr>';
-                } else {
-                    archivedJobs.forEach(job => archivedBody.appendChild(createJobRow(job, true)));
-                }
-
-            } catch (err) {
-                console.error('Error fetching jobs:', err);
-            }
-        }
-
-        function createJobRow(job, isArchived = false) {
-            const tr = document.createElement('tr');
-            const date = new Date(job.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            
-            // Truncate URL for display
-            let displayUrl = job.url.replace(/^https?:\/\/(www\.)?/, '');
-            if (displayUrl.length > 35) displayUrl = displayUrl.substring(0, 32) + '...';
-
-            const actionCell = isArchived 
-                ? '<td>-</td>' 
-                : `<td><button onclick="deleteJob('${job.id}')" style="background:transparent; color:#ef4444; padding:4px 8px; border:1px solid rgba(239, 68, 68, 0.2); border-radius:6px; font-size:12px; box-shadow:none; cursor:pointer;">✕</button></td>`;
-
-            tr.innerHTML = `
-                <td><a href="${job.url}" target="_blank" title="${job.url}">${displayUrl}</a></td>
-                <td><span class="status-badge status-${job.status}">${job.status}</span></td>
-                <td class="recipe-count">${job.recipes_found}</td>
-                <td style="color: var(--text-secondary); font-size: 13px;">${date}</td>
-                ${actionCell}
-            `;
-            return tr;
-        }
-
-        async function deleteJob(id) {
-            if (!confirm('Stop and archive this job?')) return;
-            try {
-                const res = await fetch(`${API_URL}/jobs/${id}`, { method: 'DELETE' });
-                if (res.ok) fetchJobs();
-                else alert('Failed to delete job');
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        }
-
-        // Modal Logic
-        function showClearModal() {
-            document.getElementById('clearModal').classList.add('active');
-        }
-
-        function hideClearModal() {
-            document.getElementById('clearModal').classList.remove('active');
-        }
-
-        async function confirmClearJobs() {
-            const btn = document.querySelector('.btn-danger');
-            const originalText = btn.textContent;
-            btn.textContent = 'Clearing...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(`${API_URL}/jobs`, { method: 'DELETE' });
-                if (res.ok) {
-                    hideClearModal();
-                    fetchJobs();
-                } else {
-                    alert('Failed to clear jobs');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
+        lucide.createIcons();
+        // ... (Re-use existing admin logic: startCrawl, fetchJobs, deleteJob, modal)
+        const API_URL = '';
+        async function startCrawl(e) { e.preventDefault(); const btn = document.getElementById('submitBtn'); const input = document.getElementById('urlInput'); btn.textContent = 'Initializing...'; btn.disabled = true; try { const res = await fetch(`${API_URL}/crawl`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: input.value }) }); if(!res.ok) throw new Error(await res.text()); input.value = ''; fetchJobs(); } catch(e) { alert(e.message); } finally { btn.innerHTML = 'Start Job <i data-lucide="play" class="w-4 h-4 ml-2"></i>'; btn.disabled = false; lucide.createIcons(); } }
+        async function fetchJobs() { try { const [active, archived] = await Promise.all([fetch(`${API_URL}/jobs`).then(r => r.json()), fetch(`${API_URL}/jobs/archived`).then(r => r.json())]); renderTable('jobsBody', active); } catch(e) { console.error(e); } }
+        function renderTable(id, jobs) { const tbody = document.getElementById(id); tbody.innerHTML = ''; if(jobs.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="px-8 py-8 text-center text-text-muted opacity-60 text-sm">No active jobs found.</td></tr>`; return; } jobs.forEach(job => { const date = new Date(job.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }); const url = job.url.replace(/^https?:\/\/(www\.)?/, '').substring(0, 30) + '...'; const statusStyles = { pending: 'bg-yellow-100 text-yellow-800', processing: 'bg-blue-100 text-blue-800', completed: 'bg-green-100 text-green-800', failed: 'bg-red-100 text-red-800' }; const badge = statusStyles[job.status] || 'bg-gray-100 text-gray-800'; const tr = document.createElement('tr'); tr.className = 'hover:bg-gray-50/50 transition-colors'; tr.innerHTML = `<td class="px-8 py-4 font-mono text-xs text-primary truncate"><a href="${job.url}" target="_blank" class="hover:underline">${url}</a></td><td class="px-8 py-4"><span class="status-badge ${badge}">${job.status}</span></td><td class="px-8 py-4 font-mono text-xs text-text-muted">${job.recipes_found}</td><td class="px-8 py-4 text-xs text-text-light">${date}</td><td class="px-8 py-4"><button onclick="deleteJob('${job.id}')" class="text-xs font-bold text-red-600 hover:text-red-800 uppercase">Stop</button></td>`; tbody.appendChild(tr); }); }
+        async function deleteJob(id) { if(confirm('Stop job?')) { await fetch(`${API_URL}/jobs/${id}`, {method:'DELETE'}); fetchJobs(); } }
+        function showClearModal() { document.getElementById('clearModal').classList.remove('hidden'); }
+        function hideClearModal() { document.getElementById('clearModal').classList.add('hidden'); }
+        async function confirmClearJobs() { await fetch(`${API_URL}/jobs`, {method:'DELETE'}); hideClearModal(); fetchJobs(); }
         document.getElementById('crawlForm').addEventListener('submit', startCrawl);
         
-        // Initial load
-        fetchJobs();
-        
-        // Poll every 5 seconds
-        setInterval(fetchJobs, 5000);
+        // Shader Reused
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+
+        // Mobile Menu
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
+
+        fetchJobs(); setInterval(fetchJobs, 5000);
     </script>
 </body>
 </html>
