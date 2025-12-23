@@ -13,7 +13,12 @@ const NUTRIENT_IDS = {
     FAT: 1004,
     CARBS: 1005,
     FIBER: 1079,
-    SUGAR: 2000
+    SUGAR: 2000,
+    // Micros
+    CALCIUM: 1087,
+    IRON: 1089,
+    VITAMIN_A: 1106, // RAE
+    VITAMIN_C: 1162
 };
 
 export interface UsdaNutrition {
@@ -23,7 +28,11 @@ export interface UsdaNutrition {
     carbs: number;
     fiber: number;
     sugar: number;
-    serving_size_g?: number; // Standard is usually 100g for reference, but sometimes detailed
+    calcium_mg: number;
+    iron_mg: number;
+    vitamin_a_mcg: number;
+    vitamin_c_mg: number;
+    serving_size_g?: number; 
 }
 
 export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
@@ -34,28 +43,48 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
     }
 
     try {
-        // 1. Search for the food
-        // Removing dataType filter to avoid axios array serialization issues and broaden search
-        const searchRes = await axios.get(`${BASE_URL}/foods/search`, {
-            params: {
-                api_key: API_KEY,
-                query: query,
-                pageSize: 1
-            }
-        });
+        const encodedQuery = encodeURIComponent(query);
+        // Explicitly requesting Foundation/Survey data to avoid branded candy/processed items
+        const url = `${BASE_URL}/foods/search?api_key=${API_KEY}&query=${encodedQuery}&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5`;
+        
+        console.log(`DEBUG: Fetching URL: ${url.replace(API_KEY, '***')}`);
+
+        const searchRes = await axios.get(url);
 
         console.log(`DEBUG: USDA Response Status: ${searchRes.status}, Items: ${searchRes.data.foods?.length}`);
 
-        const food = searchRes.data.foods?.[0];
-        if (!food) {
+        const foods = searchRes.data.foods || [];
+        
+        if (foods.length === 0) {
             console.log(`DEBUG: USDA found no results for "${query}"`);
             return null;
         }
 
-        // 2. Extract Nutrients (Search results usually contain them, no need for second call often)
-        // The search result format flattens nutrients slightly differently than detailed view,
-        // but 'foodNutrients' array is usually present.
+        // Client-side priority: Skip Branded AND Processed (dried/powder/cooked) if query didn't ask for it
+        const queryLower = query.toLowerCase();
+        // Check if user explicitly asked for any processing
+        const processingTerms = /dried|dehydrated|powder|chip|candied|syrup|baked|fried|roasted|grilled|boiled|stewed|canned|cooked/i;
+        const wantsProcessed = processingTerms.test(queryLower);
         
+        const isProcessed = (desc: string) => {
+            if (wantsProcessed) return false; // User asked for it
+            // Filter out items that mention processing if user didn't ask
+            return processingTerms.test(desc);
+        };
+
+        // 1. Try to find Non-Branded AND Non-Processed
+        let food = foods.find((f: any) => f.dataType !== 'Branded' && !isProcessed(f.description));
+        
+        // 2. Fallback: Any Non-Branded
+        if (!food) {
+            food = foods.find((f: any) => f.dataType !== 'Branded');
+        }
+        
+        // 3. Last Resort: Top Result
+        if (!food) food = foods[0];
+
+        console.log(`DEBUG: Selected Food: ${food.description} (${food.dataType})`);
+
         const nutrients = food.foodNutrients;
         const getVal = (id: number) => {
             const n = nutrients.find((x: any) => x.nutrientId === id);
@@ -69,6 +98,10 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
             carbs: getVal(NUTRIENT_IDS.CARBS),
             fiber: getVal(NUTRIENT_IDS.FIBER),
             sugar: getVal(NUTRIENT_IDS.SUGAR),
+            calcium_mg: getVal(NUTRIENT_IDS.CALCIUM),
+            iron_mg: getVal(NUTRIENT_IDS.IRON),
+            vitamin_a_mcg: getVal(NUTRIENT_IDS.VITAMIN_A),
+            vitamin_c_mg: getVal(NUTRIENT_IDS.VITAMIN_C),
             serving_size_g: 100 // USDA standard search results are typically normalized to 100g or have a serving size
         };
 

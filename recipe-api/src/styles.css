@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles if needed */
+.btn-deep {
+    @apply bg-deep-900 hover:bg-deep-800 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1;
+}
+
+.card-panel {
+    @apply flex flex-col bg-white border border-gray-200 shadow-sm rounded-xl p-4 md:p-5;
+}

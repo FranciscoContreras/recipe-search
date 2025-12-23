@@ -100,7 +100,11 @@ export async function findNutritionForRecipe(recipeName: string): Promise<any | 
                 "proteinContent": `${serving.protein} g`,
                 "fatContent": `${serving.fat} g`,
                 "fiberContent": `${serving.fiber} g`,
-                "sugarContent": `${serving.sugar} g`
+                "sugarContent": `${serving.sugar} g`,
+                "calciumContent": `${serving.calcium} mg`,
+                "ironContent": `${serving.iron} mg`,
+                "vitaminAContent": `${serving.vitamin_a} mcg`, // FatSecret sometimes uses %DV or IU, need to verify, but assuming value
+                "vitaminCContent": `${serving.vitamin_c} mg`
             };
         }
 
@@ -119,6 +123,10 @@ export interface SimpleNutrition {
     carbs: number;
     fiber: number;
     sugar: number;
+    calcium_mg: number;
+    iron_mg: number;
+    vitamin_a_mcg: number;
+    vitamin_c_mg: number;
     serving_size_g: number;
 }
 
@@ -180,6 +188,10 @@ export async function searchFatSecret(query: string): Promise<SimpleNutrition | 
             carbs: parseFloat(serving.carbohydrate) || 0,
             fiber: parseFloat(serving.fiber) || 0,
             sugar: parseFloat(serving.sugar) || 0,
+            calcium_mg: parseFloat(serving.calcium) || 0,
+            iron_mg: parseFloat(serving.iron) || 0,
+            vitamin_a_mcg: parseFloat(serving.vitamin_a) || 0,
+            vitamin_c_mg: parseFloat(serving.vitamin_c) || 0,
             serving_size_g: servingWeight
         };
 

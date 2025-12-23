@@ -12,6 +12,10 @@ interface NutritionTotal {
     carbs: number;
     fiber: number;
     sugar: number;
+    calcium_mg: number;
+    iron_mg: number;
+    vitamin_a_mcg: number;
+    vitamin_c_mg: number;
 }
 
 export class NutritionEngine {
@@ -19,25 +23,58 @@ export class NutritionEngine {
     // Normalize to grams. Very basic map.
     // Real implementation would use a library like 'convert-units'
     private static unitToGrams(unit: string, qty: number): number {
-        const u = unit ? unit.toLowerCase() : '';
-        if (['g', 'gram', 'grams'].includes(u)) return qty;
-        if (['kg', 'kilogram'].includes(u)) return qty * 1000;
-        if (['oz', 'ounce', 'ounces'].includes(u)) return qty * 28.35;
-        if (['lb', 'pound', 'pounds'].includes(u)) return qty * 453.59;
+        const u = unit ? unit.toLowerCase().replace(/s$/, '') : ''; // singularize
         
-        // Volumetric to weight is hard without density. We assume water density (1ml = 1g) as a baseline fallback
+        // Weight
+        if (['g', 'gram'].includes(u)) return qty;
+        if (['kg', 'kilogram'].includes(u)) return qty * 1000;
+        if (['oz', 'ounce'].includes(u)) return qty * 28.35;
+        if (['lb', 'pound'].includes(u)) return qty * 453.59;
+        
+        // Volume (water density assumption)
         if (['ml', 'milliliter'].includes(u)) return qty;
         if (['l', 'liter'].includes(u)) return qty * 1000;
-        if (['cup', 'cups'].includes(u)) return qty * 236; // ~236ml
-        if (['tbsp', 'tablespoon'].includes(u)) return qty * 15;
-        if (['tsp', 'teaspoon'].includes(u)) return qty * 5;
+        if (['cup', 'c'].includes(u)) return qty * 236; 
+        if (['tbsp', 'tablespoon', 'tbs', 'T'].includes(u)) return qty * 15;
+        if (['tsp', 'teaspoon', 'tspn', 't'].includes(u)) return qty * 5;
+        if (['fl oz', 'floz'].includes(u)) return qty * 29.57;
+        if (['pint', 'pt'].includes(u)) return qty * 473;
+        if (['quart', 'qt'].includes(u)) return qty * 946;
+        if (['gallon', 'gal'].includes(u)) return qty * 3785;
+
+        // Abstract
+        if (['pinch', 'pn'].includes(u)) return qty * 0.3;
+        if (['dash'].includes(u)) return qty * 0.6;
+        if (['slice'].includes(u)) return qty * 30; // bread/cheese avg
+        if (['clove'].includes(u)) return qty * 5; // garlic
         
         return 100; // Default fallback if no unit: assume "1 serving/piece" ~ 100g
     }
 
+    // Helper to parse "1 1/2", "1/2", "1.5"
+    private static parseQuantity(qtyStr: string): number {
+        if (!qtyStr) return 1;
+        try {
+            const parts = qtyStr.trim().split(' ');
+            let total = 0;
+            for (const part of parts) {
+                if (part.includes('/')) {
+                    const [num, den] = part.split('/').map(Number);
+                    if (den !== 0) total += num / den;
+                } else {
+                    total += parseFloat(part) || 0;
+                }
+            }
+            return total || 1;
+        } catch (e) { return 1; }
+    }
+
     static async analyze(ingredients: string[]): Promise<{ total: NutritionTotal, breakdown: any[] }> {
         console.log('DEBUG: Analyzing ingredients:', JSON.stringify(ingredients));
-        const total: NutritionTotal = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0 };
+        const total: NutritionTotal = { 
+            calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0,
+            calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0
+        };
         const breakdown = [];
 
         for (const line of ingredients) {
@@ -52,13 +89,13 @@ export class NutritionEngine {
             }
 
             // Manual Regex Fallback if library fails
+            // Enhanced regex for "1 1/2 cups", "1/2 tsp", "1.5 g"
             if (!parsed || !parsed.description) {
-                // Try to capture "200g Item" or "200 g Item" or "2 cups Item"
-                const regex = /^(\d+(?:\.\d+)?)\s*([a-zA-Z]+)?\s+(.*)$/;
+                const regex = /^((?:\d+\s+)?\d+\/\d+|\d+(?:\.\d+)?|\d+)\s*([a-zA-Z]+)?\s+(.*)$/;
                 const match = line.match(regex);
                 if (match) {
                     parsed = {
-                        quantity: parseFloat(match[1]),
+                        quantity: this.parseQuantity(match[1]),
                         unitOfMeasure: match[2] || null,
                         description: match[3]
                     };
@@ -67,12 +104,13 @@ export class NutritionEngine {
                 }
             }
 
-            const name = parsed.description || line; // Clean name
-            const qty = parsed.quantity || 1;
+            const name = parsed.description || line; 
+            const qty = typeof parsed.quantity === 'string' ? this.parseQuantity(parsed.quantity) : (parsed.quantity || 1);
             const unit = parsed.unitOfMeasure || '';
             const weightGrams = this.unitToGrams(unit, qty);
 
-            console.log(`DEBUG: Parsed "${line}" -> Name: "${name}", Qty: ${qty}, Unit: "${unit}", Weight: ${weightGrams}g`);
+            // Cache Versioning: Force new cache by prefixing
+            const cacheKey = `v8:${name.toLowerCase()}`;
 
             // 2. Check Cache
             let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
@@ -81,24 +119,20 @@ export class NutritionEngine {
             const { data: cached } = await supabase
                 .from('ingredient_cache')
                 .select('*')
-                .eq('term', name.toLowerCase())
+                .eq('term', cacheKey)
                 .single();
 
             if (cached) {
                 nutritionInfo = cached.nutrition as any;
                 source = cached.source;
             } else {
-                // 3. Fetch from USDA
+                // 3. Fetch from USDA (Fresh)
+                console.log(`DEBUG: Cache miss for "${cacheKey}". Fetching fresh data for "${name}"...`);
                 const usdaData = await searchUsda(name);
                 if (usdaData) {
                     nutritionInfo = usdaData;
                     source = 'usda';
-                    // Cache it
-                    await supabase.from('ingredient_cache').upsert({
-                        term: name.toLowerCase(),
-                        nutrition: usdaData as any,
-                        source: 'usda'
-                    });
+                    await supabase.from('ingredient_cache').upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' });
                 } else {
                     // 4. Fallback to FatSecret
                     console.log(`DEBUG: USDA failed for "${name}", trying FatSecret...`);
@@ -106,11 +140,7 @@ export class NutritionEngine {
                     if (fsData) {
                         nutritionInfo = fsData;
                         source = 'fatsecret';
-                         await supabase.from('ingredient_cache').upsert({
-                            term: name.toLowerCase(),
-                            nutrition: fsData as any,
-                            source: 'fatsecret'
-                        });
+                        await supabase.from('ingredient_cache').upsert({ term: cacheKey, nutrition: fsData as any, source: 'fatsecret' });
                     }
                 }
             }
@@ -120,13 +150,20 @@ export class NutritionEngine {
                 const baseWeight = nutritionInfo.serving_size_g || 100;
                 const ratio = weightGrams / baseWeight;
                 
+                // Safe access for micros which might not exist in cached/FatSecret data
+                const n = nutritionInfo as any; 
+
                 const itemStats = {
-                    calories: nutritionInfo.calories * ratio,
-                    protein: nutritionInfo.protein * ratio,
-                    fat: nutritionInfo.fat * ratio,
-                    carbs: nutritionInfo.carbs * ratio,
-                    fiber: nutritionInfo.fiber * ratio,
-                    sugar: nutritionInfo.sugar * ratio
+                    calories: (n.calories || 0) * ratio,
+                    protein: (n.protein || 0) * ratio,
+                    fat: (n.fat || 0) * ratio,
+                    carbs: (n.carbs || 0) * ratio,
+                    fiber: (n.fiber || 0) * ratio,
+                    sugar: (n.sugar || 0) * ratio,
+                    calcium_mg: (n.calcium_mg || 0) * ratio,
+                    iron_mg: (n.iron_mg || 0) * ratio,
+                    vitamin_a_mcg: (n.vitamin_a_mcg || 0) * ratio,
+                    vitamin_c_mg: (n.vitamin_c_mg || 0) * ratio
                 };
 
                 // Add to total
@@ -136,6 +173,10 @@ export class NutritionEngine {
                 total.carbs += itemStats.carbs;
                 total.fiber += itemStats.fiber;
                 total.sugar += itemStats.sugar;
+                total.calcium_mg += itemStats.calcium_mg;
+                total.iron_mg += itemStats.iron_mg;
+                total.vitamin_a_mcg += itemStats.vitamin_a_mcg;
+                total.vitamin_c_mg += itemStats.vitamin_c_mg;
 
                 breakdown.push({
                     ingredient: line,
@@ -153,6 +194,10 @@ export class NutritionEngine {
         total.protein = Math.round(total.protein);
         total.fat = Math.round(total.fat);
         total.carbs = Math.round(total.carbs);
+        total.calcium_mg = Math.round(total.calcium_mg);
+        total.iron_mg = parseFloat(total.iron_mg.toFixed(1));
+        total.vitamin_a_mcg = Math.round(total.vitamin_a_mcg);
+        total.vitamin_c_mg = parseFloat(total.vitamin_c_mg.toFixed(1));
 
         return { total, breakdown };
     }
