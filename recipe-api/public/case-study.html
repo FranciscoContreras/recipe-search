@@ -95,19 +95,57 @@
         <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center">
             <div class="reveal order-2 lg:order-1 relative">
                 <div class="absolute -inset-4 bg-gradient-to-tr from-primary/5 to-transparent rounded-3xl transform -rotate-2"></div>
-                <div class="card-ceramic p-8 relative z-10 h-full flex flex-col justify-center">
-                    <div class="flex items-center justify-center gap-4 mb-8">
-                        <div class="text-center">
-                            <span class="block text-4xl font-display font-bold text-primary">20,000+</span>
-                            <span class="text-xs uppercase tracking-widest text-text-light">Recipes Indexed</span>
+                
+                <!-- Product Showcase Container -->
+                <div class="grid md:grid-cols-2 gap-4 relative z-10">
+                    
+                    <!-- Left: Raw Recipe (Input) -->
+                    <div class="card-ceramic p-4 flex flex-col h-full bg-white transform md:-rotate-2 transition-transform hover:rotate-0 duration-500">
+                        <div class="relative w-full h-32 rounded-lg overflow-hidden mb-3 bg-gray-100">
+                            <img src="https://img.buzzfeed.com/tasty-app-user-assets-prod-us-east-1/recipes/598bb95dce5641afb9e257dc3d6cf7f9.png?resize=600:*" class="w-full h-full object-cover" alt="Broccoli Cheddar Soup">
+                            <div class="absolute inset-0 bg-black/10"></div>
+                            <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm font-medium">Input: Raw Data</span>
                         </div>
-                        <div class="h-12 w-[1px] bg-border"></div>
-                        <div class="text-center">
-                            <span class="block text-4xl font-display font-bold text-primary">150+</span>
-                            <span class="text-xs uppercase tracking-widest text-text-light">Sources</span>
+                        <h4 class="font-display text-sm text-primary mb-2 leading-tight">Easy Broccoli Cheddar Soup</h4>
+                        <p class="text-[10px] text-text-muted leading-relaxed line-clamp-4 font-mono bg-gray-50 p-2 rounded border border-border">
+                            small onion, medium red bell pepper, broccoli, butter, all purpose flour, evaporated milk, vegetable broth, shredded cheddar cheese...
+                        </p>
+                    </div>
+
+                    <!-- Right: Structured Data (Output) -->
+                    <div class="card-ceramic p-5 flex flex-col h-full bg-primary text-white transform md:rotate-2 md:translate-y-8 transition-transform hover:rotate-0 duration-500 shadow-xl border-none relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
+                                <span class="text-[10px] uppercase tracking-widest font-bold opacity-80">API Output</span>
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i>
+                            </div>
+                            
+                            <div class="flex items-baseline gap-1 mb-4">
+                                <span class="text-3xl font-display font-medium">350</span>
+                                <span class="text-xs opacity-70">kcal</span>
+                            </div>
+
+                            <div class="space-y-2 text-xs mb-4">
+                                <div class="flex justify-between"><span class="opacity-70">Protein</span><span class="font-mono font-bold">12g</span></div>
+                                <div class="w-full bg-white/20 h-1 rounded-full overflow-hidden"><div class="bg-green-400 h-full w-[24%]"></div></div>
+                                
+                                <div class="flex justify-between"><span class="opacity-70">Healthy Fats</span><span class="font-mono font-bold">24g</span></div>
+                                <div class="w-full bg-white/20 h-1 rounded-full overflow-hidden"><div class="bg-yellow-400 h-full w-[45%]"></div></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 mt-auto">
+                                <div class="bg-white/10 rounded p-2 text-center">
+                                    <span class="block text-[10px] opacity-60 uppercase">Vit C</span>
+                                    <span class="font-mono font-bold text-green-300">85%</span>
+                                </div>
+                                <div class="bg-white/10 rounded p-2 text-center">
+                                    <span class="block text-[10px] opacity-60 uppercase">Calc</span>
+                                    <span class="font-mono font-bold text-blue-300">30%</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <p class="text-center text-sm text-text-muted italic">"We needed to capture not just recipes, but their visual essence, and make them programmatically accessible."</p>
                 </div>
             </div>
             <div class="reveal order-1 lg:order-2">
