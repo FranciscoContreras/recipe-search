@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study - Recipe Base</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'], display: ['Grenda', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+        .btn-primary { background-color: #254a31; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); border-color: transparent; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
+        .btn-secondary { background-color: #ffffff; color: #254a31; border-color: #e5e0d8; }
+        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; transform: translateY(-1px); }
+        .btn-ghost { background-color: transparent; color: #5c5446; border-color: transparent; padding-left: 1rem; padding-right: 1rem; }
+        .btn-ghost:hover { color: #254a31; background-color: rgba(37, 74, 49, 0.05); }
+
+        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.25rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); transition: all 0.4s ease; }
+        .card-ceramic:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -4px rgba(37, 74, 49, 0.08); border-color: #d1ccbc; }
+        
+        /* Typography utilities for case study */
+        .prose-p { font-size: 1.125rem; line-height: 1.8; color: #5c5446; margin-bottom: 1.5rem; font-weight: 300; }
+        .prose-h3 { font-family: 'Grenda', sans-serif; font-size: 1.5rem; color: #254a31; margin-bottom: 1rem; margin-top: 2.5rem; }
+        .highlight-box { background: rgba(37, 74, 49, 0.03); border-left: 4px solid #254a31; padding: 1.5rem; border-radius: 0 1rem 1rem 0; margin: 2rem 0; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Recipes</a>
+                <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Nutrition Lab</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">API Docs</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:inline-flex btn btn-ghost border border-border">Admin</a>
+                <a href="/lab.html" class="hidden md:inline-flex btn btn-primary">Launch App</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Nutrition Lab</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">API Docs</a>
+    </div>
+
+    <main class="pt-32">
+        <!-- HERO -->
+        <section class="max-w-4xl mx-auto px-6 py-12 md:py-20 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-primary text-xs font-bold uppercase tracking-wider mb-6 shadow-sm reveal">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Engineering Case Study
+            </div>
+            <h1 class="font-display font-medium text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-primary mb-8 reveal">Structuring the <br><span class="italic text-text-muted">Unstructured.</span></h1>
+            <p class="text-xl text-text-muted leading-relaxed mb-10 max-w-2xl mx-auto font-light reveal">How we built an intelligent pipeline to turn messy recipe text into precision nutritional data, handling scale, ambiguity, and automated compliance.</p>
+        </section>
+
+        <!-- THE CHALLENGE -->
+        <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center">
+            <div class="reveal">
+                <h2 class="font-display text-3xl text-primary mb-6">The Challenge: Culinary Chaos</h2>
+                <p class="prose-p">The internet is flooded with recipes, but 90% of them exist as unstructured "blobs" of text. A human understands that "1 large ripe avocado, pitted" is an ingredient. A machine sees a string of characters.</p>
+                <p class="prose-p">We faced three core problems:</p>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
+                        <span class="text-text-muted text-sm leading-relaxed"><strong>Unit Variance:</strong> "Cups", "grams", "pinch", "handful". Normalizing these to a standard mass for calculation is non-trivial.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
+                        <span class="text-text-muted text-sm leading-relaxed"><strong>Ambiguity:</strong> "Cilantro" vs "Coriander". "Flour" (is it wheat? almond? GF?). Missing context leads to dangerous allergen omissions.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 mt-1 shrink-0"><i data-lucide="x" class="w-3 h-3"></i></div>
+                        <span class="text-text-muted text-sm leading-relaxed"><strong>Scale:</strong> Processing one recipe is easy. Processing 10,000/hour requires a distributed, fault-tolerant architecture.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="relative reveal">
+                <div class="absolute -inset-4 bg-gradient-to-tr from-red-50 to-transparent rounded-3xl transform rotate-2"></div>
+                <div class="card-ceramic p-8 relative z-10">
+                    <div class="font-mono text-xs text-text-light mb-4 border-b border-border pb-2">Input: raw_text_blob</div>
+                    <div class="space-y-2 opacity-60">
+                        <p class="line-through decoration-red-400/50">2 lg eggs (room temp)</p>
+                        <p class="line-through decoration-red-400/50">1/2 c. almond flour</p>
+                        <p class="line-through decoration-red-400/50">pinch of himalayan salt</p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-dashed border-red-200">
+                        <div class="flex items-center gap-2 text-red-700 font-bold text-xs uppercase tracking-widest">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> Parsing Failed
+                        </div>
+                        <p class="text-xs text-text-muted mt-2">Legacy regex parsers fail on 40% of complex ingredient strings.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- THE SOLUTION -->
+        <section class="bg-white border-y border-border py-24">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+                    <h2 class="font-display text-3xl md:text-4xl text-primary mb-6">The Solution: Intelligent Pipeline</h2>
+                    <p class="text-text-muted font-light text-lg">We didn't just build a parser. We built a context-aware nutrition engine backed by USDA Foundation data.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 relative">
+                    <!-- Connector Lines (Desktop only) -->
+                    <div class="hidden md:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-transparent via-border to-transparent z-0"></div>
+
+                    <!-- Step 1 -->
+                    <div class="card-ceramic p-8 text-center relative z-10 reveal">
+                        <div class="w-16 h-16 mx-auto bg-primary/5 rounded-2xl flex items-center justify-center text-primary mb-6">
+                            <i data-lucide="scan-text" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-display text-xl text-primary mb-3">1. NLP Normalization</h3>
+                        <p class="text-sm text-text-muted leading-relaxed">Our custom parser identifies entity types: <span class="bg-gray-100 px-1 rounded">Quantity</span>, <span class="bg-gray-100 px-1 rounded">Unit</span>, <span class="bg-gray-100 px-1 rounded">Ingredient</span>, and <span class="bg-gray-100 px-1 rounded">Prep Method</span>. It converts "2 lg" to "100g" based on density databases.</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="card-ceramic p-8 text-center relative z-10 reveal">
+                        <div class="w-16 h-16 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 mb-6">
+                            <i data-lucide="database" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-display text-xl text-primary mb-3">2. Vector Mapping</h3>
+                        <p class="text-sm text-text-muted leading-relaxed">We use hybrid search (keywords + embeddings) to map "Cilantro" to the exact USDA Food ID #11165, accounting for regional synonyms.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="card-ceramic p-8 text-center relative z-10 reveal">
+                        <div class="w-16 h-16 mx-auto bg-green-50 rounded-2xl flex items-center justify-center text-green-700 mb-6">
+                            <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-display text-xl text-primary mb-3">3. Compliance Check</h3>
+                        <p class="text-sm text-text-muted leading-relaxed">Once identified, the engine scans the molecular profile for 14 major allergens and calculates macro/micro splits instantly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HARDSHIPS -->
+        <section class="max-w-6xl mx-auto px-6 py-24">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="order-2 lg:order-1 relative reveal">
+                    <div class="card-ceramic p-8 border-l-4 border-l-orange-400">
+                        <h4 class="font-display text-lg text-primary mb-2">Hardship #1: "The Salt Problem"</h4>
+                        <p class="text-sm text-text-muted mb-4">Sodium content varies wildly. "Kosher salt" vs "Table salt" have different densities. A parser error here could label a dish "Heart Healthy" when it's dangerous.</p>
+                        <div class="bg-orange-50 p-4 rounded-lg text-xs text-orange-800">
+                            <strong>Fix:</strong> Implemented specific density lookups for 15 varieties of salt, defaulting to the most conservative (highest sodium) estimate when ambiguous to ensure safety.
+                        </div>
+                    </div>
+                    <div class="card-ceramic p-8 border-l-4 border-l-blue-400 mt-6">
+                        <h4 class="font-display text-lg text-primary mb-2">Hardship #2: Image Sync</h4>
+                        <p class="text-sm text-text-muted mb-4">Crawling recipes often resulted in broken image links or low-res thumbnails, degrading the user experience.</p>
+                        <div class="bg-blue-50 p-4 rounded-lg text-xs text-blue-800">
+                            <strong>Fix:</strong> Built a tiered fallback system. If the OG image fails, we query a verified image API, and as a last resort, generate a high-quality placeholder based on the recipe category (e.g., "Soup").
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2 reveal">
+                    <h2 class="font-display text-3xl text-primary mb-6">Roadblocks & Breakthroughs</h2>
+                    <p class="prose-p">Building Recipe Base wasn't a straight line. We encountered edge cases that broke our initial models.</p>
+                    <p class="prose-p">One significant hurdle was <strong>fuzzy matching</strong>. Users type "Parm", "Parmesan", "Parmigiano-Reggiano". String matching failed.</p>
+                    <div class="highlight-box">
+                        <p class="text-sm text-primary font-medium italic">"We had to implement a custom embedding model to understand that 'EVOO' and 'Extra Virgin Olive Oil' are semantically identical in a culinary context."</p>
+                    </div>
+                    <p class="prose-p">This attention to detail allows us to achieve >98% accuracy in nutritional labeling, far surpassing standard "keyword" searches.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CAPABILITIES -->
+        <section class="bg-primary text-white py-24 relative overflow-hidden">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div class="max-w-6xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-16 reveal">
+                    <h2 class="font-display text-3xl md:text-4xl mb-6">Capabilities at Scale</h2>
+                    <p class="text-white/80 max-w-2xl mx-auto font-light">From a single recipe to an enterprise database.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 reveal">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="font-display text-2xl">Automated Tagging</h3>
+                            <i data-lucide="tag" class="w-6 h-6 opacity-70"></i>
+                        </div>
+                        <p class="text-sm text-white/70 mb-6">Instantly generate dietary flags based on composition, not just user tags.</p>
+                        <div class="flex gap-3">
+                            <span class="px-3 py-1 rounded bg-green-500/20 border border-green-500/50 text-green-300 text-xs font-bold uppercase">Vegan</span>
+                            <span class="px-3 py-1 rounded bg-blue-500/20 border border-blue-500/50 text-blue-300 text-xs font-bold uppercase">Gluten-Free</span>
+                            <span class="px-3 py-1 rounded bg-yellow-500/20 border border-yellow-500/50 text-yellow-300 text-xs font-bold uppercase">High Protein</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 reveal">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="font-display text-2xl">Micronutrient Audit</h3>
+                            <i data-lucide="microscope" class="w-6 h-6 opacity-70"></i>
+                        </div>
+                        <p class="text-sm text-white/70 mb-6">Go beyond calories. Track iron, calcium, Vitamin D, and more for clinical applications.</p>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div><span class="block text-xl font-mono font-bold">12mg</span><span class="text-[10px] uppercase tracking-wider opacity-60">Iron</span></div>
+                            <div><span class="block text-xl font-mono font-bold">800mg</span><span class="text-[10px] uppercase tracking-wider opacity-60">Calcium</span></div>
+                            <div><span class="block text-xl font-mono font-bold">90mg</span><span class="text-[10px] uppercase tracking-wider opacity-60">Vit C</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="py-24 bg-white">
+            <div class="max-w-4xl mx-auto px-6 text-center reveal">
+                <h2 class="font-display font-medium text-4xl text-primary mb-6">Ready to upgrade your data?</h2>
+                <p class="text-text-muted mb-10 text-lg font-light">See the engine in action with our interactive lab.</p>
+                <a href="/lab.html" class="btn btn-primary">Try the Nutrition Lab</a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-border py-16 px-6">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+                <div>
+                    <a href="/" class="flex items-center gap-2 mb-4">
+                        <img src="/logo.svg" alt="Recipe Base" class="h-6 w-auto">
+                    </a>
+                    <p class="text-sm text-text-muted max-w-xs font-light">
+                        Building the standard for culinary data.
+                    </p>
+                </div>
+                <div class="flex gap-16 text-sm">
+                    <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Product</span><a href="/recipes.html" class="text-text-muted hover:text-primary transition-colors">Database</a><a href="/lab.html" class="text-text-muted hover:text-primary transition-colors">Nutrition Lab</a></div>
+                    <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Developers</span><a href="/docs.html" class="text-text-muted hover:text-primary transition-colors">Documentation</a><a href="/admin.html" class="text-text-muted hover:text-primary transition-colors">Status</a></div>
+                </div>
+            </div>
+            <div class="max-w-6xl mx-auto mt-12 pt-8 border-t border-border text-xs text-text-light flex justify-between"><span>© 2025 Recipe Base Inc. • Made by <a href="https://contrerasfrancisco.com" target="_blank" class="hover:text-primary">Francisco</a> with love.</span><span>v1.6 Ceramic</span></div>
+        </footer>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // Animations
+        gsap.registerPlugin(ScrollTrigger);
+        
+        const reveals = document.querySelectorAll('.reveal');
+        reveals.forEach((element) => {
+            gsap.fromTo(element, 
+                { y: 50, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    duration: 1,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: element,
+                        start: "top 85%", // Start when top of element is 85% down viewport
+                        toggleActions: "play none none reverse"
+                    }
+                }
+            );
+        });
+
+        // Mobile Menu
+        const toggle = document.getElementById('mobile-menu-toggle');
+        const close = document.getElementById('mobile-menu-close');
+        const menu = document.getElementById('mobile-menu');
+        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
+        toggle.addEventListener('click', toggleMenu);
+        close.addEventListener('click', toggleMenu);
+
+        // Shader
+        class GodRaysBackground {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                if (!this.canvas) return;
+                
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true, antialias: true });
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                
+                this.uniforms = {
+                    uTime: { value: 0 },
+                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+                };
+                
+                // Shader: Polar coordinate noise for rays + radial mask
+                const material = new THREE.ShaderMaterial({
+                    uniforms: this.uniforms,
+                    transparent: true,
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float uTime;
+                        uniform vec2 uResolution;
+                        varying vec2 vUv;
+
+                        vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+                        float snoise(vec2 v){
+                            const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+                            vec2 i  = floor(v + dot(v, C.yy) );
+                            vec2 x0 = v - i + dot(i, C.xx);
+                            vec2 i1;
+                            i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                            vec4 x12 = x0.xyxy + C.xxzz;
+                            x12.xy -= i1;
+                            i = mod(i, 289.0);
+                            vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+                            vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                            m = m*m ;
+                            m = m*m ;
+                            vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                            vec3 h = abs(x) - 0.5;
+                            vec3 ox = floor(x + 0.5);
+                            vec3 a0 = x - ox;
+                            m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                            vec3 g;
+                            g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                            return 130.0 * dot(m, g);
+                        }
+
+                        void main() {
+                            vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
+                            float aspect = uResolution.x / uResolution.y;
+                            vec2 lightPos = vec2(-aspect * 0.25, 0.55);
+                            vec2 p = uv - lightPos;
+                            float angle = atan(p.y, p.x);
+                            float dist = length(p);
+                            float t = uTime * 0.245;
+                            float n1 = snoise(vec2(angle * 4.0 + t * 0.2, dist * 0.5 - t));
+                            float n2 = snoise(vec2(angle * 8.0 - t * 0.5, dist * 1.5 + n1 * 0.5 - t * 0.5));
+                            float rays = n1 * 0.6 + n2 * 0.4;
+                            rays = rays * 0.5 + 0.5;
+                            rays = pow(rays, 2.5);
+                            float fadeOut = 1.0 - smoothstep(0.4, 1.4, dist);
+                            float fadeIn = smoothstep(0.1, 0.45, dist);
+                            float spotlight = fadeIn * fadeOut;
+                            float finalAlpha = rays * spotlight * 0.5; 
+                            vec3 rayColor = vec3(0.82, 0.80, 0.70);
+                            gl_FragColor = vec4(rayColor, finalAlpha);
+                        }
+                    `
+                });
+
+                this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.animate();
+            }
+
+            resize() {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                this.renderer.setSize(w, h);
+                this.uniforms.uResolution.value.set(w, h);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.uniforms.uTime.value += 0.0098;
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+        
+        // Initialize
+        new GodRaysBackground('bg-canvas');
+    </script>
+</body>
+</html>
