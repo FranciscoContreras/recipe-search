@@ -8,8 +8,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
     
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -67,6 +67,12 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e0e0d2; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #c0c0b5; }
+
+        /*Navbar components reused */
+        .btn-ghost { background-color: transparent; color: #4a6b5d; border-color: transparent; padding-left: 1rem; padding-right: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+        .btn-ghost:hover { color: #1a4432; background-color: rgba(26, 68, 50, 0.05); }
+        .btn-nav-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.1); border-color: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
+        .btn-nav-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(26, 68, 50, 0.15); background-color: #143326; }
     </style>
 </head>
 <body class="antialiased bg-technical">
@@ -74,18 +80,31 @@
     <canvas id="bg-canvas"></canvas>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 bg-[#fafafa]/90 backdrop-blur-xl border-b border-border shadow-sm">
-        <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-            <a href="/" class="flex items-center gap-2 font-bold text-primary text-xl tracking-tight">
-                <img src="/logo.svg" alt="RB" class="h-6 w-auto"> Lab
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
+            <a href="/" class="flex items-center gap-2">
+                <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
             </a>
-            <div class="flex items-center gap-4 text-sm font-medium">
-                <a href="/" class="text-text-muted hover:text-primary">Home</a>
-                <a href="/recipes.html" class="text-text-muted hover:text-primary">Recipes</a>
-                <a href="/docs.html" class="text-text-muted hover:text-primary">Docs</a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Recipes</a>
+                <a href="/lab.html" class="text-sm font-bold text-primary border-b-2 border-primary/20 pb-0.5">Nutrition Lab</a>
+                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">API Docs</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin.html" class="hidden md:inline-flex btn-ghost border border-border">Admin</a>
+                <a href="/lab.html" class="hidden md:inline-flex btn-nav-primary">Launch App</a>
+                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>
     </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fafafa] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
+        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
+        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
+        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Nutrition Lab</a>
+        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">API Docs</a>
+    </div>
 
     <main class="pt-32 pb-24 px-6 max-w-7xl mx-auto">
         

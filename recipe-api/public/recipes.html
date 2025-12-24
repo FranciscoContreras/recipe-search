@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Collection - Recipe Base</title>
     
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -28,71 +30,85 @@
                         border: '#e0e0d2', 
                         text: { main: '#1a4432', muted: '#4a6b5d', light: '#7a9185' } 
                     },
-                    fontFamily: {
-                        sans: ['DM Sans', 'sans-serif'],
-                        display: ['Grenda', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    boxShadow: {
-                        'ceramic': '0 4px 20px -2px rgba(26, 68, 50, 0.05), 0 0 1px rgba(26, 68, 50, 0.1)',
-                    }
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'], display: ['Grenda', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(26, 68, 50, 0.05), 0 0 1px rgba(26, 68, 50, 0.1)' }
                 }
             }
         }
     </script>
-
     <style>
         body { background-color: #fafafa; color: #1a4432; overflow-x: hidden; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
+        
+        /* Technical Grid Background */
+        .bg-technical {
+            background-color: #fafafa;
+            background-image: 
+                linear-gradient(to right, rgba(26, 68, 50, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26, 68, 50, 0.03) 1px, transparent 1px);
+            background-size: 64px 64px;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
         
         /* --- Component System: Buttons --- */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-        .btn-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.15); border-color: transparent; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(26, 68, 50, 0.2); background-color: #143326; }
+        
+        .btn-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.1); border-color: transparent; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(26, 68, 50, 0.15); background-color: #143326; }
+        
         .btn-secondary { background-color: #ffffff; color: #1a4432; border-color: #e0e0d2; }
         .btn-secondary:hover { border-color: #1a4432; background-color: #fafafa; transform: translateY(-1px); }
+
         .btn-ghost { background-color: transparent; color: #4a6b5d; border-color: transparent; padding-left: 1rem; padding-right: 1rem; }
         .btn-ghost:hover { color: #1a4432; background-color: rgba(26, 68, 50, 0.05); }
 
+        /* --- Components: Inputs & Cards --- */
         .input-ceramic {
             background-color: #ffffff; border: 1px solid #e0e0d2;
             border-radius: 9999px; padding: 0.75rem 1.5rem;
             transition: all 0.3s;
+            font-family: 'DM Sans', sans-serif;
+            color: #1a4432;
         }
         .input-ceramic:focus {
             border-color: #1a4432; outline: none; 
             box-shadow: 0 0 0 3px rgba(26, 68, 50, 0.1);
         }
         
-        .card-recipe {
-            background: #ffffff; border: 1px solid #e0e0d2; border-radius: 1.25rem;
-            box-shadow: 0 4px 20px -2px rgba(26, 68, 50, 0.05);
-            transition: all 0.4s ease;
+        .card-ceramic { 
+            background: #ffffff; border: 1px solid #e0e0d2; 
+            border-radius: 1.25rem; 
+            box-shadow: 0 2px 8px -2px rgba(26, 68, 50, 0.03); 
+            transition: all 0.4s ease; 
             display: flex; flex-direction: column; overflow: hidden;
         }
-        .card-recipe:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px -4px rgba(26, 68, 50, 0.08);
-            border-color: #c0c0b5;
+        .card-ceramic:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 12px 30px -4px rgba(26, 68, 50, 0.08); 
+            border-color: #c0c0b5; 
         }
+
+        .border-fine { border-color: #e0e0d2; border-width: 1px; }
     </style>
 </head>
 <body class="antialiased bg-technical">
 
     <canvas id="bg-canvas"></canvas>
 
+    <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
         <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
             </a>
             <div class="hidden md:flex items-center gap-8">
-                <a href="/recipes.html" class="text-sm font-bold text-primary border-b-2 border-primary/20 pb-0.5">Recipes</a>
+                <a href="/recipes.html" class="text-sm font-medium text-primary border-b-2 border-primary/20 pb-0.5">Recipes</a>
                 <a href="/lab.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Nutrition Lab</a>
                 <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">API Docs</a>
             </div>
             <div class="flex items-center gap-3">
-                <a href="/admin.html" class="hidden md:inline-flex btn btn-secondary">Admin</a>
+                <a href="/admin.html" class="hidden md:inline-flex btn btn-ghost border border-border">Admin</a>
+                <a href="/lab.html" class="hidden md:inline-flex btn btn-primary">Launch App</a>
                 <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
             </div>
         </div>
@@ -107,15 +123,19 @@
     </div>
 
     <main class="relative z-10 px-6 pt-32 pb-20 max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div>
-                <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-2 block">The Archive</span>
-                <h1 class="font-display font-medium text-4xl md:text-5xl text-primary">All Recipes</h1>
-                <p class="mt-2 text-text-muted text-sm pl-1 opacity-80" id="resultCount">Loading archive...</p>
+                <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">The Archive</span>
+                <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-3">All Recipes</h1>
+                <p class="text-text-muted text-sm font-light opacity-80" id="resultCount">Loading archive...</p>
             </div>
             <div class="w-full md:w-auto flex flex-col gap-4">
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="searchInput" class="input-ceramic w-full sm:w-64" placeholder="Search (e.g. 'pasta')">
+                    <div class="relative w-full sm:w-64">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-text-light"></i>
+                        <input type="text" id="searchInput" class="input-ceramic w-full pl-11" placeholder="Search...">
+                    </div>
                     <input type="text" id="ingredientInput" class="input-ceramic w-full sm:w-48" placeholder="Ingredients...">
                 </div>
                 <div class="flex items-center gap-2 px-2">
@@ -125,32 +145,78 @@
             </div>
         </div>
 
+        <!-- Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="recipesGrid">
-            <div class="col-span-full py-20 text-center opacity-50 font-display">Loading collection...</div>
+            <div class="col-span-full py-20 text-center opacity-50 font-display animate-pulse">Loading collection...</div>
+        </div>
+        
+        <!-- Pagination Controls -->
+        <div id="paginationControls" class="flex justify-center items-center gap-4 mt-12 hidden">
+            <button id="prevPage" class="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+            <span id="pageIndicator" class="text-sm font-medium text-text-muted">Page 1</span>
+            <button id="nextPage" class="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
         </div>
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-white border-t border-border py-16 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+            <div>
+                <a href="/" class="flex items-center gap-2 mb-4">
+                    <img src="/logo.svg" alt="Recipe Base" class="h-6 w-auto">
+                </a>
+                <p class="text-sm text-text-muted max-w-xs font-light">
+                    Building the standard for culinary data.
+                </p>
+            </div>
+            <div class="flex gap-16 text-sm">
+                <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Product</span><a href="/recipes.html" class="text-text-muted hover:text-primary transition-colors">Database</a><a href="/lab.html" class="text-text-muted hover:text-primary transition-colors">Nutrition Lab</a></div>
+                <div class="flex flex-col gap-3"><span class="font-bold text-primary mb-1">Developers</span><a href="/docs.html" class="text-text-muted hover:text-primary transition-colors">Documentation</a><a href="/admin.html" class="text-text-muted hover:text-primary transition-colors">Status</a></div>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto mt-12 pt-8 border-t border-border text-xs text-text-light flex justify-between"><span>© 2025 Recipe Base Inc. • Made by <a href="https://contrerasfrancisco.com" target="_blank" class="hover:text-primary">Francisco</a> with love.</span><span>v1.6 Ceramic</span></div>
+    </footer>
+
     <script>
         lucide.createIcons();
-        // ... (Re-use existing fetch logic but updated class names)
+        
         const API_URL = ''; 
         let debounceTimer;
+        let currentPage = 1;
+        const limit = 50;
 
-        async function fetchRecipes(query = '', ingredients = '', matchAll = false) {
+        async function fetchRecipes(query = '', ingredients = '', matchAll = false, page = 1) {
             try {
-                let endpoint = `${API_URL}/recipes`;
+                const grid = document.getElementById('recipesGrid');
+                // Only show loading on initial load or if explicitly needed, otherwise it can be jarring
+                if(page === 1 && !grid.querySelector('.card-ceramic')) {
+                    grid.innerHTML = '<div class="col-span-full py-20 text-center opacity-50 font-display animate-pulse">Loading collection...</div>';
+                }
+
                 const params = new URLSearchParams();
+                params.append('page', page);
+                params.append('limit', limit);
+
+                let endpoint = `${API_URL}/recipes`;
+                
                 if (query) params.append('q', query);
                 if (ingredients) params.append('ingredients', ingredients);
                 if (matchAll) params.append('match_all', 'true');
-                if (query || ingredients) endpoint = `${API_URL}/search?${params.toString()}`;
                 
-                const res = await fetch(endpoint);
+                // If searching, switch to search endpoint
+                if (query || ingredients) {
+                    endpoint = `${API_URL}/search`;
+                }
+
+                const res = await fetch(`${endpoint}?${params.toString()}`);
                 const data = await res.json();
                 const recipes = data.recipes || [];
+                
                 renderGrid(recipes);
                 updateCount(data.count !== undefined ? data.count : recipes.length, !!(query || ingredients));
+                updatePagination(data.count, page, recipes.length);
             } catch (err) {
+                console.error(err);
                 document.getElementById('recipesGrid').innerHTML = '<div class="col-span-full text-center py-20 text-red-400">Unable to load archive.</div>';
             }
         }
@@ -159,33 +225,61 @@
             document.getElementById('resultCount').textContent = isSearch ? `${count} result${count === 1 ? '' : 's'} found` : `${count} curated recipe${count === 1 ? '' : 's'}`;
         }
 
+        function updatePagination(totalCount, page, currentCount) {
+             const controls = document.getElementById('paginationControls');
+             const prevBtn = document.getElementById('prevPage');
+             const nextBtn = document.getElementById('nextPage');
+             const indicator = document.getElementById('pageIndicator');
+
+             // Simple check: if totalCount is available and > limit, show controls
+             // Or if we just have a full page of results, assume there might be more (naive)
+             if (totalCount > limit || (page > 1)) {
+                 controls.classList.remove('hidden');
+             } else {
+                 controls.classList.add('hidden');
+             }
+
+             indicator.textContent = `Page ${page}`;
+             prevBtn.disabled = page <= 1;
+             
+             // Disable next if we fetched fewer than limit or if we reached total
+             const maxPages = Math.ceil(totalCount / limit);
+             nextBtn.disabled = (currentCount < limit) || (page >= maxPages && totalCount);
+        }
+
         function renderGrid(recipes) {
             const grid = document.getElementById('recipesGrid');
             grid.innerHTML = '';
             if (recipes.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-20 text-text-muted">No recipes found.</div>'; return; }
-            recipes.forEach((recipe) => {
+            
+            recipes.forEach((recipe, index) => {
                 const imageUrl = recipe.image || 'https://via.placeholder.com/400x300?text=No+Image';
                 const description = recipe.description || 'No description available.';
                 const cookTime = formatDuration(recipe.cook_time);
                 const prepTime = formatDuration(recipe.prep_time);
 
                 const card = document.createElement('a');
-                card.className = 'card-recipe group h-full';
+                card.className = 'card-ceramic group h-full opacity-0 animate-fade-in-up';
+                card.style.animationDelay = `${index * 50}ms`;
+                card.style.animationFillMode = 'forwards';
                 card.href = `/recipe-details.html?id=${recipe.id}`;
                 card.innerHTML = `
-                    <div class="aspect-[4/3] w-full overflow-hidden relative bg-earth-200">
-                        <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${imageUrl}" alt="${recipe.name}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                    <div class="aspect-[4/3] w-full overflow-hidden relative bg-gray-100">
+                        <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${imageUrl}" alt="${recipe.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
                     <div class="p-6 flex flex-col flex-1">
-                        <h3 class="font-display text-xl text-primary mb-2 font-medium leading-tight group-hover:text-green-700 transition-colors line-clamp-2">${recipe.name}</h3>
+                        <h3 class="font-display text-xl text-primary mb-2 font-medium leading-tight group-hover:text-tertiary transition-colors line-clamp-2">${recipe.name}</h3>
                         <div class="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-text-light mb-4">
-                            ${prepTime ? `<span>Prep ${prepTime}</span>` : ''}
-                            ${cookTime ? `<span>Cook ${cookTime}</span>` : ''}
+                            ${prepTime ? `<span class="bg-gray-50 px-2 py-1 rounded border border-border">Prep ${prepTime}</span>` : ''}
+                            ${cookTime ? `<span class="bg-gray-50 px-2 py-1 rounded border border-border">Cook ${cookTime}</span>` : ''}
                         </div>
-                        <p class="text-text-muted text-sm leading-relaxed line-clamp-3 mb-6 flex-1 opacity-80">${description}</p>
+                        <p class="text-text-muted text-sm leading-relaxed line-clamp-3 mb-6 flex-1 opacity-80 font-light">${description}</p>
                         <div class="mt-auto pt-4 border-t border-border flex justify-between items-center">
                             <span class="text-xs font-bold uppercase tracking-widest text-primary group-hover:underline">View Details</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1"></i>
+                            <div class="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -195,22 +289,64 @@
         }
 
         function formatDuration(iso) { if (!iso) return ''; return iso.replace('PT', '').replace('H', 'h ').replace('M', 'm').toLowerCase(); }
-        function handleSearch() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { const query = document.getElementById('searchInput').value; const ingredients = document.getElementById('ingredientInput').value; const matchAll = document.getElementById('matchAllCheck').checked; fetchRecipes(query, ingredients, matchAll); }, 300); }
+        
+        function handleSearch() { 
+            clearTimeout(debounceTimer); 
+            debounceTimer = setTimeout(() => { 
+                currentPage = 1;
+                const query = document.getElementById('searchInput').value; 
+                const ingredients = document.getElementById('ingredientInput').value; 
+                const matchAll = document.getElementById('matchAllCheck').checked; 
+                fetchRecipes(query, ingredients, matchAll, currentPage); 
+            }, 300); 
+        }
 
         document.getElementById('searchInput').addEventListener('input', handleSearch);
         document.getElementById('ingredientInput').addEventListener('input', handleSearch);
         document.getElementById('matchAllCheck').addEventListener('change', handleSearch);
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                const query = document.getElementById('searchInput').value; 
+                const ingredients = document.getElementById('ingredientInput').value; 
+                const matchAll = document.getElementById('matchAllCheck').checked; 
+                fetchRecipes(query, ingredients, matchAll, currentPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            const query = document.getElementById('searchInput').value; 
+            const ingredients = document.getElementById('ingredientInput').value; 
+            const matchAll = document.getElementById('matchAllCheck').checked; 
+            fetchRecipes(query, ingredients, matchAll, currentPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Initial Load
         fetchRecipes();
 
-        // Shader Reused
-        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fafafa', '#1a4432');
+        // Shader
+        class GodRaysBackground { constructor(canvasId) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true, antialias: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) } }; const material = new THREE.ShaderMaterial({ uniforms: this.uniforms, transparent: true, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; varying vec2 vUv; vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); } float snoise(vec2 v){ const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod(i, 289.0); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } void main() { vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y; float aspect = uResolution.x / uResolution.y; vec2 lightPos = vec2(-aspect * 0.25, 0.55); vec2 p = uv - lightPos; float angle = atan(p.y, p.x); float dist = length(p); float t = uTime * 0.245; float n1 = snoise(vec2(angle * 4.0 + t * 0.2, dist * 0.5 - t)); float n2 = snoise(vec2(angle * 8.0 - t * 0.5, dist * 1.5 + n1 * 0.5 - t * 0.5)); float rays = n1 * 0.6 + n2 * 0.4; rays = rays * 0.5 + 0.5; rays = pow(rays, 2.5); float fadeOut = 1.0 - smoothstep(0.4, 1.4, dist); float fadeIn = smoothstep(0.1, 0.45, dist); float spotlight = fadeIn * fadeOut; float finalAlpha = rays * spotlight * 0.5; vec3 rayColor = vec3(0.85, 0.85, 0.80); gl_FragColor = vec4(rayColor, finalAlpha); }` }); this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material)); this.resize(); window.addEventListener('resize', () => this.resize()); this.animate(); } resize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(() => this.animate()); this.uniforms.uTime.value += 0.0098; this.renderer.render(this.scene, this.camera); } }
+        new GodRaysBackground('bg-canvas');
 
+        // Mobile Menu
         const toggle = document.getElementById('mobile-menu-toggle');
         const close = document.getElementById('mobile-menu-close');
         const menu = document.getElementById('mobile-menu');
         function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
         toggle.addEventListener('click', toggleMenu);
         close.addEventListener('click', toggleMenu);
+
+        // Add Animation Style
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            .animate-fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
