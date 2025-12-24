@@ -22,32 +22,41 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    colors: { 
+                        primary: '#1a4432', 
+                        tertiary: '#266549',
+                        secondary: '#2b7156',
+                        accent: '#f55b2b',
+                        surface: '#e0e0d2',
+                        bg: '#fafafa', 
+                        border: '#e0e0d2', 
+                        text: { main: '#1a4432', muted: '#4a6b5d', light: '#7a9185' } 
+                    },
                     fontFamily: { sans: ['DM Sans', 'sans-serif'], display: ['Grenda', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(26, 68, 50, 0.05), 0 0 1px rgba(26, 68, 50, 0.1)' }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        body { background-color: #fafafa; color: #1a4432; overflow-x: hidden; }
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
         
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-        .btn-primary { background-color: #254a31; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); border-color: transparent; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
-        .btn-secondary { background-color: #ffffff; color: #254a31; border-color: #e5e0d8; }
-        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; transform: translateY(-1px); }
-        .btn-ghost { background-color: transparent; color: #5c5446; border-color: transparent; padding-left: 1rem; padding-right: 1rem; }
-        .btn-ghost:hover { color: #254a31; background-color: rgba(37, 74, 49, 0.05); }
+        .btn-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.15); border-color: transparent; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(26, 68, 50, 0.2); background-color: #143326; }
+        .btn-secondary { background-color: #ffffff; color: #1a4432; border-color: #e0e0d2; }
+        .btn-secondary:hover { border-color: #1a4432; background-color: #fafafa; transform: translateY(-1px); }
+        .btn-ghost { background-color: transparent; color: #4a6b5d; border-color: transparent; padding-left: 1rem; padding-right: 1rem; }
+        .btn-ghost:hover { color: #1a4432; background-color: rgba(26, 68, 50, 0.05); }
 
-        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.25rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); transition: all 0.4s ease; }
-        .card-ceramic:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -4px rgba(37, 74, 49, 0.08); border-color: #d1ccbc; }
+        .card-ceramic { background: #ffffff; border: 1px solid #e0e0d2; border-radius: 1.25rem; box-shadow: 0 4px 20px -2px rgba(26, 68, 50, 0.05); transition: all 0.4s ease; }
+        .card-ceramic:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -4px rgba(26, 68, 50, 0.08); border-color: #c0c0b5; }
         
         /* Typography utilities for case study */
-        .prose-p { font-size: 1.125rem; line-height: 1.8; color: #5c5446; margin-bottom: 1.5rem; font-weight: 300; }
-        .prose-h3 { font-family: 'Grenda', sans-serif; font-size: 1.5rem; color: #254a31; margin-bottom: 1rem; margin-top: 2.5rem; }
-        .highlight-box { background: rgba(37, 74, 49, 0.03); border-left: 4px solid #254a31; padding: 1.5rem; border-radius: 0 1rem 1rem 0; margin: 2rem 0; }
+        .prose-p { font-size: 1.125rem; line-height: 1.8; color: #4a6b5d; margin-bottom: 1.5rem; font-weight: 300; }
+        .prose-h3 { font-family: 'Grenda', sans-serif; font-size: 1.5rem; color: #1a4432; margin-bottom: 1rem; margin-top: 2.5rem; }
+        .highlight-box { background: rgba(26, 68, 50, 0.03); border-left: 4px solid #1a4432; padding: 1.5rem; border-radius: 0 1rem 1rem 0; margin: 2rem 0; }
     </style>
 </head>
 <body class="antialiased">
@@ -55,7 +64,7 @@
     <canvas id="bg-canvas"></canvas>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
         <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
@@ -73,7 +82,7 @@
         </div>
     </nav>
 
-    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fafafa] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
         <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
         <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
         <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
@@ -92,70 +101,129 @@
         </section>
 
         <!-- ORIGIN STORY -->
-        <section class="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-16 items-center">
-            <div class="reveal order-2 lg:order-1 relative">
-                <div class="absolute -inset-4 bg-gradient-to-tr from-primary/5 to-transparent rounded-3xl transform -rotate-2"></div>
+        <section class="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-12 gap-16 items-center overflow-hidden">
+            <!-- Text Section -->
+            <div class="lg:col-span-5 reveal order-1 relative z-10">
+                <div class="inline-flex items-center gap-2 mb-6">
+                    <span class="w-8 h-[1px] bg-primary/40"></span>
+                    <span class="text-xs font-bold tracking-widest uppercase text-primary/80">The Foundation</span>
+                </div>
+                <h2 class="font-display text-4xl md:text-5xl text-primary mb-8 leading-tight">Order from <br><span class="text-transparent bg-clip-text bg-gradient-to-br from-primary via-primary/80 to-primary/40">Entropy.</span></h2>
                 
-                <!-- Product Showcase Container -->
-                <div class="grid md:grid-cols-2 gap-4 relative z-10">
-                    
-                    <!-- Left: Raw Recipe (Input) -->
-                    <div class="card-ceramic p-4 flex flex-col h-full bg-white transform md:-rotate-2 transition-transform hover:rotate-0 duration-500">
-                        <div class="relative w-full h-32 rounded-lg overflow-hidden mb-3 bg-gray-100">
-                            <img src="https://img.buzzfeed.com/tasty-app-user-assets-prod-us-east-1/recipes/598bb95dce5641afb9e257dc3d6cf7f9.png?resize=600:*" class="w-full h-full object-cover" alt="Broccoli Cheddar Soup">
-                            <div class="absolute inset-0 bg-black/10"></div>
-                            <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm font-medium">Input: Raw Data</span>
-                        </div>
-                        <h4 class="font-display text-sm text-primary mb-2 leading-tight">Easy Broccoli Cheddar Soup</h4>
-                        <p class="text-[10px] text-text-muted leading-relaxed line-clamp-4 font-mono bg-gray-50 p-2 rounded border border-border">
-                            small onion, medium red bell pepper, broccoli, butter, all purpose flour, evaporated milk, vegetable broth, shredded cheddar cheese...
-                        </p>
+                <div class="space-y-6 text-lg text-text-muted font-light leading-relaxed">
+                    <p>Our raw database holds terabytes of unstructured culinary text. To make it useful, we architected a <strong>distributed processing pipeline</strong>.</p>
+                    <p>The system pulls raw records from our archives, normalizes inconsistent units (converting "cups" to grams), and stabilizes the schema. It turns static text into a queryable, intelligent dataset ready for application use.</p>
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-border/60 grid grid-cols-3 gap-6">
+                    <div>
+                        <span class="block text-2xl font-display text-primary">20k+</span>
+                        <span class="text-xs text-text-light uppercase tracking-wide">Processed</span>
                     </div>
-
-                    <!-- Right: Structured Data (Output) -->
-                    <div class="card-ceramic p-5 flex flex-col h-full bg-primary text-white transform md:rotate-2 md:translate-y-8 transition-transform hover:rotate-0 duration-500 shadow-xl border-none relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-center mb-4 border-b border-white/20 pb-2">
-                                <span class="text-[10px] uppercase tracking-widest font-bold opacity-80">API Output</span>
-                                <i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i>
-                            </div>
-                            
-                            <div class="flex items-baseline gap-1 mb-4">
-                                <span class="text-3xl font-display font-medium">350</span>
-                                <span class="text-xs opacity-70">kcal</span>
-                            </div>
-
-                            <div class="space-y-2 text-xs mb-4">
-                                <div class="flex justify-between"><span class="opacity-70">Protein</span><span class="font-mono font-bold">12g</span></div>
-                                <div class="w-full bg-white/20 h-1 rounded-full overflow-hidden"><div class="bg-green-400 h-full w-[24%]"></div></div>
-                                
-                                <div class="flex justify-between"><span class="opacity-70">Healthy Fats</span><span class="font-mono font-bold">24g</span></div>
-                                <div class="w-full bg-white/20 h-1 rounded-full overflow-hidden"><div class="bg-yellow-400 h-full w-[45%]"></div></div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2 mt-auto">
-                                <div class="bg-white/10 rounded p-2 text-center">
-                                    <span class="block text-[10px] opacity-60 uppercase">Vit C</span>
-                                    <span class="font-mono font-bold text-green-300">85%</span>
-                                </div>
-                                <div class="bg-white/10 rounded p-2 text-center">
-                                    <span class="block text-[10px] opacity-60 uppercase">Calc</span>
-                                    <span class="font-mono font-bold text-blue-300">30%</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div>
+                        <span class="block text-2xl font-display text-primary">99.8%</span>
+                        <span class="text-xs text-text-light uppercase tracking-wide">Accuracy</span>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-display text-primary">40ms</span>
+                        <span class="text-xs text-text-light uppercase tracking-wide">Latency</span>
                     </div>
                 </div>
             </div>
-            <div class="reveal order-1 lg:order-2">
-                <h2 class="font-display text-3xl text-primary mb-6">The Origin: The Extensive Crawler</h2>
-                <p class="prose-p">Recipe Base began by tackling the first hurdle: acquiring a comprehensive dataset. We developed an extensive, robust crawler capable of navigating diverse culinary websites, extracting not just recipe text but also high-quality images and metadata.</p>
-                <p class="prose-p">This led to a curated collection of 20,000+ recipes, each complete with instructions, ingredients, and accompanying visuals, all made available through a powerful, developer-friendly API.</p>
-                <div class="highlight-box">
-                    <p class="text-sm text-primary font-medium italic">"Providing recipes with images via API was crucial. Visuals are as important as ingredients in the culinary world."</p>
+
+            <!-- Visual Section: Terminal + Card Overlay -->
+            <div class="lg:col-span-7 reveal order-2 relative h-[600px] flex items-center justify-center lg:justify-end">
+                <!-- Abstract BG -->
+                <div class="absolute inset-0 bg-gradient-to-tr from-gray-100 to-transparent rounded-full opacity-50 blur-3xl -z-10 transform translate-x-12"></div>
+
+                <!-- LAYER 1: The Terminal (Background) -->
+                <div class="absolute top-1/2 left-0 lg:left-8 -translate-y-[60%] w-full max-w-lg bg-[#1e1e1e] rounded-xl shadow-2xl border border-white/10 overflow-hidden font-mono text-xs leading-relaxed opacity-90 scale-95 origin-bottom-left transition-transform duration-700 hover:scale-100 hover:z-20">
+                    <!-- Terminal Header -->
+                    <div class="bg-[#2d2d2d] px-4 py-3 flex items-center justify-between border-b border-white/5">
+                        <div class="flex gap-2">
+                            <div class="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+                            <div class="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+                            <div class="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+                        </div>
+                        <div class="text-white/30 text-[10px] tracking-wide font-medium">processor_node_04 — zsh</div>
+                        <div class="w-10"></div>
+                    </div>
+
+                    <!-- Terminal Body -->
+                    <div class="p-6 text-gray-300 space-y-3 h-[320px] overflow-hidden relative">
+                        <div class="opacity-50">
+                            <span class="text-green-400">➜</span> <span class="text-blue-400">~</span> queue:start --batch=2104
+                        </div>
+                        
+                        <div class="pt-2 border-t border-white/5 mt-2"></div>
+
+                        <div class="flex gap-2">
+                            <span class="text-purple-400">FETCH</span>
+                            <span class="text-gray-400">job_id: <span class="text-white">8821</span></span>
+                            <span class="text-green-500 text-[10px] border border-green-500/30 px-1 rounded ml-auto">READY</span>
+                        </div>
+
+                        <div class="pl-4 space-y-1 border-l border-white/10 ml-1">
+                            <div><span class="text-gray-500">├─</span> Loading raw JSON blob...</div>
+                            <div><span class="text-gray-500">├─</span> Detected <span class="text-yellow-300">14 ingredients</span></div>
+                            <div><span class="text-gray-500">├─</span> Detected <span class="text-yellow-300">6 steps</span></div>
+                            <div><span class="text-gray-500">└─</span> Image optimization... <span class="text-green-400">Done</span></div>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <span class="text-purple-400">ENRICH</span>
+                            <span class="text-gray-400">nutrition_engine.ts</span>
+                        </div>
+
+                        <div class="pl-4 space-y-1 border-l border-white/10 ml-1">
+                            <div><span class="text-gray-500">├─</span> Mapping to USDA DB...</div>
+                            <div><span class="text-gray-500">├─</span> Calculating macros...</div>
+                            <div class="animate-pulse"><span class="text-green-400">➜</span> <span class="text-white">Output generated.</span></div>
+                        </div>
+                        
+                        <!-- Overlay Gradient -->
+                        <div class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#1e1e1e] to-transparent pointer-events-none"></div>
+                    </div>
                 </div>
-                <p class="prose-p">But accessing raw recipe data was only the first step. To unlock its true potential for developers building health apps, meal planners, or smart kitchen tools, we needed to go deeper. We needed to transform raw text into precise nutritional information.</p>
+
+                <!-- LAYER 2: The Nutrition Card (Foreground Overlay) -->
+                <div class="absolute bottom-[10%] right-4 lg:-right-4 w-full md:w-[360px] bg-white rounded-2xl shadow-ceramic border border-white/50 p-6 backdrop-blur-sm transform transition-all duration-700 hover:-translate-y-2 z-30">
+                    <div class="absolute -top-3 -right-3 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg border border-white/20">
+                        FINAL OUTPUT
+                    </div>
+
+                    <div class="flex gap-4 mb-6">
+                        <div class="w-16 h-16 rounded-xl bg-gray-100 shrink-0 overflow-hidden shadow-inner relative group">
+                            <img src="https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=200&q=80" class="w-full h-full object-cover" alt="Pizza">
+                        </div>
+                        <div>
+                            <h3 class="font-display text-lg text-primary leading-tight mb-1">Neapolitan Pizza</h3>
+                            <div class="flex gap-2 text-[10px] text-text-muted font-mono mb-2">
+                                <span class="px-1.5 py-0.5 bg-gray-100 rounded">ID: 8821</span>
+                                <span class="px-1.5 py-0.5 bg-gray-100 rounded">45m</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="check-circle-2" class="w-3 h-3 text-green-500"></i>
+                                <span class="text-xs font-medium text-green-600">Verified</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-xs py-2 border-b border-dashed border-gray-100">
+                            <span class="text-text-muted">Calories</span>
+                            <span class="font-mono font-medium text-primary bg-primary/5 px-2 py-0.5 rounded">860 kcal</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs py-2 border-b border-dashed border-gray-100">
+                            <span class="text-text-muted">Carbohydrates</span>
+                            <span class="font-mono font-medium text-primary">102g</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs py-2">
+                            <span class="text-text-muted">Protein</span>
+                            <span class="font-mono font-medium text-primary">34g</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -246,18 +314,23 @@
         <section class="max-w-6xl mx-auto px-6 py-24">
             <div class="grid lg:grid-cols-2 gap-16 items-center">
                 <div class="order-2 lg:order-1 relative reveal">
-                    <div class="card-ceramic p-8 border-l-4 border-l-orange-400">
-                        <h4 class="font-display text-lg text-primary mb-2">Hardship #1: "The Salt Problem"</h4>
-                        <p class="text-sm text-text-muted mb-4">Sodium content varies wildly. "Kosher salt" vs "Table salt" have different densities. A parser error here could label a dish "Heart Healthy" when it's dangerous.</p>
-                        <div class="bg-orange-50 p-4 rounded-lg text-xs text-orange-800">
-                            <strong>Fix:</strong> Implemented specific density lookups for 15 varieties of salt, defaulting to the most conservative (highest sodium) estimate when ambiguous to ensure safety.
+                    <div class="space-y-6">
+                        <!-- Card 1 -->
+                        <div class="bg-transparent border border-primary/10 rounded-xl p-8 shadow-[0_2px_15px_-4px_rgba(37,74,49,0.03)] hover:bg-white/40 transition-colors duration-500">
+                            <h4 class="font-display text-lg text-primary mb-3">Hardship #1: "The Salt Problem"</h4>
+                            <p class="text-sm text-text-muted leading-relaxed mb-5 font-light">Sodium content varies wildly. "Kosher salt" vs "Table salt" have different densities. A parser error here could label a dish "Heart Healthy" when it's dangerous.</p>
+                            <div class="text-xs text-primary/80 pl-3 border-l border-primary/20 italic">
+                                <span class="not-italic font-bold mr-1">Fix:</span> Implemented specific density lookups for 15 varieties of salt, defaulting to the most conservative (highest sodium) estimate when ambiguous to ensure safety.
+                            </div>
                         </div>
-                    </div>
-                    <div class="card-ceramic p-8 border-l-4 border-l-blue-400 mt-6">
-                        <h4 class="font-display text-lg text-primary mb-2">Hardship #2: Image Sync</h4>
-                        <p class="text-sm text-text-muted mb-4">Our extensive crawling often resulted in broken image links or low-res thumbnails, degrading the visual experience of our API.</p>
-                        <div class="bg-blue-50 p-4 rounded-lg text-xs text-blue-800">
-                            <strong>Fix:</strong> Built a tiered fallback system. If the OG image fails, we query a verified image API, and as a last resort, generate a high-quality placeholder based on the recipe category (e.g., "Soup"). This ensures our API always delivers rich media.
+
+                        <!-- Card 2 -->
+                        <div class="bg-transparent border border-primary/10 rounded-xl p-8 shadow-[0_2px_15px_-4px_rgba(37,74,49,0.03)] hover:bg-white/40 transition-colors duration-500">
+                            <h4 class="font-display text-lg text-primary mb-3">Hardship #2: Image Sync</h4>
+                            <p class="text-sm text-text-muted leading-relaxed mb-5 font-light">Our extensive crawling often resulted in broken image links or low-res thumbnails, degrading the visual experience of our API.</p>
+                            <div class="text-xs text-primary/80 pl-3 border-l border-primary/20 italic">
+                                <span class="not-italic font-bold mr-1">Fix:</span> Built a tiered fallback system. If the OG image fails, we query a verified image API, and as a last resort, generate a high-quality placeholder based on the recipe category (e.g., "Soup"). This ensures our API always delivers rich media.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -451,7 +524,7 @@
                             float fadeIn = smoothstep(0.1, 0.45, dist);
                             float spotlight = fadeIn * fadeOut;
                             float finalAlpha = rays * spotlight * 0.5; 
-                            vec3 rayColor = vec3(0.82, 0.80, 0.70);
+                            vec3 rayColor = vec3(0.85, 0.85, 0.80);
                             gl_FragColor = vec4(rayColor, finalAlpha);
                         }
                     `

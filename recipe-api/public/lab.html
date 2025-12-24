@@ -1,245 +1,561 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nutrition Lab - Recipe Base</title>
+    <title>Recipe Base - The Laboratory</title>
     
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#254a31', 
-                        bg: '#fcfaf7', 
-                        border: '#e5e0d8',
-                        text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' }
+                    colors: { 
+                        primary: '#1a4432', 
+                        tertiary: '#266549',
+                        secondary: '#2b7156',
+                        accent: '#f55b2b',
+                        surface: '#e0e0d2',
+                        bg: '#fafafa', 
+                        border: '#e0e0d2', 
+                        text: { main: '#1a4432', muted: '#4a6b5d', light: '#7a9185' } 
                     },
-                    fontFamily: {
-                        sans: ['DM Sans', 'sans-serif'],
-                        display: ['Grenda', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    boxShadow: {
-                        'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)',
-                    }
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'], display: ['Grenda', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(26, 68, 50, 0.05), 0 0 1px rgba(26, 68, 50, 0.1)' }
                 }
             }
         }
     </script>
-
     <style>
-        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
-        
-        .btn-primary {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-            padding: 0.75rem 1.5rem; border-radius: 9999px;
-            background-color: #254a31; color: #ffffff;
-            font-family: 'DM Sans', sans-serif; font-weight: 500;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15);
+        body { background-color: #fafafa; color: #1a4432; overflow-x: hidden; }
+        .bg-technical {
+            background-color: #fafafa;
+            background-image: linear-gradient(to right, rgba(26, 68, 50, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(26, 68, 50, 0.03) 1px, transparent 1px);
+            background-size: 64px 64px;
         }
-        .btn-primary:hover { transform: translateY(-1px); background-color: #1e3d28; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
+        
+        /* Components */
+        .card { background: white; border: 1px solid #e0e0d2; border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
+        .card:hover { box-shadow: 0 10px 30px -5px rgba(26, 68, 50, 0.08); border-color: #c0c0b5; transform: translateY(-2px); }
+        
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; }
+        .btn-primary { background: #1a4432; color: white; }
+        .btn-primary:hover { background: #143326; }
+        .btn-outline { border: 1px solid #e0e0d2; color: #1a4432; background: white; }
+        .btn-outline:hover { border-color: #1a4432; }
 
-        .input-ceramic {
-            background-color: #ffffff; border: 1px solid #e5e0d8;
-            border-radius: 1rem; padding: 1rem;
-            transition: all 0.3s; width: 100%;
-            font-family: 'DM Sans', sans-serif;
-        }
-        .input-ceramic:focus {
-            border-color: #254a31; outline: none; 
-            box-shadow: 0 0 0 3px rgba(37, 74, 49, 0.1);
-        }
+        .code-snippet { background: #f8faf9; border-top: 1px solid #e0e0d2; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #4a6b5d; overflow-x: auto; }
+        .demo-area { padding: 24px; min-height: 200px; background: #ffffff; }
         
-        .card-ceramic {
-            background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem;
-            box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05);
-        }
+        .loader { width: 16px; height: 16px; border: 2px solid #e0e0d2; border-top-color: #1a4432; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e0d2; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c0c0b5; }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased bg-technical">
 
     <canvas id="bg-canvas"></canvas>
 
-    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
-        <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
-            <a href="/" class="flex items-center gap-2">
-                <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-[#fafafa]/90 backdrop-blur-xl border-b border-border shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+            <a href="/" class="flex items-center gap-2 font-bold text-primary text-xl tracking-tight">
+                <img src="/logo.svg" alt="RB" class="h-6 w-auto"> Lab
             </a>
-            <div class="hidden md:flex items-center gap-8">
-                <a href="/recipes.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">Recipes</a>
-                <a href="/lab.html" class="text-sm font-bold text-primary">Nutrition Lab</a>
-                <a href="/docs.html" class="text-sm font-medium text-text-muted hover:text-primary transition-colors">API Docs</a>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/admin.html" class="hidden md:block text-sm font-medium text-text-muted border border-border px-4 py-2 rounded-full hover:border-primary hover:text-primary transition-all font-display">Admin</a>
-                <button id="mobile-menu-toggle" class="md:hidden p-2 text-primary"><i data-lucide="menu" class="w-6 h-6"></i></button>
+            <div class="flex items-center gap-4 text-sm font-medium">
+                <a href="/" class="text-text-muted hover:text-primary">Home</a>
+                <a href="/recipes.html" class="text-text-muted hover:text-primary">Recipes</a>
+                <a href="/docs.html" class="text-text-muted hover:text-primary">Docs</a>
             </div>
         </div>
     </nav>
 
-    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
-        <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
-        <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
-        <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Recipes</a>
-        <a href="/lab.html" class="font-display text-3xl font-medium text-primary">Nutrition Lab</a>
-        <a href="/docs.html" class="font-display text-3xl font-medium text-primary">API Docs</a>
-    </div>
+    <main class="pt-32 pb-24 px-6 max-w-7xl mx-auto">
+        
+        <!-- Header -->
+        <header class="mb-20 text-center max-w-2xl mx-auto">
+            <span class="inline-block py-1 px-3 rounded-full bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest mb-4">API Playground</span>
+            <h1 class="text-5xl font-display font-medium text-primary mb-6">The Laboratory</h1>
+            <p class="text-text-muted text-lg">Ten interactive experiments demonstrating the capabilities of the Recipe Base API. All demos are running live in your browser.</p>
+        </header>
 
-    <main class="relative z-10 px-6 pt-32 pb-20 max-w-6xl mx-auto">
-        <div class="text-center mb-12">
-            <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">Molecular Analysis</span>
-            <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-4">The Nutrition Lab</h1>
-            <p class="text-text-muted max-w-2xl mx-auto font-light">Enter raw ingredients to decode their nutritional profile using our dual-source engine.</p>
-        </div>
+        <!-- Grid of 10 Use Cases -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
 
-        <div class="grid md:grid-cols-2 gap-8 items-start">
-            <!-- Input -->
-            <div class="card-ceramic p-8 h-full flex flex-col">
-                <label for="ingredients" class="block font-display font-medium text-lg mb-4 text-primary">Ingredients</label>
-                <textarea id="ingredients" class="input-ceramic flex-1 font-mono text-sm resize-none min-h-[300px] mb-6 focus:ring-primary" placeholder="1 cup rice&#10;200g chicken breast&#10;1 tbsp olive oil"></textarea>
-                <button onclick="analyze()" class="btn-primary w-full">
-                    Analyze Composition <i data-lucide="flask-conical" class="w-4 h-4"></i>
-                </button>
+            <!-- 1. Semantic Search -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">1. Semantic Search</h3>
+                        <i data-lucide="search" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Find recipes using fuzzy text matching across titles and descriptions.</p>
+                </div>
+                <div class="demo-area space-y-4">
+                    <div class="flex gap-2">
+                        <input type="text" id="demo1-input" class="flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" placeholder="e.g. pasta, chocolate cake">
+                        <button onclick="runDemo1()" class="btn btn-primary">Search</button>
+                    </div>
+                    <div id="demo1-result" class="min-h-[100px] max-h-[200px] overflow-y-auto space-y-2">
+                        <p class="text-xs text-text-light italic text-center mt-8">Results will appear here...</p>
+                    </div>
+                </div>
+                <div class="code-snippet">GET /search?q={query}</div>
             </div>
 
-            <!-- Results -->
-            <div class="card-ceramic p-8 bg-primary text-white h-full min-h-[450px] flex flex-col relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                <div class="relative z-10 flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <h3 class="font-display font-medium text-2xl">Results</h3>
-                    <span id="status" class="text-xs font-bold uppercase tracking-widest opacity-60">Ready</span>
+            <!-- 2. Ingredient Matcher -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">2. Ingredient Matcher</h3>
+                        <i data-lucide="refrigerator" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Find recipes that contain specific ingredients ("What's in your fridge?").</p>
                 </div>
-                <div id="output-container" class="font-mono text-sm flex-1 overflow-auto custom-scrollbar relative z-10">
-                    <div class="h-full flex items-center justify-center opacity-40">Waiting for input...</div>
+                <div class="demo-area space-y-4">
+                    <div class="flex flex-wrap gap-2 mb-2" id="demo2-tags">
+                        <!-- Tags injected here -->
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="demo2-input" class="flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary" placeholder="Add ingredient (e.g. chicken)">
+                        <button onclick="addIngTag()" class="btn btn-outline">+</button>
+                        <button onclick="runDemo2()" class="btn btn-primary">Find</button>
+                    </div>
+                    <div id="demo2-result" class="min-h-[100px] max-h-[200px] overflow-y-auto space-y-2">
+                        <p class="text-xs text-text-light italic text-center mt-8">Add ingredients to start...</p>
+                    </div>
                 </div>
+                <div class="code-snippet">GET /search?ingredients={list}&match_all=true</div>
             </div>
+
+            <!-- 3. Nutrition Analyzer -->
+            <div class="card group md:row-span-2">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">3. Nutrition Analyzer</h3>
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Analyze unstructured text for nutritional content. The core engine.</p>
+                </div>
+                <div class="demo-area space-y-4 flex flex-col h-[400px]">
+                    <textarea id="demo3-input" class="w-full h-32 border border-border rounded-lg p-3 text-sm font-mono resize-none focus:outline-none focus:border-primary" placeholder="1 cup oats&#10;1 banana&#10;200ml milk"></textarea>
+                    <button onclick="runDemo3()" class="btn btn-primary w-full">Analyze</button>
+                    <div id="demo3-result" class="flex-1 bg-gray-50 rounded-lg p-4 overflow-y-auto font-mono text-xs text-text-muted border border-border">
+                        // JSON Result
+                    </div>
+                </div>
+                <div class="code-snippet">POST /nutrition/analyze { ingredients: [...] }</div>
+            </div>
+
+            <!-- 4. Recipe Randomizer -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">4. Random Recipe</h3>
+                        <i data-lucide="shuffle" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Fetch a random curated recipe from the database.</p>
+                </div>
+                <div class="demo-area flex flex-col items-center justify-center text-center space-y-4">
+                    <button onclick="runDemo4()" class="btn btn-primary shadow-lg">
+                        <i data-lucide="dice-5" class="w-4 h-4 mr-2"></i> Feeling Lucky
+                    </button>
+                    <div id="demo4-result" class="w-full text-left">
+                        <!-- Card injected here -->
+                    </div>
+                </div>
+                <div class="code-snippet">GET /recipes (Custom client-side random logic)</div>
+            </div>
+
+            <!-- 5. Smart Shopping List -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">5. Shopping List</h3>
+                        <i data-lucide="list-checks" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Parse recipe ingredients into a checkable shopping list.</p>
+                </div>
+                <div class="demo-area space-y-4">
+                    <select id="demo5-select" class="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white" onchange="runDemo5()">
+                        <option value="" disabled selected>Select a recipe...</option>
+                        <!-- Options filled by JS -->
+                    </select>
+                    <div id="demo5-result" class="space-y-2 max-h-[150px] overflow-y-auto">
+                        <p class="text-xs text-text-light italic text-center mt-4">Select a recipe above.</p>
+                    </div>
+                </div>
+                <div class="code-snippet">GET /recipes/:id -> ingredients parsing</div>
+            </div>
+
+            <!-- 6. Cook Mode -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">6. Cook Mode</h3>
+                        <i data-lucide="chef-hat" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Step-by-step instruction viewer.</p>
+                </div>
+                <div class="demo-area space-y-4 relative">
+                    <div id="demo6-container" class="hidden h-full flex flex-col justify-between min-h-[150px]">
+                        <p id="demo6-text" class="text-lg font-medium text-primary text-center px-4"></p>
+                        <div class="flex justify-between items-center mt-4">
+                            <button onclick="prevStep()" class="btn btn-outline btn-sm"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <span id="demo6-counter" class="text-xs text-text-muted uppercase tracking-widest font-bold">Step 1/1</span>
+                            <button onclick="nextStep()" class="btn btn-outline btn-sm"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    <div id="demo6-start" class="text-center py-8">
+                        <button onclick="initCookMode()" class="btn btn-primary">Start Cooking Demo</button>
+                    </div>
+                </div>
+                <div class="code-snippet">GET /recipes/:id -> instructions array</div>
+            </div>
+
+            <!-- 7. Crawler Widget -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">7. Crawler Widget</h3>
+                        <i data-lucide="globe" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Queue a URL for the backend crawler to process.</p>
+                </div>
+                <div class="demo-area space-y-4">
+                    <div class="flex gap-2">
+                        <input type="text" id="demo7-input" class="flex-1 border border-border rounded-lg px-3 py-2 text-sm font-mono" placeholder="https://example.com/recipe">
+                        <button onclick="runDemo7()" class="btn btn-primary">Crawl</button>
+                    </div>
+                    <div id="demo7-result" class="p-3 bg-gray-50 rounded-lg border border-border text-xs font-mono text-text-muted min-h-[60px]">
+                        Status: Idle
+                    </div>
+                </div>
+                <div class="code-snippet">POST /crawl { url: ... }</div>
+            </div>
+
+            <!-- 8. Health Monitor -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">8. System Health</h3>
+                        <i data-lucide="activity" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Real-time statistics from the database.</p>
+                </div>
+                <div class="demo-area grid grid-cols-2 gap-4">
+                    <div class="p-3 bg-green-50 border border-green-100 rounded-lg text-center">
+                        <span class="block text-2xl font-bold text-green-700" id="stats-total">-</span>
+                        <span class="text-[10px] uppercase tracking-widest text-green-600">Total Recipes</span>
+                    </div>
+                    <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                        <span class="block text-2xl font-bold text-blue-700" id="stats-verified">-</span>
+                        <span class="text-[10px] uppercase tracking-widest text-blue-600">Verified</span>
+                    </div>
+                    <div class="col-span-2 text-center">
+                        <button onclick="refreshStats()" class="text-xs text-primary underline">Refresh Data</button>
+                    </div>
+                </div>
+                <div class="code-snippet">GET /health</div>
+            </div>
+
+            <!-- 9. Quick JSON Viewer -->
+            <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">9. Raw Data Explorer</h3>
+                        <i data-lucide="code" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Inspect the full JSON structure of a recipe object.</p>
+                </div>
+                <div class="demo-area space-y-4">
+                     <button onclick="runDemo9()" class="btn btn-outline w-full text-xs">Load Sample JSON</button>
+                     <pre id="demo9-result" class="h-32 overflow-auto text-[10px] font-mono bg-gray-900 text-green-400 p-3 rounded-lg">
+// Click load to view data
+                     </pre>
+                </div>
+                <div class="code-snippet">GET /recipes/:id</div>
+            </div>
+
+             <!-- 10. Dietary Filter (Mock) -->
+             <div class="card group">
+                <div class="p-6 border-b border-border bg-gray-50/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-display font-bold text-xl text-primary">10. Dietary Filter</h3>
+                        <i data-lucide="filter" class="w-5 h-5 text-text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-sm text-text-muted">Client-side filtering for specific dietary needs.</p>
+                </div>
+                <div class="demo-area space-y-4">
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="filterDiet('vegan')" class="px-3 py-1 rounded-full border border-border text-xs hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors">Vegan</button>
+                        <button onclick="filterDiet('gf')" class="px-3 py-1 rounded-full border border-border text-xs hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 transition-colors">Gluten Free</button>
+                    </div>
+                    <div id="demo10-result" class="text-center text-sm text-text-muted min-h-[60px] flex items-center justify-center border border-dashed border-border rounded-lg">
+                        Select a filter
+                    </div>
+                </div>
+                <div class="code-snippet">GET /search -> JS Filter</div>
+            </div>
+
         </div>
     </main>
 
+    <!-- Scripts -->
     <script>
         lucide.createIcons();
 
-        async function analyze() {
-            const text = document.getElementById('ingredients').value;
-            const outputContainer = document.getElementById('output-container');
-            const status = document.getElementById('status');
+        // --- Helpers ---
+        const api = {
+            search: async (q) => (await fetch(`/search?q=${encodeURIComponent(q)}`)).json(),
+            getRecipes: async () => (await fetch('/recipes')).json(),
+            getRecipe: async (id) => (await fetch(`/recipes/${id}`)).json(),
+            analyze: async (ing) => (await fetch('/nutrition/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ingredients: ing}) })).json(),
+            health: async () => (await fetch('/health')).json()
+        };
+
+        // --- Demo 1: Search ---
+        async function runDemo1() {
+            const q = document.getElementById('demo1-input').value;
+            const resContainer = document.getElementById('demo1-result');
+            resContainer.innerHTML = '<div class="loader mx-auto"></div>';
             
-            if (!text.trim()) { return; }
-
-            status.textContent = "Analyzing...";
-            status.className = "text-xs font-bold uppercase tracking-widest animate-pulse text-green-300";
-            outputContainer.innerHTML = '<div class="h-full flex items-center justify-center opacity-60">Processing...</div>';
-
-            const ingredients = text.split('\n').map(l => l.trim()).filter(l => l);
-
             try {
-                const res = await fetch('/nutrition/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients }) });
-                const data = await res.json();
-                
-                const formatNumber = (num, unit = '') => {
-                    if (typeof num !== 'number') return '0' + unit;
-                    const rounded = Math.round(num * 10) / 10;
-                    return rounded + unit;
-                };
-
-                const total = data.total;
-                const html = `
-                    <div class="space-y-8 animate-fade-in">
-                        <div>
-                            <div class="grid grid-cols-2 gap-4 mb-6">
-                                <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                                    <span class="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Calories</span>
-                                    <span class="font-mono text-3xl">${Math.round(total.calories)}</span>
-                                </div>
-                                <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                                    <span class="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Protein</span>
-                                    <span class="font-mono text-3xl">${formatNumber(total.protein, 'g')}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Carbs</span><span class="font-mono font-bold">${formatNumber(total.carbs, 'g')}</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Fat</span><span class="font-mono font-bold">${formatNumber(total.fat, 'g')}</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Fiber</span><span class="font-mono font-bold">${formatNumber(total.fiber, 'g')}</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg"><span class="block opacity-60">Sugar</span><span class="font-mono font-bold">${formatNumber(total.sugar, 'g')}</span></div>
-                                
-                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Calcium</span><span class="font-mono font-bold">${Math.round(total.calcium_mg)}mg</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Iron</span><span class="font-mono font-bold">${formatNumber(total.iron_mg, 'mg')}</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Vit A</span><span class="font-mono font-bold">${Math.round(total.vitamin_a_mcg)}mcg</span></div>
-                                <div class="bg-white/5 p-3 rounded-lg border border-green-400/30"><span class="block text-green-300">Vit C</span><span class="font-mono font-bold">${formatNumber(total.vitamin_c_mg, 'mg')}</span></div>
-                            </div>
+                const data = await api.search(q);
+                if (data.recipes.length === 0) {
+                    resContainer.innerHTML = '<p class="text-xs text-text-muted text-center">No results found.</p>';
+                    return;
+                }
+                resContainer.innerHTML = data.recipes.slice(0, 3).map(r => `
+                    <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-border transition-all">
+                        <div class="w-10 h-10 bg-gray-200 rounded overflow-hidden flex-shrink-0"><img src="${r.image || '/logo.svg'}" class="w-full h-full object-cover"></div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-primary truncate">${r.name}</p>
+                            <p class="text-[10px] text-text-muted truncate">${r.description || 'No description'}</p>
                         </div>
+                    </div>
+                `).join('');
+            } catch(e) { resContainer.textContent = 'Error: ' + e.message; }
+        }
 
-                        <div>
-                            <h4 class="font-display font-medium text-lg mb-4 border-b border-white/10 pb-2">Breakdown</h4>
-                            <div class="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-                                ${data.breakdown.map(item => `
-                                    <div class="flex justify-between items-center py-2 border-b border-white/5 text-sm">
-                                        <span class="font-medium opacity-90">${item.parsed.name} <span class="opacity-50 text-xs">(${Math.round(item.parsed.weightGrams)}g)</span></span>
-                                        <span class="font-mono opacity-80">${Math.round(item.stats.calories)} kcal</span>
-                                    </div>
-                                `).join('')}
-                            </div>
+        // --- Demo 2: Ingredients ---
+        let ingredientsTags = [];
+        function addIngTag() {
+            const input = document.getElementById('demo2-input');
+            const val = input.value.trim();
+            if(val) { ingredientsTags.push(val); input.value = ''; renderTags(); }
+        }
+        function renderTags() {
+            document.getElementById('demo2-tags').innerHTML = ingredientsTags.map(t => `<span class="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-bold">${t}</span>`).join('');
+        }
+        async function runDemo2() {
+            const resContainer = document.getElementById('demo2-result');
+            resContainer.innerHTML = '<div class="loader mx-auto"></div>';
+            try {
+                const res = await fetch(`/search?ingredients=${ingredientsTags.join(',')}&match_all=true`);
+                const data = await res.json();
+                resContainer.innerHTML = data.recipes.length ? data.recipes.slice(0,3).map(r => `<div class="text-sm text-primary font-medium p-1">• ${r.name}</div>`).join('') : '<span class="text-xs text-text-muted">No matches</span>';
+            } catch(e) { resContainer.textContent = 'Error'; }
+        }
+
+        // --- Demo 3: Nutrition ---
+        async function runDemo3() {
+            const text = document.getElementById('demo3-input').value;
+            const out = document.getElementById('demo3-result');
+            out.textContent = 'Analyzing...';
+            try {
+                const data = await api.analyze(text.split('\n'));
+                out.textContent = JSON.stringify(data.total, null, 2);
+            } catch(e) { out.textContent = 'Error'; }
+        }
+
+        // --- Demo 4: Random ---
+        async function runDemo4() {
+            const container = document.getElementById('demo4-result');
+            container.innerHTML = '<div class="loader mx-auto mt-4"></div>';
+            try {
+                const { recipes } = await api.getRecipes();
+                if(!recipes.length) return;
+                const r = recipes[Math.floor(Math.random() * recipes.length)];
+                container.innerHTML = `
+                    <div class="mt-4 border border-border rounded-lg overflow-hidden">
+                        <img src="${r.image || ''}" class="w-full h-32 object-cover bg-gray-100">
+                        <div class="p-3">
+                            <h4 class="font-bold text-primary">${r.name}</h4>
+                            <p class="text-xs text-text-muted line-clamp-2">${r.description || ''}</p>
                         </div>
                     </div>
                 `;
-                outputContainer.innerHTML = html;
-                status.textContent = "Complete"; status.className = "text-xs font-bold uppercase tracking-widest text-green-300";
-            } catch (e) {
-                outputContainer.innerHTML = `<div class="text-red-300 font-mono text-sm">Error: ${e.message}</div>`;
-                status.textContent = "Error"; status.className = "text-xs font-bold uppercase tracking-widest text-red-300";
+            } catch(e) { container.textContent = 'Error'; }
+        }
+
+        // --- Demo 5: Shopping List ---
+        // Load options on load
+        (async () => {
+            try {
+                const { recipes } = await api.getRecipes();
+                const sel = document.getElementById('demo5-select');
+                recipes.slice(0,5).forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id; opt.textContent = r.name;
+                    sel.appendChild(opt);
+                });
+            } catch(e) {}
+        })();
+
+        async function runDemo5() {
+            const id = document.getElementById('demo5-select').value;
+            const list = document.getElementById('demo5-result');
+            list.innerHTML = '<div class="loader mx-auto"></div>';
+            try {
+                const r = await api.getRecipe(id);
+                // Mock parsing logic (in real app, use NLP or pre-parsed data)
+                // Assuming description or instructions might contain hints, or just using raw text mock
+                const mockIngredients = ["1 cup flour", "2 eggs", "Milk"].map(i => `
+                    <label class="flex items-center gap-2 text-sm cursor-pointer p-1 hover:bg-gray-50 rounded">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary border-gray-300">
+                        <span class="text-text-main">${i}</span>
+                    </label>
+                `).join('');
+                list.innerHTML = mockIngredients; 
+                // Note: The API currently doesn't return a structured ingredients array in the basic GET, 
+                // it returns 'nutrition' which has parsed data if available.
+                if(r.nutrition && r.nutrition.ingredients) {
+                     list.innerHTML = r.nutrition.ingredients.map(i => `
+                    <label class="flex items-center gap-2 text-sm cursor-pointer p-1 hover:bg-gray-50 rounded">
+                        <input type="checkbox" class="rounded text-primary focus:ring-primary border-gray-300">
+                        <span class="text-text-main">${i.parsed.name} (${Math.round(i.parsed.weightGrams)}g)</span>
+                    </label>
+                `).join('');
+                } else {
+                     list.innerHTML = '<p class="text-xs text-text-muted">No structured ingredients found for this recipe.</p>';
+                }
+            } catch(e) { list.textContent = 'Error'; }
+        }
+
+        // --- Demo 6: Cook Mode ---
+        let currentSteps = [];
+        let currentStepIdx = 0;
+        async function initCookMode() {
+            const container = document.getElementById('demo6-container');
+            const startBtn = document.getElementById('demo6-start');
+            startBtn.classList.add('hidden');
+            container.classList.remove('hidden');
+            
+            // Fetch a recipe with instructions
+            const { recipes } = await api.getRecipes();
+            // Just pick first one for demo
+            const r = await api.getRecipe(recipes[0].id);
+            
+            // Mock instructions splitting
+            if(r.instructions) {
+                // simple split by period or newline
+                currentSteps = r.instructions.split(/\.\s+|\n/).filter(s => s.length > 5);
+            } else {
+                currentSteps = ["Preheat oven to 350F.", "Mix ingredients.", "Bake for 20 mins."];
+            }
+            currentStepIdx = 0;
+            renderStep();
+        }
+        function renderStep() {
+            document.getElementById('demo6-text').textContent = currentSteps[currentStepIdx];
+            document.getElementById('demo6-counter').textContent = `Step ${currentStepIdx + 1}/${currentSteps.length}`;
+        }
+        function nextStep() { if(currentStepIdx < currentSteps.length - 1) { currentStepIdx++; renderStep(); } }
+        function prevStep() { if(currentStepIdx > 0) { currentStepIdx--; renderStep(); } }
+
+        // --- Demo 7: Crawl ---
+        async function runDemo7() {
+            const url = document.getElementById('demo7-input').value;
+            const res = document.getElementById('demo7-result');
+            if(!url) return;
+            res.textContent = 'Queuing...';
+            try {
+                const resp = await fetch('/crawl', {
+                    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url})
+                });
+                const data = await resp.json();
+                res.textContent = `Job ID: ${data.job ? data.job.id : 'Error'}\nStatus: ${data.job ? data.job.status : data.error}`;
+            } catch(e) { res.textContent = 'Error: ' + e.message; }
+        }
+
+        // --- Demo 8: Health ---
+        async function refreshStats() {
+            const t = document.getElementById('stats-total');
+            const v = document.getElementById('stats-verified');
+            t.textContent = '...'; v.textContent = '...';
+            const data = await api.health();
+            t.textContent = data.stats.total;
+            v.textContent = data.stats.verified;
+        }
+        refreshStats();
+
+        // --- Demo 9: JSON ---
+        async function runDemo9() {
+            const pre = document.getElementById('demo9-result');
+            pre.textContent = 'Loading...';
+            const { recipes } = await api.getRecipes();
+            const r = await api.getRecipe(recipes[0].id);
+            pre.textContent = JSON.stringify(r, null, 2);
+        }
+
+        // --- Demo 10: Filter ---
+        async function filterDiet(type) {
+            const res = document.getElementById('demo10-result');
+            res.innerHTML = '<div class="loader"></div>';
+            
+            // Mock search for keywords
+            const q = type === 'vegan' ? 'vegan' : 'gluten free';
+            const data = await api.search(q);
+            
+            if(data.recipes.length) {
+                res.innerHTML = `<span class="text-primary font-bold text-2xl">${data.recipes.length}</span><span class="text-xs text-text-muted ml-2">matching recipes found</span>`;
+            } else {
+                res.innerHTML = '<span class="text-xs text-text-muted">No matches found in sample DB</span>';
             }
         }
 
-        // Shader
+        // Shader Background
         class GodRaysBackground {
-            constructor(canvasId, color1, color2, speed=0.002) {
+            constructor(canvasId) {
                 this.canvas = document.getElementById(canvasId); if (!this.canvas) return;
-                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true });
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true, antialias: true });
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.scene = new THREE.Scene();
                 this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-                this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } };
+                this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) } };
                 this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-                    uniforms: this.uniforms,
+                    uniforms: this.uniforms, transparent: true,
                     vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
-                    fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv;
-                        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-                        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-                        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-                        float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); }
-                        float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; }
-                        void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }
+                    fragmentShader: `uniform float uTime; uniform vec2 uResolution; varying vec2 vUv;
+                        vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+                        float snoise(vec2 v){ const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy) ); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod(i, 289.0); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); }
+                        void main() { vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y; float aspect = uResolution.x / uResolution.y; vec2 lightPos = vec2(-aspect * 0.25, 0.55); vec2 p = uv - lightPos; float angle = atan(p.y, p.x); float dist = length(p); float t = uTime * 0.245; float n1 = snoise(vec2(angle * 4.0 + t * 0.2, dist * 0.5 - t)); float n2 = snoise(vec2(angle * 8.0 - t * 0.5, dist * 1.5 + n1 * 0.5 - t * 0.5)); float rays = n1 * 0.6 + n2 * 0.4; rays = rays * 0.5 + 0.5; rays = pow(rays, 2.5); float spotlight = (1.0 - smoothstep(0.4, 1.4, dist)) * smoothstep(0.1, 0.45, dist); gl_FragColor = vec4(vec3(0.85, 0.85, 0.80), rays * spotlight * 0.5); }
 `
                 })));
-                this.animate = this.animate.bind(this); 
-                this.handleResize = this.handleResize.bind(this);
-                window.addEventListener('resize', this.handleResize);
-                this.handleResize(); this.animate();
+                this.resize = this.resize.bind(this); window.addEventListener('resize', this.resize); this.resize(); this.animate();
             }
-            handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); }
-            animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); }
+            resize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); }
+            animate() { requestAnimationFrame(() => this.animate()); this.uniforms.uTime.value += 0.0098; this.renderer.render(this.scene, this.camera); }
         }
-        new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
-
-        const toggle = document.getElementById('mobile-menu-toggle');
-        const close = document.getElementById('mobile-menu-close');
-        const menu = document.getElementById('mobile-menu');
-        function toggleMenu() { menu.classList.toggle('translate-x-full'); document.body.classList.toggle('overflow-hidden'); }
-        toggle.addEventListener('click', toggleMenu);
-        close.addEventListener('click', toggleMenu);
+        new GodRaysBackground('bg-canvas');
     </script>
 </body>
 </html>

@@ -12,9 +12,17 @@
 
 /* Custom Styles if needed */
 .btn-deep {
-    @apply bg-deep-900 hover:bg-deep-800 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1;
+    @apply bg-primary hover:bg-primary/90 text-white font-semibold py-4 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1;
 }
 
 .card-panel {
-    @apply flex flex-col bg-white border border-gray-200 shadow-sm rounded-xl p-4 md:p-5;
+    @apply flex flex-col bg-white border border-surface shadow-sm rounded-xl p-4 md:p-5;
+}
+
+.bg-technical {
+    background-color: #fafafa;
+    background-image: 
+        linear-gradient(to right, rgba(26, 68, 50, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(26, 68, 50, 0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
 }

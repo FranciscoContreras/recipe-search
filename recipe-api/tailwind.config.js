@@ -7,10 +7,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Defining "Deep" colors based on your request
+        primary: '#1a4432',
+        tertiary: '#266549',
+        secondary: '#2b7156',
+        accent: '#f55b2b',
+        surface: '#e0e0d2',
+        background: '#fafafa',
+        // Legacy support mapping
         deep: {
-          900: '#1e1b4b', // Deep Indigo
-          800: '#312e81',
+          900: '#1a4432',
+          800: '#266549',
         }
       },
       fontFamily: {

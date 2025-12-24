@@ -15,17 +15,26 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: '#254a31', bg: '#fcfaf7', border: '#e5e0d8', text: { main: '#1a3322', muted: '#5c5446', light: '#8c857b' } },
+                    colors: { 
+                        primary: '#1a4432', 
+                        tertiary: '#266549',
+                        secondary: '#2b7156',
+                        accent: '#f55b2b',
+                        surface: '#e0e0d2',
+                        bg: '#fafafa', 
+                        border: '#e0e0d2', 
+                        text: { main: '#1a4432', muted: '#4a6b5d', light: '#7a9185' } 
+                    },
                     fontFamily: { sans: ['DM Sans', 'sans-serif'], display: ['Grenda', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(37, 74, 49, 0.05), 0 0 1px rgba(37, 74, 49, 0.1)' }
+                    boxShadow: { 'ceramic': '0 4px 20px -2px rgba(26, 68, 50, 0.05), 0 0 1px rgba(26, 68, 50, 0.1)' }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #fcfaf7; color: #1a3322; overflow-x: hidden; }
+        body { background-color: #fafafa; color: #1a4432; overflow-x: hidden; }
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.6; pointer-events: none; }
-        .card-ceramic { background: #ffffff; border: 1px solid #e5e0d8; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(37, 74, 49, 0.05); }
+        .card-ceramic { background: #ffffff; border: 1px solid #e0e0d2; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(26, 68, 50, 0.05); }
         .status-pill { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; }
         .status-verified { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .status-flagged { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
@@ -33,16 +42,16 @@
 
         /* --- Component System: Buttons --- */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-        .btn-primary { background-color: #254a31; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 74, 49, 0.15); border-color: transparent; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(37, 74, 49, 0.2); background-color: #1e3d28; }
-        .btn-secondary { background-color: #ffffff; color: #254a31; border-color: #e5e0d8; }
-        .btn-secondary:hover { border-color: #254a31; background-color: #fcfaf7; transform: translateY(-1px); }
+        .btn-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.15); border-color: transparent; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(26, 68, 50, 0.2); background-color: #143326; }
+        .btn-secondary { background-color: #ffffff; color: #1a4432; border-color: #e0e0d2; }
+        .btn-secondary:hover { border-color: #1a4432; background-color: #fafafa; transform: translateY(-1px); }
     </style>
 </head>
 <body class="antialiased">
     <canvas id="bg-canvas"></canvas>
     <nav class="fixed top-0 w-full z-50 px-6 py-6 transition-all duration-300">
-        <div class="w-full flex justify-between items-center bg-[#fcfaf7]/90 backdrop-blur-xl border-b border-white/40 shadow-sm px-6 py-4">
+        <div class="w-full flex justify-between items-center bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
             </a>
@@ -57,7 +66,7 @@
             </div>
         </div>
     </nav>
-    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fcfaf7] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
+    <div id="mobile-menu" class="fixed inset-0 z-[60] bg-[#fafafa] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center gap-8 md:hidden">
         <button id="mobile-menu-close" class="absolute top-6 right-6 text-primary p-2"><i data-lucide="x" class="w-8 h-8"></i></button>
         <a href="/" class="font-display text-3xl font-medium text-primary">Home</a>
         <a href="/recipes.html" class="font-display text-3xl font-medium text-primary">Products</a>
@@ -132,7 +141,7 @@
         }
         
         // Shader Reused
-        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fcfaf7', '#254a31');
+        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i++) { v += a * snoise(st); st *= 2.0; a *= 0.5; } return v; } void main() { vec2 st = gl_FragCoord.xy / uResolution.xy; st.x *= uResolution.x / uResolution.y; vec2 raySt = st; raySt.x += raySt.y * 0.4; raySt.y -= uTime * 0.05; float noise = fbm(raySt * 3.0); float warp = snoise(st * 2.0 + uTime * 0.1); float rays = fbm(raySt * 4.0 + warp * 0.5); rays = smoothstep(-0.2, 0.8, rays); vec3 color = mix(uColor1, uColor2, 0.03); color += rays * 0.08; float vignette = 1.0 - length(vUv - 0.5) * 0.5; color *= vignette; gl_FragColor = vec4(color, 1.0); }` }))); this.animate = this.animate.bind(this); this.handleResize = this.handleResize.bind(this); window.addEventListener('resize', this.handleResize); this.handleResize(); this.animate(); } handleResize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } animate() { requestAnimationFrame(this.animate); this.uniforms.uTime.value += 0.002; this.renderer.render(this.scene, this.camera); } } new GodRaysBackground('bg-canvas', '#fafafa', '#1a4432');
 
         const toggle = document.getElementById('mobile-menu-toggle');
         const close = document.getElementById('mobile-menu-close');
