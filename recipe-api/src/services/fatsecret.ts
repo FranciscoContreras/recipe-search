@@ -22,7 +22,7 @@ export async function getAccessToken(): Promise<string | null> {
 
     try {
         const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-        const res = await fetch(TOKEN_URL, {
+        const res = await fetchWithTimeout(TOKEN_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Basic ${auth}`,
@@ -43,6 +43,19 @@ export async function getAccessToken(): Promise<string | null> {
     }
 }
 
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 5000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
 export async function findNutritionForRecipe(recipeName: string): Promise<any | null> {
     const token = await getAccessToken();
     if (!token) return null;
@@ -57,7 +70,7 @@ export async function findNutritionForRecipe(recipeName: string): Promise<any | 
             max_results: '1' // Just get the top match
         });
 
-        const res = await fetch(SEARCH_URL, {
+        const res = await fetchWithTimeout(SEARCH_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -81,7 +94,7 @@ export async function findNutritionForRecipe(recipeName: string): Promise<any | 
             format: 'json'
         });
 
-        const detailsRes = await fetch(SEARCH_URL, {
+        const detailsRes = await fetchWithTimeout(SEARCH_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -142,7 +155,7 @@ export async function searchFatSecret(query: string): Promise<SimpleNutrition | 
             max_results: '1'
         });
 
-        const res = await fetch(SEARCH_URL, {
+        const res = await fetchWithTimeout(SEARCH_URL, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: params
@@ -161,7 +174,7 @@ export async function searchFatSecret(query: string): Promise<SimpleNutrition | 
             format: 'json'
         });
 
-        const detailsRes = await fetch(SEARCH_URL, {
+        const detailsRes = await fetchWithTimeout(SEARCH_URL, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: detailsParams
