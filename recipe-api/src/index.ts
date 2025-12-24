@@ -63,16 +63,20 @@ app.get('/recipes/:id', async (req: Request, res: Response) => {
   if (!recipe.nutrition) {
       console.log(`[JIT] Enriching recipe ${id} (${recipe.name})...`);
       const start = Date.now();
-      try {
-          const nutrition = await findNutritionForRecipe(recipe.name);
-          if (nutrition) {
-              await supabase.from('recipes').update({ nutrition }).eq('id', id);
-              recipe.nutrition = nutrition; 
-              console.log(`[JIT] Success for ${id} in ${Date.now() - start}ms`);
-          } else {
-              console.log(`[JIT] No nutrition found for ${id} in ${Date.now() - start}ms`);
-          }
-      } catch (err) { console.error(`[JIT] Error for ${id} in ${Date.now() - start}ms:`, err); }
+      
+      // Fire-and-forget: Start enrichment in background but don't block response
+      findNutritionForRecipe(recipe.name)
+        .then(async (nutrition) => {
+            if (nutrition) {
+                await supabase.from('recipes').update({ nutrition }).eq('id', id);
+                console.log(`[JIT] Success for ${id} in ${Date.now() - start}ms`);
+            } else {
+                console.log(`[JIT] No nutrition found for ${id} in ${Date.now() - start}ms`);
+            }
+        })
+        .catch((err) => {
+            console.error(`[JIT] Error for ${id} in ${Date.now() - start}ms:`, err);
+        });
   }
   res.status(200).json(recipe);
 });
