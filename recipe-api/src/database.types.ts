@@ -227,6 +227,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      update_recipe_nutritions: { Args: { payload: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

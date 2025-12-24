@@ -40,10 +40,19 @@ app.post('/recipes', async (req: Request, res: Response) => {
 
 app.get('/recipes', async (req: Request, res: Response) => {
   const isFull = req.query.full === 'true';
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const offset = (page - 1) * limit;
+
   const selectFields = isFull ? '*' : 'id, name, image, description, cook_time, prep_time';
-  const { data, error, count } = await supabase.from('recipes').select(selectFields, { count: 'exact' }).neq('qa_status', 'quarantined');
+  const { data, error, count } = await supabase
+    .from('recipes')
+    .select(selectFields, { count: 'exact' })
+    .neq('qa_status', 'quarantined')
+    .range(offset, offset + limit - 1);
+
   if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json({ recipes: data, count });
+  res.status(200).json({ recipes: data, count, page, limit });
 });
 
 app.get('/recipes/:id', async (req: Request, res: Response) => {
@@ -71,18 +80,26 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   const { data: recipes, error } = await supabase.from('recipes').select('*').in('id', ids).neq('qa_status', 'quarantined');
   if (error) return res.status(500).json({ error: error.message });
 
+  const updates: any[] = [];
+  
   const enrichedRecipes = await Promise.all(recipes.map(async (recipe) => {
       if (!recipe.nutrition) {
           try {
               const nutrition = await findNutritionForRecipe(recipe.name);
               if (nutrition) {
-                  supabase.from('recipes').update({ nutrition }).eq('id', recipe.id).then();
+                  updates.push({ id: recipe.id, nutrition });
                   return { ...recipe, nutrition };
               }
           } catch (e) { console.error(`Batch fail: ${recipe.id}`, e); }
       }
       return recipe;
   }));
+
+  if (updates.length > 0) {
+      const { error: updateError } = await supabase.rpc('update_recipe_nutritions', { payload: updates });
+      if (updateError) console.error('Batch update error:', updateError);
+  }
+
   res.status(200).json({ recipes: enrichedRecipes, count: enrichedRecipes.length });
 });
 

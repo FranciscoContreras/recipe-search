@@ -164,6 +164,8 @@ export class RecipeCrawlerService {
              }
         }
 
+        let pageRecipesFound = 0;
+
         for (const data of schemaData) {
             const items = Array.isArray(data) ? data : (data['@graph'] || [data]);
             
@@ -252,11 +254,15 @@ export class RecipeCrawlerService {
                   log.error(`Failed to save recipe: ${error.message}`);
                 } else {
                   foundInPage++; 
-                  recipesFound++;
-                  await this.updateJobProgress(recipesFound);
+                  pageRecipesFound++;
                 }
               }
             }
+        }
+
+        if (pageRecipesFound > 0) {
+            recipesFound += pageRecipesFound;
+            await this.updateJobProgress(recipesFound);
         }
 
         if (foundInPage === 0) { 
