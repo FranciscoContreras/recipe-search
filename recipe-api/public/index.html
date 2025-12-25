@@ -701,7 +701,9 @@
                                                         float spotlight = fadeIn * fadeOut;
                                                         
                                                                                     // Opacity & Color
-                                                                                    float finalAlpha = rays * spotlight * 0.5;                                                        // Realistic Dusty Light Color (Warm/Neutral)                            vec3 rayColor = vec3(0.85, 0.85, 0.80);
+                                                                                    float finalAlpha = rays * spotlight * 0.5;
+                                                                                    // Realistic Dusty Light Color (Warm/Neutral)
+                                                                                    vec3 rayColor = vec3(0.85, 0.85, 0.80);
 
                             gl_FragColor = vec4(rayColor, finalAlpha);
                         }
