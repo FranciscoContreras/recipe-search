@@ -618,8 +618,8 @@
                             vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
                             float aspect = uResolution.x / uResolution.y;
                             
-                            // ORIGIN: Slightly Left, Above Title
-                            vec2 lightPos = vec2(-aspect * 0.25, 0.55);
+                            // ORIGIN: Closer to Title (Focused)
+                            vec2 lightPos = vec2(-aspect * 0.15, 0.60);
                             
                             // Vector from light to pixel
                             vec2 p = uv - lightPos;
@@ -649,11 +649,11 @@
                             // Squaring the value pushes mids to darks, creating defined but soft light paths
                             rays = pow(rays, 2.5);
                             
-                            // Spotlight Mask
+                            // Spotlight Mask (Tighter Focus)
                             // Smooth falloff from origin (fade out)
-                            float fadeOut = 1.0 - smoothstep(0.4, 1.4, dist);
+                            float fadeOut = 1.0 - smoothstep(0.2, 0.8, dist);
                             // Soft fade in near the source (increased effect)
-                            float fadeIn = smoothstep(0.1, 0.45, dist);
+                            float fadeIn = smoothstep(0.05, 0.3, dist);
                             
                             float spotlight = fadeIn * fadeOut;
                             
