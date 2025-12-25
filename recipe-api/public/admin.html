@@ -145,13 +145,19 @@
         lucide.createIcons();
         // ... (Re-use existing admin logic: startCrawl, fetchJobs, deleteJob, modal)
         const API_URL = '';
-        async function startCrawl(e) { e.preventDefault(); const btn = document.getElementById('submitBtn'); const input = document.getElementById('urlInput'); btn.textContent = 'Initializing...'; btn.disabled = true; try { const res = await fetch(`${API_URL}/crawl`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: input.value }) }); if(!res.ok) throw new Error(await res.text()); input.value = ''; fetchJobs(); } catch(e) { alert(e.message); } finally { btn.innerHTML = 'Start Job <i data-lucide="play" class="w-4 h-4 ml-2"></i>'; btn.disabled = false; lucide.createIcons(); } }
-        async function fetchJobs() { try { const [active, archived] = await Promise.all([fetch(`${API_URL}/jobs`).then(r => r.json()), fetch(`${API_URL}/jobs/archived`).then(r => r.json())]); renderTable('jobsBody', active); } catch(e) { console.error(e); } }
+        const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
+
+        async function startCrawl(e) { e.preventDefault(); const btn = document.getElementById('submitBtn'); const input = document.getElementById('urlInput'); btn.textContent = 'Initializing...'; btn.disabled = true; try { const res = await fetch(`${API_URL}/crawl`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY }, body: JSON.stringify({ url: input.value }) }); if(!res.ok) throw new Error(await res.text()); input.value = ''; fetchJobs(); } catch(e) { alert(e.message); } finally { btn.innerHTML = 'Start Job <i data-lucide="play" class="w-4 h-4 ml-2"></i>'; btn.disabled = false; lucide.createIcons(); } }
+        
+        async function fetchJobs() { try { const [active, archived] = await Promise.all([fetch(`${API_URL}/jobs`, { headers: { 'x-api-key': API_KEY } }).then(r => r.json()), fetch(`${API_URL}/jobs/archived`, { headers: { 'x-api-key': API_KEY } }).then(r => r.json())]); renderTable('jobsBody', active); } catch(e) { console.error(e); } }
+        
         function renderTable(id, jobs) { const tbody = document.getElementById(id); tbody.innerHTML = ''; if(jobs.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="px-8 py-8 text-center text-text-muted opacity-60 text-sm">No active jobs found.</td></tr>`; return; } jobs.forEach(job => { const date = new Date(job.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }); const url = job.url.replace(/^https?:\/\/(www\.)?/, '').substring(0, 30) + '...'; const statusStyles = { pending: 'bg-yellow-100 text-yellow-800', processing: 'bg-blue-100 text-blue-800', completed: 'bg-green-100 text-green-800', failed: 'bg-red-100 text-red-800' }; const badge = statusStyles[job.status] || 'bg-gray-100 text-gray-800'; const tr = document.createElement('tr'); tr.className = 'hover:bg-gray-50/50 transition-colors'; tr.innerHTML = `<td class="px-8 py-4 font-mono text-xs text-primary truncate"><a href="${job.url}" target="_blank" class="hover:underline">${url}</a></td><td class="px-8 py-4"><span class="status-badge ${badge}">${job.status}</span></td><td class="px-8 py-4 font-mono text-xs text-text-muted">${job.recipes_found}</td><td class="px-8 py-4 text-xs text-text-light">${date}</td><td class="px-8 py-4"><button onclick="deleteJob('${job.id}')" class="text-xs font-bold text-red-600 hover:text-red-800 uppercase">Stop</button></td>`; tbody.appendChild(tr); }); }
-        async function deleteJob(id) { if(confirm('Stop job?')) { await fetch(`${API_URL}/jobs/${id}`, {method:'DELETE'}); fetchJobs(); } }
+        
+        async function deleteJob(id) { if(confirm('Stop job?')) { await fetch(`${API_URL}/jobs/${id}`, {method:'DELETE', headers: { 'x-api-key': API_KEY }}); fetchJobs(); } }
+        
         function showClearModal() { document.getElementById('clearModal').classList.remove('hidden'); }
         function hideClearModal() { document.getElementById('clearModal').classList.add('hidden'); }
-        async function confirmClearJobs() { await fetch(`${API_URL}/jobs`, {method:'DELETE'}); hideClearModal(); fetchJobs(); }
+        async function confirmClearJobs() { await fetch(`${API_URL}/jobs`, {method:'DELETE', headers: { 'x-api-key': API_KEY }}); hideClearModal(); fetchJobs(); }
         document.getElementById('crawlForm').addEventListener('submit', startCrawl);
         
         // Shader Reused

@@ -181,6 +181,7 @@
         lucide.createIcons();
         
         const API_URL = ''; 
+        const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
         let debounceTimer;
         let currentPage = 1;
         const limit = 50;
@@ -208,7 +209,7 @@
                     endpoint = `${API_URL}/search`;
                 }
 
-                const res = await fetch(`${endpoint}?${params.toString()}`);
+                const res = await fetch(`${endpoint}?${params.toString()}`, { headers: { 'x-api-key': API_KEY } });
                 const data = await res.json();
                 const recipes = data.recipes || [];
                 

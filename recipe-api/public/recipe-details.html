@@ -102,13 +102,14 @@
     <script>
         lucide.createIcons();
         const API_URL = ''; 
+        const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
 
         async function fetchRecipeDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
             if (!id) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-red-800">No ID provided.</div>'; return; }
             try {
-                const res = await fetch(`${API_URL}/recipes/${id}`);
+                const res = await fetch(`${API_URL}/recipes/${id}`, { headers: { 'x-api-key': API_KEY } });
                 if (res.status === 404) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-text-muted">Recipe not found.</div>'; return; }
                 const recipe = await res.json();
                 renderRecipe(recipe);

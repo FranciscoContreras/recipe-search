@@ -342,11 +342,12 @@
         lucide.createIcons();
 
         // --- Helpers ---
+        const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
         const api = {
-            search: async (q) => (await fetch(`/search?q=${encodeURIComponent(q)}`)).json(),
-            getRecipes: async () => (await fetch('/recipes')).json(),
-            getRecipe: async (id) => (await fetch(`/recipes/${id}`)).json(),
-            analyze: async (ing) => (await fetch('/nutrition/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ingredients: ing}) })).json(),
+            search: async (q) => (await fetch(`/search?q=${encodeURIComponent(q)}`, { headers: { 'x-api-key': API_KEY } })).json(),
+            getRecipes: async () => (await fetch('/recipes', { headers: { 'x-api-key': API_KEY } })).json(),
+            getRecipe: async (id) => (await fetch(`/recipes/${id}`, { headers: { 'x-api-key': API_KEY } })).json(),
+            analyze: async (ing) => (await fetch('/nutrition/analyze', { method: 'POST', headers: {'Content-Type':'application/json', 'x-api-key': API_KEY}, body: JSON.stringify({ingredients: ing}) })).json(),
             health: async () => (await fetch('/health')).json()
         };
 
@@ -388,7 +389,7 @@
             const resContainer = document.getElementById('demo2-result');
             resContainer.innerHTML = '<div class="loader mx-auto"></div>';
             try {
-                const res = await fetch(`/search?ingredients=${ingredientsTags.join(',')}&match_all=true`);
+                const res = await fetch(`/search?ingredients=${ingredientsTags.join(',')}&match_all=true`, { headers: { 'x-api-key': API_KEY } });
                 const data = await res.json();
                 resContainer.innerHTML = data.recipes.length ? data.recipes.slice(0,3).map(r => `<div class="text-sm text-primary font-medium p-1">• ${r.name}</div>`).join('') : '<span class="text-xs text-text-muted">No matches</span>';
             } catch(e) { resContainer.textContent = 'Error'; }
@@ -508,7 +509,7 @@
             res.textContent = 'Queuing...';
             try {
                 const resp = await fetch('/crawl', {
-                    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url})
+                    method: 'POST', headers: {'Content-Type':'application/json', 'x-api-key': API_KEY}, body: JSON.stringify({url})
                 });
                 const data = await resp.json();
                 res.textContent = `Job ID: ${data.job ? data.job.id : 'Error'}\nStatus: ${data.job ? data.job.status : data.error}`;

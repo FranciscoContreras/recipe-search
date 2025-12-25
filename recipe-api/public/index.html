@@ -444,7 +444,7 @@
             const ingredients = input.split('\n').map(l => l.trim()).filter(l => l);
             try {
                 const res = await fetch('/nutrition/analyze', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86' }, body: JSON.stringify({ ingredients })
                 });
                 const data = await res.json();
                 const t = data.total;
