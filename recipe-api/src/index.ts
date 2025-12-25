@@ -8,6 +8,7 @@ import { NutritionEngine } from './services/nutritionEngine';
 import { RecipeCrawlerService } from './crawler';
 import path from 'path';
 import { apiKeyAuth } from './middleware/auth';
+import { requestApiKey } from './controllers/authController';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -26,6 +27,8 @@ app.get('/', (req: Request, res: Response) => {
   }
   res.send('Recipe API is running!');
 });
+
+app.post('/auth/request-key', requestApiKey);
 
 app.get('/health', async (req: Request, res: Response) => {
   try {
