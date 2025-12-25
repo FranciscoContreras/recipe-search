@@ -11,6 +11,8 @@
 - **Database:** Supabase (PostgreSQL)
 - **Crawling:** Playwright, Crawlee
 - **Nutrition Analysis:** Custom `NutritionEngine`, FatSecret API
+- **Authentication:** Custom API Key system (x-api-key header)
+- **Frontend Design:** "Ceramic" Design System (Tailwind, Three.js shaders, Lucide Icons)
 - **Deployment:** PM2 (ecosystem.config.js present)
 
 ## Directory Structure
@@ -18,11 +20,16 @@
 ### `recipe-api/`
 The main backend application.
 - **`src/index.ts`**: Application entry point. Defines Express routes and server setup.
-- **`src/services/`**: Integration with external APIs and internal logic (FatSecret, USDA, NutritionEngine).
+- **`src/middleware/auth.ts`**: API Key authentication middleware.
+- **`src/controllers/authController.ts`**: Logic for generating and emailing API keys.
+- **`src/services/`**: Integration with external APIs and internal logic (FatSecret, USDA, NutritionEngine, Email).
 - **`src/crawler.ts`**: Logic for crawling recipe websites.
-- **`src/worker.ts`**: Background worker entry point (likely for processing crawl jobs).
-- **`public/`**: Static HTML files for admin, testing, and documentation interfaces.
-- **`package.json`**: Dependencies and scripts.
+- **`public/`**: Static HTML files for the frontend interface.
+    - **`index.html`**: Landing page with live analysis demo.
+    - **`access.html`**: Portal to request API keys.
+    - **`lab.html`**: Interactive API playground.
+    - **`docs.html`**: API documentation.
+    - **`admin.html`**: Crawler management interface.
 
 ### `supabase/`
 Database configuration and migrations.
@@ -34,7 +41,7 @@ Database configuration and migrations.
 ### Prerequisites
 - Node.js (v20+ recommended)
 - Supabase CLI (for local DB management, if applicable)
-- Valid `.env` file in `recipe-api/` with Supabase credentials.
+- Valid `.env` file in `recipe-api/` with Supabase credentials and Mailgun/SMTP settings.
 
 ### Setup & Installation
 ```bash
@@ -56,30 +63,37 @@ npm install
   ```
   Compiles TypeScript to `dist/` and runs the result.
 
-### Testing
-- Currently, no automated tests are defined in `package.json` (`npm test` exits with error).
-- Manual testing can be done via the provided HTML pages in `recipe-api/public/` (e.g., `http://localhost:3000/lab.html`).
+## API Authentication
+All endpoints (except `/health` and `/` and `/auth/request-key`) require an API Key.
+- **Header:** `x-api-key: <YOUR_KEY>`
+- **Requesting Keys:** POST `/auth/request-key` with `{ "email": "..." }`.
+- **Logic:** Emails are normalized (aliases removed) and existing keys are rotated/overwritten to prevent abuse.
 
 ## Key API Endpoints
-- **GET `/recipes`**: List recipes. Supports `?full=true` for full details.
-- **GET `/recipes/:id`**: Get a single recipe. Performs JIT nutrition enrichment if missing.
-- **GET `/search`**: Search recipes. Supports keyword (`q`) and ingredient (`ingredients`) filters.
-- **POST `/crawl`**: Queue a new URL for crawling.
-- **GET `/health`**: System health and statistics.
+- **GET `/recipes`**: List recipes. Supports `?full=true`. (Auth Required)
+- **GET `/recipes/:id`**: Get a single recipe. Performs JIT nutrition enrichment. (Auth Required)
+- **GET `/search`**: Search recipes via hybrid vector/text search. (Auth Required)
+- **POST `/nutrition/analyze`**: Analyze raw ingredient text. (Auth Required)
+- **POST `/crawl`**: Queue a new URL for crawling. (Auth Required)
+- **POST `/auth/request-key`**: Request a new API key via email. (Public)
+- **GET `/health`**: System health and statistics. (Public)
 
 ## Database Schema Highlights
-- **`recipes`**: Stores recipe details (name, ingredients, instructions, nutrition).
-- **`crawl_jobs`**: Manages the state of crawling tasks (pending, completed, failed).
-- **RPC Functions**: Custom PostgreSQL functions used for complex queries like hybrid search (`search_recipes_hybrid`).
+- **`recipes`**: Stores recipe details, nutrition, and embeddings.
+- **`crawl_jobs`**: Manages the state of crawling tasks.
+- **`api_keys`**: Stores hashed API keys and owner information.
+- **RPC Functions**: 
+    - `search_recipes_hybrid`: Semantic + Keyword search.
+    - `update_recipe_nutritions`: Batch updates.
 
-## Coding Conventions
-- **TypeScript**: Strict typing is encouraged.
-- **Async/Await**: Used for all database and network operations.
-- **Environment Variables**: configuration via `dotenv`.
-- **Supabase Client**: Singleton instance from `src/supabaseClient.ts`.
+## Design System ("Ceramic")
+The frontend uses a custom design system characterized by:
+- **Colors:** Deep Green (`#1a4432`) primary, Off-white (`#fafafa`) background.
+- **Typography:** `Grenda` (Display), `DM Sans` (UI), `JetBrains Mono` (Code).
+- **Visuals:** Three.js "God Rays" background shader, Lucide icons.
+- **Components:** `card-ceramic`, `btn-primary`, `input-ceramic`.
 
 ## Deployment Environment
-
 - **Server:** VPS (`root@server.wearemachina.com`)
 - **Domain:** `recipe-base.wearemachina.com`
 - **Management:** CloudPanel

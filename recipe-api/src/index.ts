@@ -7,6 +7,8 @@ import { findNutritionForRecipe } from './services/fatsecret';
 import { NutritionEngine } from './services/nutritionEngine';
 import { RecipeCrawlerService } from './crawler';
 import path from 'path';
+import fs from 'fs';
+import { injectMetaTags } from './services/seo';
 import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 
@@ -17,6 +19,82 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// --- SEO & PUBLIC ROUTES (No Auth) ---
+
+// Robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Sitemap: https://recipe-base.wearemachina.com/sitemap.xml
+`);
+});
+
+// Sitemap.xml
+app.get('/sitemap.xml', async (req, res) => {
+  res.type('application/xml');
+  res.write('<?xml version="1.0" encoding="UTF-8"?>\n');
+  res.write('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n');
+
+  // Static Pages
+  const staticPages = ['', '/recipes', '/lab', '/docs'];
+  staticPages.forEach(page => {
+    res.write(`  <url><loc>https://recipe-base.wearemachina.com${page}</loc><changefreq>daily</changefreq></url>\n`);
+  });
+
+  // Dynamic Recipes (Stream from DB)
+  // Fetch in chunks to avoid memory issues if DB is huge, but for now standard pagination is fine
+  const limit = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data: recipes, error } = await supabase
+      .from('recipes')
+      .select('id, updated_at')
+      .neq('qa_status', 'quarantined')
+      .range(offset, offset + limit - 1);
+
+    if (error || !recipes || recipes.length === 0) {
+      hasMore = false;
+    } else {
+      recipes.forEach(r => {
+        const date = r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString();
+        res.write(`  <url><loc>https://recipe-base.wearemachina.com/recipe/${r.id}</loc><lastmod>${date}</lastmod></url>\n`);
+      });
+      offset += limit;
+      if (recipes.length < limit) hasMore = false;
+    }
+  }
+
+  res.write('</urlset>');
+  res.end();
+});
+
+// SEO-Optimized Recipe Details (SSR Injection)
+app.get('/recipe/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  // 1. Fetch Data
+  const { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).single();
+  
+  if (error || !recipe) {
+      return res.status(404).sendFile(path.join(__dirname, '../public/index.html')); // Fallback or 404 page
+  }
+
+  // 2. Read Template
+  const templatePath = path.join(__dirname, '../public/recipe-details.html');
+  fs.readFile(templatePath, 'utf8', (err, html) => {
+      if (err) return res.status(500).send('Server Error');
+
+      // 3. Inject Meta & Schema
+      const finalHtml = injectMetaTags(html, recipe);
+      
+      res.send(finalHtml);
+  });
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Public Endpoints (No Auth Required)

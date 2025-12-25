@@ -263,7 +263,8 @@
                 card.className = 'card-ceramic group h-full opacity-0 animate-fade-in-up';
                 card.style.animationDelay = `${index * 50}ms`;
                 card.style.animationFillMode = 'forwards';
-                card.href = `/recipe-details.html?id=${recipe.id}`;
+                // SEO: Use clean URL
+                card.href = `/recipe/${recipe.id}`;
                 card.innerHTML = `
                     <div class="aspect-[4/3] w-full overflow-hidden relative bg-gray-100">
                         <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${imageUrl}" alt="${recipe.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">

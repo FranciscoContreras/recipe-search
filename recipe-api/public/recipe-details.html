@@ -105,11 +105,23 @@
         const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
 
         async function fetchRecipeDetails() {
+            // Support both Query Param (Legacy) and Clean URL (SEO)
             const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
+            let id = urlParams.get('id');
+            
+            if (!id) {
+                const parts = window.location.pathname.split('/');
+                const potentialId = parts[parts.length - 1];
+                // specific check for UUID-like structure or just assume last segment is ID if not html
+                if (potentialId && !potentialId.endsWith('.html')) {
+                    id = potentialId;
+                }
+            }
+
             if (!id) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-red-800">No ID provided.</div>'; return; }
             try {
-                const res = await fetch(`${API_URL}/recipes/${id}`, { headers: { 'x-api-key': API_KEY } });
+                // Ensure absolute path for API call
+                const res = await fetch(`/recipes/${id}`, { headers: { 'x-api-key': API_KEY } });
                 if (res.status === 404) { document.getElementById('recipeContainer').innerHTML = '<div class="h-screen flex items-center justify-center text-text-muted">Recipe not found.</div>'; return; }
                 const recipe = await res.json();
                 renderRecipe(recipe);
