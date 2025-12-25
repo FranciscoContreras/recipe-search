@@ -7,6 +7,7 @@ import { findNutritionForRecipe } from './services/fatsecret';
 import { NutritionEngine } from './services/nutritionEngine';
 import { RecipeCrawlerService } from './crawler';
 import path from 'path';
+import { apiKeyAuth } from './middleware/auth';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -17,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Public Endpoints (No Auth Required)
 app.get('/', (req: Request, res: Response) => {
   if (req.accepts('html')) {
      res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -24,6 +26,22 @@ app.get('/', (req: Request, res: Response) => {
   }
   res.send('Recipe API is running!');
 });
+
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    const { count: total } = await supabase.from('recipes').select('*', { count: 'exact', head: true });
+    const { count: verified } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'verified');
+    const { count: flagged } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'flagged');
+    const { data: sample } = await supabase.from('recipes').select('quality_score').not('quality_score', 'is', null).limit(100);
+    const avg_score = sample && sample.length > 0 ? sample.reduce((a, b) => a + (b.quality_score || 0), 0) / sample.length : 0;
+    const { data: recent } = await supabase.from('recipes').select('id, name, qa_status, quality_score, audit_log').not('last_audited_at', 'is', null).order('last_audited_at', { ascending: false }).limit(10);
+    res.json({ stats: { total: total || 0, verified: verified || 0, flagged: flagged || 0, avg_score: avg_score }, recent: recent || [] });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// --- PROTECTED ROUTES ---
+// All routes below this line require x-api-key header
+app.use(apiKeyAuth);
 
 // --- RECIPES ENDPOINTS ---
 
@@ -150,18 +168,6 @@ app.get('/search', async (req: Request, res: Response) => {
 
   const finalData = isFull ? data : (data || []).map((r: any) => ({ id: r.id, name: r.name, image: r.image, description: r.description, cook_time: r.cook_time, prep_time: r.prep_time }));
   res.status(200).json({ recipes: finalData, count: (data || []).length });
-});
-
-app.get('/health', async (req: Request, res: Response) => {
-  try {
-    const { count: total } = await supabase.from('recipes').select('*', { count: 'exact', head: true });
-    const { count: verified } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'verified');
-    const { count: flagged } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'flagged');
-    const { data: sample } = await supabase.from('recipes').select('quality_score').not('quality_score', 'is', null).limit(100);
-    const avg_score = sample && sample.length > 0 ? sample.reduce((a, b) => a + (b.quality_score || 0), 0) / sample.length : 0;
-    const { data: recent } = await supabase.from('recipes').select('id, name, qa_status, quality_score, audit_log').not('last_audited_at', 'is', null).order('last_audited_at', { ascending: false }).limit(10);
-    res.json({ stats: { total: total || 0, verified: verified || 0, flagged: flagged || 0, avg_score: avg_score }, recent: recent || [] });
-  } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/crawl', async (req: Request, res: Response) => {
