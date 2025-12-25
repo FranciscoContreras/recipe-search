@@ -136,7 +136,8 @@ async function startAuditor() {
                             const retryCount = lastJob ? lastJob.retry_count : 0;
 
                             if (retryCount < 2) {
-                                console.log(`Scheduling auto-repair crawl for: ${recipe.name}`);
+                                console.log(`[DISABLED] Auto-repair crawl would be scheduled for: ${recipe.name}`);
+                                /*
                                 await supabase.from('crawl_jobs').insert([{
                                     url: recipe.url,
                                     status: 'pending',
@@ -144,6 +145,8 @@ async function startAuditor() {
                                     log: 'Auto-repair triggered by Auditor (Low Quality Score)'
                                 }]);
                                 logs.push(`Scheduled auto-repair crawl (Attempt ${retryCount + 1}).`);
+                                */
+                                logs.push(`Auto-repair disabled to prevent loops.`);
                             } else {
                                 logs.push('Auto-repair exhausted. Human review required.');
                             }

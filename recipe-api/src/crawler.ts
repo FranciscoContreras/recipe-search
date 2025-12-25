@@ -41,6 +41,7 @@ export class RecipeCrawlerService {
 
     this.crawler = new CheerioCrawler({
       // Gentle & Polite settings
+      maxRequestsPerCrawl: 50,
       maxConcurrency: this.isRetry ? 1 : 2,
       maxRequestRetries: this.isRetry ? 5 : 3,
       requestHandlerTimeoutSecs: 60,
