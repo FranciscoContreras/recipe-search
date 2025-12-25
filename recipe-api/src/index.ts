@@ -11,6 +11,9 @@ import fs from 'fs';
 import { injectMetaTags } from './services/seo';
 import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
+import { swaggerOptions } from './swaggerOptions';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -19,6 +22,9 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+const specs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, { customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css' }));
 
 // --- SEO & PUBLIC ROUTES (No Auth) ---
 
@@ -126,6 +132,32 @@ app.use(apiKeyAuth);
 
 // --- RECIPES ENDPOINTS ---
 
+/**
+ * @swagger
+ * /recipes:
+ *   post:
+ *     summary: Create a new recipe
+ *     tags: [Recipes]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Recipe'
+ *     responses:
+ *       201:
+ *         description: The recipe was successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Recipe'
+ *       400:
+ *         description: Missing required fields
+ *       500:
+ *         description: Server error
+ */
 app.post('/recipes', async (req: Request, res: Response) => {
   const newRecipe: TablesInsert<'recipes'> = req.body;
   if (!newRecipe.name) {
@@ -137,6 +169,51 @@ app.post('/recipes', async (req: Request, res: Response) => {
   res.status(201).json(data);
 });
 
+/**
+ * @swagger
+ * /recipes:
+ *   get:
+ *     summary: Returns a list of recipes
+ *     tags: [Recipes]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: The page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: The number of items per page
+ *       - in: query
+ *         name: full
+ *         schema:
+ *           type: boolean
+ *         description: If true, returns full recipe details. If false (default), returns metadata only.
+ *     responses:
+ *       200:
+ *         description: The list of recipes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 recipes:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Recipe'
+ *                 count:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ */
 app.get('/recipes', async (req: Request, res: Response) => {
   const isFull = req.query.full === 'true';
   const page = parseInt(req.query.page as string) || 1;
@@ -154,6 +231,31 @@ app.get('/recipes', async (req: Request, res: Response) => {
   res.status(200).json({ recipes: data, count, page, limit });
 });
 
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   get:
+ *     summary: Get a recipe by ID
+ *     tags: [Recipes]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The recipe ID
+ *     responses:
+ *       200:
+ *         description: The recipe description by id
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Recipe'
+ *       404:
+ *         description: The recipe was not found
+ */
 app.get('/recipes/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   let { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).neq('qa_status', 'quarantined').single();
@@ -215,6 +317,36 @@ app.get('/nutrition/analyze', (req: Request, res: Response) => {
     res.status(405).send('<h1>Method Not Allowed</h1><p>Use POST.</p>');
 });
 
+/**
+ * @swagger
+ * /nutrition/analyze:
+ *   post:
+ *     summary: Analyze ingredients for nutritional data
+ *     tags: [Nutrition]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ingredients
+ *             properties:
+ *               ingredients:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["1 cup rice", "200g chicken"]
+ *     responses:
+ *       200:
+ *         description: Nutritional analysis result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NutritionAnalysis'
+ */
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
   console.log(`DEBUG: HIT /nutrition/analyze POST Endpoint - ${new Date().toISOString()}`);
   const { ingredients } = req.body;
@@ -229,6 +361,45 @@ app.post('/nutrition/analyze', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /search:
+ *   get:
+ *     summary: Search recipes by keyword or ingredients
+ *     tags: [Search]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Fuzzy search term (e.g. "pasta")
+ *       - in: query
+ *         name: ingredients
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of ingredients to filter by (e.g. "chicken, rice")
+ *       - in: query
+ *         name: match_all
+ *         schema:
+ *           type: boolean
+ *         description: If true, returns recipes containing ALL specified ingredients.
+ *     responses:
+ *       200:
+ *         description: Search results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 recipes:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Recipe'
+ *                 count:
+ *                   type: integer
+ */
 app.get('/search', async (req: Request, res: Response) => {
   const query = (req.query.q as string) || '';
   const ingredientsParam = req.query.ingredients as string;
