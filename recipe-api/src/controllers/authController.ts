@@ -19,6 +19,14 @@ function isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function normalizeEmail(email: string): string {
+    const [local, domain] = email.split('@');
+    if (!local || !domain) return email.toLowerCase();
+    // Remove everything after '+' in the local part
+    const cleanLocal = local.split('+')[0];
+    return `${cleanLocal}@${domain}`.toLowerCase();
+}
+
 // In-memory rate limiting (simple)
 // Map<IP, timestamp>
 const requestLog = new Map<string, number>();
@@ -32,6 +40,8 @@ export async function requestApiKey(req: Request, res: Response) {
         return res.status(400).json({ error: 'Valid email is required.' });
     }
 
+    const canonicalEmail = normalizeEmail(email);
+
     // 2. Rate Limiting (1 request per minute per IP to prevent spamming)
     const lastRequest = requestLog.get(ip);
     if (lastRequest && Date.now() - lastRequest < 60000) {
@@ -40,29 +50,23 @@ export async function requestApiKey(req: Request, res: Response) {
     requestLog.set(ip, Date.now());
 
     try {
-        // 3. Check for existing active key
-        const { data: existing } = await adminSupabase
+        // 3. Deactivate any existing active keys for this user (overwrite behavior)
+        // We use canonicalEmail to prevent "user+1@..." and "user+2@..." exploits
+        await adminSupabase
             .from('api_keys')
-            .select('id')
-            .eq('owner_email', email)
-            .eq('is_active', true)
-            .single();
-
-        if (existing) {
-            // Option: Resend existing key? No, we don't have the raw key.
-            // Option: Tell them they already have one.
-            return res.status(409).json({ error: 'An active API Key already exists for this email.' });
-        }
+            .update({ is_active: false })
+            .eq('owner_email', canonicalEmail);
 
         // 4. Generate New Key
         const { rawKey, hash } = generateApiKey();
 
         // 5. Store in DB
+        // We store the canonicalEmail to enforce the unique constraint and anti-spam
         const { error: dbError } = await adminSupabase
             .from('api_keys')
             .insert([{
-                owner_name: email, // Use email as name for now
-                owner_email: email,
+                owner_name: email, // Keep original email as name for reference
+                owner_email: canonicalEmail, 
                 key_hash: hash,
                 is_active: true
             }]);
@@ -72,7 +76,7 @@ export async function requestApiKey(req: Request, res: Response) {
             return res.status(500).json({ error: 'Failed to generate key.' });
         }
 
-        // 6. Send Email
+        // 6. Send Email (To the original requested email)
         const sent = await sendApiKeyEmail(email, rawKey);
 
         if (!sent) {
