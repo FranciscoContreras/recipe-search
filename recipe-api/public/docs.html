@@ -84,6 +84,21 @@
         </div>
 
         <div class="space-y-8">
+            <!-- Auth Section -->
+            <div class="card-ceramic p-8 border-l-4 border-l-primary">
+                <div class="flex items-center gap-3 mb-4">
+                    <i data-lucide="lock" class="w-5 h-5 text-primary"></i>
+                    <h3 class="font-display text-lg text-primary font-medium">Authentication</h3>
+                </div>
+                <p class="text-text-muted mb-4 text-sm leading-relaxed">
+                    All API endpoints (except <code class="text-xs">/health</code>) require authentication. You must include your API key in the <code class="text-xs">x-api-key</code> header of every request.
+                    <br><a href="/access.html" class="text-primary underline hover:text-tertiary mt-2 inline-block">Get an API Key &rarr;</a>
+                </p>
+                <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 overflow-x-auto shadow-inner">
+                    <pre class="font-mono text-xs text-green-400">curl -H "x-api-key: YOUR_KEY" https://recipe-base.wearemachina.com/recipes</pre>
+                </div>
+            </div>
+
             <div class="card-ceramic p-8">
                 <div class="flex items-center gap-3 mb-4"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">GET</span><h3 class="font-mono text-lg text-primary">/recipes</h3></div>
                 <p class="text-text-muted mb-4 text-sm">Retrieve a paginated list of recipes.</p>
