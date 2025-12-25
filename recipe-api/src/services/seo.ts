@@ -14,7 +14,7 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
     "datePublished": recipe.created_at,
     "description": recipe.description || `A delicious recipe for ${recipe.name}.`,
     "recipeIngredient": recipe.recipe_ingredients || [],
-    "recipeInstructions": (recipe.recipe_instructions || []).map((step: any) => ({
+    "recipeInstructions": (Array.isArray(recipe.recipe_instructions) ? recipe.recipe_instructions : []).map((step: any) => ({
       "@type": "HowToStep",
       "text": typeof step === 'string' ? step : step.text || step.name
     })),
@@ -26,7 +26,6 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
   if (recipe.recipe_yield) schema.recipeYield = recipe.recipe_yield;
   if (recipe.recipe_category) schema.recipeCategory = recipe.recipe_category;
   if (recipe.recipe_cuisine) schema.recipeCuisine = recipe.recipe_cuisine;
-  if (recipe.keywords) schema.keywords = recipe.keywords;
 
   if (recipe.nutrition) {
     const nut: any = recipe.nutrition;
