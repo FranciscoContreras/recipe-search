@@ -11,7 +11,7 @@ const resend = new Resend(RESEND_API_KEY);
 export async function sendApiKeyEmail(email: string, apiKey: string) {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev', // Default Resend testing domain
+            from: 'Recipe Base API <api@recipe-base.wearemachina.com>', 
             to: [email],
             subject: 'Your Recipe Base API Key',
             html: `
