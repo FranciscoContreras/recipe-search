@@ -48,7 +48,7 @@
             background-size: 64px 64px;
         }
 
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 2.5s ease-in-out; }
         
         /* --- Component System: Buttons --- */
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
@@ -339,6 +339,9 @@
                             gl_FragColor = vec4(rayColor, finalAlpha); }` }); this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material)); this.resize(); window.addEventListener('resize', () => this.resize()); this.animate(); } resize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); }             animate() { requestAnimationFrame(() => this.animate()); this.uniforms.uTime.value += 0.0098; this.renderer.render(this.scene, this.camera); } }
         if (window.innerWidth >= 768) {
             new GodRaysBackground('bg-canvas');
+            setTimeout(() => {
+                document.getElementById('bg-canvas').style.opacity = '0.4';
+            }, 100);
         }
 
         // Mobile Menu

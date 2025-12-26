@@ -44,7 +44,7 @@
             background-image: linear-gradient(to right, rgba(26, 68, 50, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(26, 68, 50, 0.03) 1px, transparent 1px);
             background-size: 64px 64px;
         }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.4; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 2.5s ease-in-out; }
         
         /* Components */
         .card { background: white; border: 1px solid #e0e0d2; border-radius: 12px; overflow: hidden; transition: all 0.3s ease; }
@@ -577,6 +577,9 @@
         }
         if (window.innerWidth >= 768) {
             new GodRaysBackground('bg-canvas');
+            setTimeout(() => {
+                document.getElementById('bg-canvas').style.opacity = '0.4';
+            }, 100);
         }
     </script>
 </body>
