@@ -127,7 +127,7 @@
         <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
             <div>
                 <span class="text-primary/60 font-bold tracking-widest text-xs uppercase mb-3 block">The Archive</span>
-                <h1 class="font-display font-medium text-4xl md:text-5xl text-primary mb-3">All Recipes</h1>
+                <h1 class="font-display font-medium text-3xl md:text-5xl text-primary mb-3">All Recipes</h1>
                 <p class="text-text-muted text-sm font-light opacity-80" id="resultCount">Loading archive...</p>
             </div>
             <div class="w-full md:w-auto flex flex-col gap-4">
@@ -270,7 +270,7 @@
                         <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${imageUrl}" alt="${recipe.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                    <div class="p-6 flex flex-col flex-1">
+                    <div class="p-4 md:p-6 flex flex-col flex-1">
                         <h3 class="font-display text-xl text-primary mb-2 font-medium leading-tight group-hover:text-tertiary transition-colors line-clamp-2">${recipe.name}</h3>
                         <div class="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-text-light mb-4">
                             ${prepTime ? `<span class="bg-gray-50 px-2 py-1 rounded border border-border">Prep ${prepTime}</span>` : ''}
