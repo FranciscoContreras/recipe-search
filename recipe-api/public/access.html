@@ -85,7 +85,7 @@
 </head>
 <body class="antialiased bg-technical flex flex-col min-h-screen">
 
-    <canvas id="bg-canvas"></canvas>
+    <canvas id="bg-canvas" class="hidden md:block"></canvas>
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
@@ -244,7 +244,9 @@
             resize() { const w = window.innerWidth; const h = window.innerHeight; this.renderer.setSize(w, h); this.uniforms.uResolution.value.set(w, h); } 
             animate() { requestAnimationFrame(() => this.animate()); this.uniforms.uTime.value += 0.0098; this.renderer.render(this.scene, this.camera); } 
         }
-        new GodRaysBackground('bg-canvas');
+        if (window.innerWidth >= 768) {
+            new GodRaysBackground('bg-canvas');
+        }
     </script>
 </body>
 </html>

@@ -127,7 +127,7 @@
 </head>
 <body class="antialiased bg-technical">
 
-    <canvas id="bg-canvas"></canvas>
+    <canvas id="bg-canvas" class="hidden md:block"></canvas>
 
     <!-- Navigation -->
     <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
@@ -732,7 +732,9 @@
         }
         
         // Initialize
-        new GodRaysBackground('bg-canvas');
+        if (window.innerWidth >= 768) {
+            new GodRaysBackground('bg-canvas');
+        }
     </script>
 </body>
 </html>
