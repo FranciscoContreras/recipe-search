@@ -60,6 +60,7 @@ app.get('/sitemap.xml', async (req, res) => {
       .from('recipes')
       .select('id, updated_at')
       .neq('qa_status', 'quarantined')
+      .neq('qa_status', 'rejected')
       .range(offset, offset + limit - 1);
 
     if (error || !recipes || recipes.length === 0) {
@@ -225,6 +226,7 @@ app.get('/recipes', async (req: Request, res: Response) => {
     .from('recipes')
     .select(selectFields, { count: 'exact' })
     .neq('qa_status', 'quarantined')
+    .neq('qa_status', 'rejected')
     .range(offset, offset + limit - 1);
 
   if (error) return res.status(500).json({ error: error.message });
@@ -258,7 +260,7 @@ app.get('/recipes', async (req: Request, res: Response) => {
  */
 app.get('/recipes/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
-  let { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).neq('qa_status', 'quarantined').single();
+  let { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).neq('qa_status', 'quarantined').neq('qa_status', 'rejected').single();
   if (error || !recipe) return res.status(404).json({ error: 'Recipe not found' });
 
   if (!recipe.nutrition) {
@@ -287,7 +289,7 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid payload.' });
   if (ids.length > 50) return res.status(400).json({ error: 'Batch limit exceeded.' });
 
-  const { data: recipes, error } = await supabase.from('recipes').select('*').in('id', ids).neq('qa_status', 'quarantined');
+  const { data: recipes, error } = await supabase.from('recipes').select('*').in('id', ids).neq('qa_status', 'quarantined').neq('qa_status', 'rejected');
   if (error) return res.status(500).json({ error: error.message });
 
   const updates: any[] = [];
@@ -409,7 +411,7 @@ app.get('/search', async (req: Request, res: Response) => {
 
   if (!query && !ingredients) {
     const selectFields = isFull ? '*' : 'id, name, image, description, cook_time, prep_time';
-    const { data, count, error } = await supabase.from('recipes').select(selectFields, { count: 'exact' }).neq('qa_status', 'quarantined').limit(50);
+    const { data, count, error } = await supabase.from('recipes').select(selectFields, { count: 'exact' }).neq('qa_status', 'quarantined').neq('qa_status', 'rejected').limit(50);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ recipes: data, count });
   }

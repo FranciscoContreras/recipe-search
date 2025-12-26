@@ -3,7 +3,9 @@ import { findNutritionForRecipe } from './services/fatsecret';
 import { calculateScore } from './utils/scoring';
 
 const BATCH_SIZE = 10;
-const POLL_INTERVAL = 10000;
+const BASE_POLL_INTERVAL = 10000;
+const MAX_POLL_INTERVAL = 300000; // 5 minutes
+let currentPollInterval = BASE_POLL_INTERVAL;
 
 async function checkImage(url: string): Promise<boolean> {
     if (!url) return false;
@@ -32,16 +34,19 @@ async function startAuditor() {
 
             if (error) {
                 console.error('Auditor fetch error:', error.message);
-                await new Promise(r => setTimeout(r, POLL_INTERVAL));
+                await new Promise(r => setTimeout(r, BASE_POLL_INTERVAL));
                 continue;
             }
 
             if (!recipes || recipes.length === 0) {
-                console.log('No pending recipes. Waiting...');
-                await new Promise(r => setTimeout(r, POLL_INTERVAL));
+                console.log(`No pending recipes. Waiting ${(currentPollInterval / 1000).toFixed(0)}s...`);
+                await new Promise(r => setTimeout(r, currentPollInterval));
+                currentPollInterval = Math.min(currentPollInterval * 2, MAX_POLL_INTERVAL);
                 continue;
             }
 
+            // Reset poll interval when work is found
+            currentPollInterval = BASE_POLL_INTERVAL;
             console.log(`Auditing batch of ${recipes.length} recipes...`);
 
             for (const recipe of recipes) {
@@ -109,7 +114,7 @@ async function startAuditor() {
                 const qualityScore = calculateScore(tempRecipe);
 
                 // Determine Status (Quarantine Logic)
-                if (qualityScore < 80) {
+                if (qualityScore < 90) {
                     status = 'quarantined';
                     logs.push(`Quarantined: Low quality score (${qualityScore}/100).`);
 
@@ -128,16 +133,16 @@ async function startAuditor() {
                                 .from('crawl_jobs')
                                 .select('retry_count, updated_at')
                                 .eq('url', recipe.url)
-                                .eq('status', 'completed')
+                                .neq('status', 'pending') // Check any finished/failed job
                                 .order('updated_at', { ascending: false })
                                 .limit(1)
                                 .single();
 
                             const retryCount = lastJob ? lastJob.retry_count : 0;
 
-                            if (retryCount < 2) {
-                                console.log(`[DISABLED] Auto-repair crawl would be scheduled for: ${recipe.name}`);
-                                /*
+                            if (retryCount < 3) {
+                                console.log(`Auto-repair crawl scheduled for: ${recipe.name} (Attempt ${retryCount + 1})`);
+                                
                                 await supabase.from('crawl_jobs').insert([{
                                     url: recipe.url,
                                     status: 'pending',
@@ -145,14 +150,14 @@ async function startAuditor() {
                                     log: 'Auto-repair triggered by Auditor (Low Quality Score)'
                                 }]);
                                 logs.push(`Scheduled auto-repair crawl (Attempt ${retryCount + 1}).`);
-                                */
-                                logs.push(`Auto-repair disabled to prevent loops.`);
                             } else {
-                                logs.push('Auto-repair exhausted. Human review required.');
+                                logs.push('Auto-repair exhausted. Permanently hiding (Rejected).');
+                                status = 'rejected';
                             }
                         }
                     } else {
                         logs.push('Cannot auto-repair: No source URL.');
+                        status = 'rejected';
                     }
                 }
 
@@ -177,7 +182,7 @@ async function startAuditor() {
 
         } catch (e) {
             console.error('Auditor fatal error:', e);
-            await new Promise(r => setTimeout(r, POLL_INTERVAL));
+            await new Promise(r => setTimeout(r, BASE_POLL_INTERVAL));
         }
     }
 }

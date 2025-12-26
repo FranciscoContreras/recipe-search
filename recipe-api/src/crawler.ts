@@ -238,6 +238,7 @@ export class RecipeCrawlerService {
                   recipe_cuisine: Array.isArray(item.recipeCuisine) ? item.recipeCuisine.join(', ') : item.recipeCuisine,
                   nutrition: item.nutrition,
                   updated_at: new Date().toISOString(),
+                  qa_status: 'pending' // Reset status to force auditor re-check
                 };
 
                 // QUALITY GATE

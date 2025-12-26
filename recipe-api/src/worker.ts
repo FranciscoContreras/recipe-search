@@ -1,7 +1,9 @@
 import { RecipeCrawlerService } from './crawler';
 import { supabase } from './supabaseClient';
 
-const POLL_INTERVAL = 5000; // 5 seconds
+const BASE_POLL_INTERVAL = 5000; // Start at 5 seconds
+const MAX_POLL_INTERVAL = 60000; // Max wait 1 minute
+let currentPollInterval = BASE_POLL_INTERVAL;
 
 async function startWorker() {
   console.log('Worker started. Polling for jobs...');
@@ -23,6 +25,8 @@ async function startWorker() {
       }
 
       if (job) {
+        // Reset poll interval when we find work
+        currentPollInterval = BASE_POLL_INTERVAL;
         console.log(`Picking up job ${job.id} for ${job.url} (Status: ${job.status})`);
 
         const isRetry = job.status === 'cooling_down';
@@ -40,6 +44,7 @@ async function startWorker() {
 
         if (claimError) {
           console.error('Error claiming job:', claimError.message);
+          // Don't backoff here, maybe another worker took it, try again soon
           continue;
         }
 
@@ -52,14 +57,21 @@ async function startWorker() {
         
         console.log(`Job ${job.id} finished.`);
       } else {
-        // No jobs, wait before polling again
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+        // No jobs, increase wait time (Exponential Backoff)
+        // Add random jitter (0-2000ms) to prevent multiple workers from waking up in lockstep
+        const jitter = Math.floor(Math.random() * 2000);
+        console.log(`No jobs found. Waiting ${(currentPollInterval / 1000).toFixed(1)}s...`);
+        
+        await new Promise(resolve => setTimeout(resolve, currentPollInterval + jitter));
+        
+        // Increase interval for next time, up to max
+        currentPollInterval = Math.min(currentPollInterval * 1.5, MAX_POLL_INTERVAL);
       }
 
     } catch (err) {
       console.error('Worker loop error:', err);
       // Wait a bit to avoid tight error loops
-      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+      await new Promise(resolve => setTimeout(resolve, BASE_POLL_INTERVAL));
     }
   }
 }
