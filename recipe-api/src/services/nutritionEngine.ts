@@ -281,6 +281,8 @@ export class NutritionEngine {
         total.protein = Math.round(total.protein);
         total.fat = Math.round(total.fat);
         total.carbs = Math.round(total.carbs);
+        total.fiber = Math.round(total.fiber);
+        total.sugar = Math.round(total.sugar);
         total.calcium_mg = Math.round(total.calcium_mg);
         total.iron_mg = parseFloat(total.iron_mg.toFixed(1));
         total.vitamin_a_mcg = Math.round(total.vitamin_a_mcg);

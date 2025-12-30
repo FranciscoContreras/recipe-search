@@ -245,10 +245,10 @@
                                 <span class="font-display text-xl text-primary">${total.fat}g</span>
                             </div>
                         </div>
-                         <div class="pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-center">
-                             <div><span class="block text-[10px] text-text-muted">Fiber</span><span class="text-sm font-medium text-primary">${total.fiber}g</span></div>
-                             <div><span class="block text-[10px] text-text-muted">Sugar</span><span class="text-sm font-medium text-primary">${total.sugar}g</span></div>
-                             <div><span class="block text-[10px] text-text-muted">Vit C</span><span class="text-sm font-medium text-primary">${total.vitamin_c_mg}mg</span></div>
+                        <div class="pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-center">
+                             <div><span class="block text-[10px] text-text-muted">Fiber</span><span class="text-sm font-medium text-primary">${Math.round(total.fiber)}g</span></div>
+                             <div><span class="block text-[10px] text-text-muted">Sugar</span><span class="text-sm font-medium text-primary">${Math.round(total.sugar)}g</span></div>
+                             <div><span class="block text-[10px] text-text-muted">Vit C</span><span class="text-sm font-medium text-primary">${Math.round(total.vitamin_c_mg)}mg</span></div>
                         </div>
                     </div>
                 `;
