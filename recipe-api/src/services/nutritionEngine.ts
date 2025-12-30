@@ -28,6 +28,9 @@ const DENSITY_TABLE: Record<string, number> = {
     'oil': 0.92,         // ~216g / cup
     'oats': 0.40,        // ~95g / cup
     'rice': 0.85,        // ~200g / cup (raw)
+    'wheat berries': 0.80,
+    'quinoa': 0.75,
+    'couscous': 0.60,
     'milk': 1.03,
     'cream': 1.01,
     'honey': 1.42,
@@ -40,7 +43,12 @@ const DENSITY_TABLE: Record<string, number> = {
     'cheese': 0.45, // Grated/Shredded loosely
     'nuts': 0.60,   // Chopped
     'spinach': 0.12, // Raw leaves, loosely packed
-    'lettuce': 0.15
+    'lettuce': 0.15,
+    'parsley': 0.15,
+    'cilantro': 0.15,
+    'basil': 0.15,
+    'mint': 0.15,
+    'herb': 0.15
 };
 
 export class NutritionEngine {
@@ -88,6 +96,16 @@ export class NutritionEngine {
             // No unit (e.g. "2 apples") or Unknown unit
             // Count-based assumptions
             const lowerName = ingredientName.toLowerCase();
+            
+            // Check for spices/seasonings first (default to ~2g, approx 1 tsp)
+            const spiceKeywords = ['salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'turmeric', 
+                                   'oregano', 'thyme', 'rosemary', 'basil', 'parsley', 'cilantro', 
+                                   'dill', 'chive', 'sage', 'bay leaf', 'vanilla', 'extract', 
+                                   'powder', 'seasoning', 'spice', 'clove', 'nutmeg', 'ginger'];
+            if (spiceKeywords.some(k => lowerName.includes(k))) {
+                 return qty * 2; 
+            }
+
             let unitWeight = 100; // Default
 
             if (lowerName.includes('egg')) unitWeight = 50;
@@ -140,10 +158,19 @@ export class NutritionEngine {
         const breakdown = [];
 
         for (const line of ingredients) {
+            // Pre-clean unicode fractions
+            const processedLine = line
+                .replace(/½/g, ' 1/2 ')
+                .replace(/⅓/g, ' 1/3 ').replace(/⅔/g, ' 2/3 ')
+                .replace(/¼/g, ' 1/4 ').replace(/¾/g, ' 3/4 ')
+                .replace(/⅕/g, ' 1/5 ').replace(/⅖/g, ' 2/5 ').replace(/⅗/g, ' 3/5 ').replace(/⅘/g, ' 4/5 ')
+                .replace(/⅙/g, ' 1/6 ').replace(/⅚/g, ' 5/6 ')
+                .replace(/⅛/g, ' 1/8 ').replace(/⅜/g, ' 3/8 ').replace(/⅝/g, ' 5/8 ').replace(/⅞/g, ' 7/8 ');
+
             // 1. Parse
             let parsed;
             try {
-                const results = parse(line);
+                const results = parse(processedLine);
                 parsed = Array.isArray(results) ? results[0] : results; 
             } catch (e) {
                 parsed = null;
@@ -152,7 +179,7 @@ export class NutritionEngine {
             // Fallback Regex
             if (!parsed || !parsed.description) {
                 const regex = /^((?:\d+\s+)?\d+\/\d+|\d+(?:\.\d+)?|\d+)\s*([a-zA-Z]+)?\s+(.*)$/;
-                const match = line.match(regex);
+                const match = processedLine.match(regex);
                 if (match) {
                     parsed = {
                         quantity: this.parseQuantity(match[1]),
@@ -160,11 +187,11 @@ export class NutritionEngine {
                         description: match[3]
                     };
                 } else {
-                    parsed = { description: line, quantity: 1, unitOfMeasure: null };
+                    parsed = { description: processedLine, quantity: 1, unitOfMeasure: null };
                 }
             }
 
-            const name = parsed.description || line; 
+            const name = parsed.description || processedLine; 
             const qty = typeof parsed.quantity === 'string' ? this.parseQuantity(parsed.quantity) : (parsed.quantity || 1);
             const unit = parsed.unitOfMeasure || '';
             
