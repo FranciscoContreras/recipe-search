@@ -660,50 +660,43 @@
                             vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
                             float aspect = uResolution.x / uResolution.y;
                             
-                            // ORIGIN: Closer to Title (Focused)
-                            vec2 lightPos = vec2(-aspect * 0.15, 0.60);
+                            // MODIFIED: Parallel/Slanted Rays instead of Radial
+                            // This creates rays that look like they come from "above" rather than a point source
+                            float slant = 0.25;
+                            vec2 p = vec2(uv.x + uv.y * slant, uv.y);
                             
-                            // Vector from light to pixel
-                            vec2 p = uv - lightPos;
+                            float t = uTime * 0.2;
                             
-                            // Polar coordinates
-                            float angle = atan(p.y, p.x);
-                            float dist = length(p);
+                            // Layer 1: Broad beams
+                            // We use p.x mainly for the noise input to create vertical-ish bands
+                            // We stretch p.y in the noise function to make the noise patterns vertically long
+                            float n1 = snoise(vec2(p.x * 5.0 - t * 0.3, p.y * 0.2 - t * 0.5));
                             
-                            // Time factor
-                            float t = uTime * 0.245;
+                            // Layer 2: Finer details
+                            float n2 = snoise(vec2(p.x * 10.0 + t * 0.2, p.y * 0.5 - t * 0.8));
                             
-                            // Layer 1: Base broad beams (Low frequency)
-                            // Rotate slowly and flow outwards
-                            float n1 = snoise(vec2(angle * 4.0 + t * 0.2, dist * 0.5 - t));
-                            
-                            // Layer 2: Wispy details (Higher frequency)
-                            // Warped by the first layer for fluid motion
-                            float n2 = snoise(vec2(angle * 8.0 - t * 0.5, dist * 1.5 + n1 * 0.5 - t * 0.5));
-                            
-                            // Combine layers
                             float rays = n1 * 0.6 + n2 * 0.4;
-                            
-                            // Normalize to 0..1 range
                             rays = rays * 0.5 + 0.5;
                             
-                            // Volumetric contrast curve (Softness)
-                            // Squaring the value pushes mids to darks, creating defined but soft light paths
-                            rays = pow(rays, 2.5);
+                            // Sharpen the rays
+                            rays = pow(rays, 3.5);
                             
-                                                        // Spotlight Mask (Balanced Focus)
-                                                        // Smooth falloff from origin (fade out)
-                                                        float fadeOut = 1.0 - smoothstep(0.3, 1.0, dist);
-                                                        // Soft fade in near the source (increased effect)
-                                                        float fadeIn = smoothstep(0.1, 0.4, dist);
-                                                        
-                                                        float spotlight = fadeIn * fadeOut;
-                                                        
-                                                                                    // Opacity & Color
-                                                                                    float finalAlpha = rays * spotlight * 0.5;
-                                                                                    // Realistic Dusty Light Color (Warm/Neutral)
-                                                                                    vec3 rayColor = vec3(0.85, 0.85, 0.80);
+                            // CONCENTRATION MASK
+                            // Focus the effect on the left side where the title text is
+                            // Title area center approx -0.25 * aspect
+                            float focusCenter = -aspect * 0.25;
+                            float focusWidth = 0.7; 
+                            
+                            // Horizontal falloff
+                            float mask = 1.0 - smoothstep(0.0, focusWidth, abs(uv.x - focusCenter));
+                            
+                            // Vertical falloff (Top to bottom, slight fade at very edges)
+                            // "Slightly offset vertically" - we shift the fade-in point slightly
+                            float verticalMask = smoothstep(-0.55, -0.4, uv.y) * (1.0 - smoothstep(0.45, 0.55, uv.y));
 
+                            float finalAlpha = rays * mask * verticalMask * 0.55;
+                            
+                            vec3 rayColor = vec3(0.85, 0.85, 0.80);
                             gl_FragColor = vec4(rayColor, finalAlpha);
                         }
                     `
