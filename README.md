@@ -1,6 +1,6 @@
 # Recipe Base API
 
-![License](https://img.shields.io/badge/license-ISC-blue.svg)
+![Status](https://img.shields.io/badge/status-proprietary-red.svg)
 ![Node.js](https://img.shields.io/badge/node->=20.0.0-green.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5.0-blue.svg)
 ![Supabase](https://img.shields.io/badge/supabase-postgres-green.svg)
@@ -34,73 +34,28 @@ The system is built on a microservices-lite architecture using Node.js and Expre
 - **Validation:** Custom middleware & sanitization
 - **Docs:** Swagger / OpenAPI 3.0
 
-## ⚡ Quick Start
+## 📖 API Capabilities
 
-### Prerequisites
-- Node.js 20.x or higher
-- A Supabase project (or local instance)
-- SMTP credentials (for API key delivery)
+The API adheres to the OpenAPI 3.0 standard. Key capabilities include:
 
-### Installation
+| Feature | Description |
+|:---|:---|
+| **Recipe Retrieval** | High-speed pagination and filtering of recipe datasets. |
+| **Hybrid Search** | Combines keyword matching with vector-based semantic search for "vibe-based" queries. |
+| **Nutrition Engine** | Proprietary algorithm for parsing natural language ingredient lists into structured nutritional data. |
+| **Crawler Queue** | Asynchronous job queue for indexing new domains on demand. |
+| **Secure Auth** | Self-service API key generation with email verification and rotation logic. |
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/FranciscoContreras/recipe-search.git
-   cd recipe-search/recipe-api
-   ```
+## 🛡️ Security Measures
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment**
-   Create a `.env` file in `recipe-api/` with the following:
-   ```env
-   PORT=3000
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   ```
-
-4. **Run Development Server**
-   ```bash
-   npm run dev
-   ```
-
-## 📖 API Documentation
-
-The API is fully documented using OpenAPI 3.0 standard.
-
-- **Interactive Docs:** Visit `http://localhost:3000/api-docs` after starting the server.
-- **Health Check:** `GET /health` (Public)
-
-### Key Endpoints
-
-| Method | Endpoint | Description | Auth |
-|:---|:---|:---|:---|
-| `GET` | `/recipes` | List recipes with pagination. | 🔒 |
-| `GET` | `/search` | Hybrid search (Text + Semantic). | 🔒 |
-| `POST` | `/nutrition/analyze` | Parse raw ingredients to macros. | 🔒 |
-| `POST` | `/crawl` | Queue a URL for indexing. | 🔒 |
-| `POST` | `/auth/request-key` | Request an API key via email. | 🌍 |
-
-## 🛡️ Security
-
-- **Authentication:** `x-api-key` header required for protected routes.
+- **Authentication:** `x-api-key` header enforcement for all protected routes.
 - **Rate Limiting:** 
   - Global: 300 requests / 15 mins.
   - Auth: 5 requests / 1 hour.
-- **Sanitization:** Input validation and XSS protection on all public-facing renders.
+- **Sanitization:** Strict input validation and XSS protection on all public-facing renders.
 
-## 🤝 Contributing
+## 🔒 Access & Licensing
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**© 2026 Francisco Contreras. All Rights Reserved.**
 
-## 📄 License
-
-Distributed under the ISC License. See `LICENSE` for more information.
+This repository contains proprietary source code and is intended for portfolio and demonstration purposes only. Unauthorized copying, modification, distribution, or use of this software is strictly prohibited.
