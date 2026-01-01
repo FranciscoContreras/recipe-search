@@ -7,6 +7,8 @@
 
 **Recipe Base** is a high-performance backend platform designed for the intelligent aggregation, analysis, and retrieval of culinary data. It combines a robust web crawler, a custom nutrition analysis engine, and a hybrid search system to deliver enriched recipe data via a RESTful API.
 
+Maintained by [Francisco Contreras](https://contrerasfrancisco.com).
+
 ## 🚀 Overview
 
 This project serves as the backbone for a modern recipe search engine. Unlike standard recipe APIs that rely on static databases, Recipe Base dynamically enriches content using:
