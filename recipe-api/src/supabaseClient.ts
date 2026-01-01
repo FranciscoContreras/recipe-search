@@ -13,7 +13,11 @@ if (!supabaseUrl || !supabaseKey) {
 
 // @ts-ignore
 export const supabase: SupabaseClient<Database> = (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http')) 
-  ? createClient<Database>(supabaseUrl, supabaseKey)
+  ? createClient<Database>(supabaseUrl, supabaseKey, {
+      global: {
+        headers: { 'Connection': 'close' }
+      }
+    })
   : { 
       from: () => ({ 
         select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),

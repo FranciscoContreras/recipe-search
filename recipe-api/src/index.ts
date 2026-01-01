@@ -216,6 +216,7 @@ app.post('/recipes', async (req: Request, res: Response) => {
  *                   type: integer
  */
 app.get('/recipes', async (req: Request, res: Response) => {
+  console.log(`[GET] /recipes - Page: ${req.query.page}, Limit: ${req.query.limit} - ${new Date().toISOString()}`);
   const isFull = req.query.full === 'true';
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 50;
