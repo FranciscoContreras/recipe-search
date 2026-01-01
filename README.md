@@ -1,11 +1,14 @@
 # Recipe Base API
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://recipe-base.wearemachina.com)
 ![Status](https://img.shields.io/badge/status-proprietary-red.svg)
 ![Node.js](https://img.shields.io/badge/node->=20.0.0-green.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5.0-blue.svg)
 ![Supabase](https://img.shields.io/badge/supabase-postgres-green.svg)
 
 **Recipe Base** is a high-performance backend platform designed for the intelligent aggregation, analysis, and retrieval of culinary data. It combines a robust web crawler, a custom nutrition analysis engine, and a hybrid search system to deliver enriched recipe data via a RESTful API.
+
+**Live URL:** [https://recipe-base.wearemachina.com](https://recipe-base.wearemachina.com)
 
 Maintained by [Francisco Contreras](https://contrerasfrancisco.com).
 
