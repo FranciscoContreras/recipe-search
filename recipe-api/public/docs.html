@@ -136,22 +136,21 @@
                 this.scene = new THREE.Scene();
                 
                 // Fog to blend edges into background
-                this.scene.fog = new THREE.Fog(0xfafafa, 10, 50);
+                this.scene.fog = new THREE.Fog(0xfafafa, 20, 60);
 
                 // Camera setup
                 this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
-                this.camera.position.set(0, 15, 15);
+                this.camera.position.set(0, 25, 25);
                 this.camera.lookAt(0, 0, 0);
 
                 // Grid setup
-                this.gridSize = 20; // 20x20 grid
+                this.gridSize = 50; // Larger grid to span page
                 this.cubeSize = 1;
                 this.spacing = 1.1; // Gap between cubes
                 this.instances = this.gridSize * this.gridSize;
 
                 // Geometry & Material
                 const geometry = new THREE.BoxGeometry(this.cubeSize, this.cubeSize, this.cubeSize);
-                // Move pivot to bottom so scaling/moving up looks correct
                 geometry.translate(0, 0.5, 0); 
 
                 const material = new THREE.MeshStandardMaterial({
@@ -167,6 +166,14 @@
                 this.mesh.castShadow = true;
                 this.scene.add(this.mesh);
 
+                // Precompute random phases for independent movement
+                this.phases = new Float32Array(this.instances);
+                this.speeds = new Float32Array(this.instances);
+                for(let i=0; i<this.instances; i++) {
+                    this.phases[i] = Math.random() * Math.PI * 2;
+                    this.speeds[i] = 0.5 + Math.random() * 1.5; // Random speed
+                }
+
                 // Dummy for transforms
                 this.dummy = new THREE.Object3D();
 
@@ -176,19 +183,19 @@
 
                 // The "Glow" Engine Light
                 this.spotLight = new THREE.SpotLight(0x1a4432, 2);
-                this.spotLight.position.set(0, 10, 0);
-                this.spotLight.angle = Math.PI / 4;
+                this.spotLight.position.set(0, 15, 0);
+                this.spotLight.angle = Math.PI / 3;
                 this.spotLight.penumbra = 0.5;
                 this.spotLight.decay = 2;
-                this.spotLight.distance = 50;
+                this.spotLight.distance = 80;
                 this.spotLight.castShadow = true;
                 this.spotLight.shadow.mapSize.width = 1024;
                 this.spotLight.shadow.mapSize.height = 1024;
                 this.scene.add(this.spotLight);
                 
                 // Secondary warm light for contrast
-                this.pointLight = new THREE.PointLight(0xf55b2b, 0.5, 20);
-                this.pointLight.position.set(-5, 5, -5);
+                this.pointLight = new THREE.PointLight(0xf55b2b, 0.5, 40);
+                this.pointLight.position.set(-10, 10, -10);
                 this.scene.add(this.pointLight);
 
                 this.time = 0;
@@ -217,33 +224,28 @@
                         const posX = (x * this.spacing) - offset;
                         const posZ = (z * this.spacing) - offset;
                         
-                        // Elevation Math (The "Engine" Breathing)
-                        // Simple wave pattern
-                        const dist = Math.sqrt(posX * posX + posZ * posZ);
-                        const y = Math.sin(dist * 0.5 - this.time * 2) * 0.5 + 
-                                  Math.cos(x * 0.3 + this.time) * 0.2;
+                        // Random Levitation
+                        const phase = this.phases[i];
+                        const speed = this.speeds[i];
+                        const y = Math.sin(this.time * speed + phase) * 0.4; // 0.4 amplitude
 
-                        this.dummy.position.set(posX, y - 2, posZ); // -2 to keep it below camera view mostly
+                        this.dummy.position.set(posX, y - 3, posZ); // Lowered slightly (-3)
                         
-                        // Slight scale change for breathing effect
+                        // Scale change based on height
                         const scale = 1.0 + Math.max(0, y * 0.2);
                         this.dummy.scale.set(1, scale, 1);
 
                         this.dummy.updateMatrix();
                         this.mesh.setMatrixAt(i, this.dummy.matrix);
-                        
-                        // Optional: Color variation based on height (simulating heat/activity)
-                        // const color = new THREE.Color().setHSL(0.4, 0.4, 0.8 + y * 0.1); 
-                        // this.mesh.setColorAt(i, color);
 
                         i++;
                     }
                 }
                 this.mesh.instanceMatrix.needsUpdate = true;
 
-                // Animate Lights slightly
-                this.spotLight.position.x = Math.sin(this.time * 0.5) * 5;
-                this.spotLight.position.z = Math.cos(this.time * 0.5) * 5;
+                // Animate Lights
+                this.spotLight.position.x = Math.sin(this.time * 0.2) * 10;
+                this.spotLight.position.z = Math.cos(this.time * 0.2) * 10;
 
                 this.renderer.render(this.scene, this.camera);
             }
