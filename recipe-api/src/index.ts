@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { supabase } from './supabaseClient';
 import { TablesInsert } from './database.types';
 import { findNutritionForRecipe } from './services/fatsecret';
@@ -20,6 +22,27 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now to avoid breaking inline scripts/styles in existing HTML
+}));
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // Limit each IP to 300 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: 'Too many requests from this IP, please try again later.'
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit each IP to 5 key requests per hour
+  message: 'Too many key requests from this IP, please try again later.'
+});
+
+app.use(limiter); // Apply global limiter
 app.use(cors());
 app.use(express.json());
 
@@ -113,7 +136,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Recipe API is running!');
 });
 
-app.post('/auth/request-key', requestApiKey);
+app.post('/auth/request-key', authLimiter, requestApiKey);
 
 app.get('/health', async (req: Request, res: Response) => {
   try {

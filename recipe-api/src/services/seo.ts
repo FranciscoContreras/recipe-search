@@ -1,5 +1,6 @@
 
 import { Tables } from '../database.types';
+import escapeHtml from 'escape-html';
 
 export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
   const schema: any = {
@@ -54,10 +55,14 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
 };
 
 export const injectMetaTags = (html: string, recipe: Tables<'recipes'>): string => {
-  const title = `${recipe.name} - Recipe Base`;
-  const desc = recipe.description || `Learn how to make ${recipe.name} with verified nutrition facts.`;
-  const image = recipe.image || 'https://recipe-base.wearemachina.com/logo-black.svg';
+  const rawTitle = `${recipe.name} - Recipe Base`;
+  const rawDesc = recipe.description || `Learn how to make ${recipe.name} with verified nutrition facts.`;
+  const rawImage = recipe.image || 'https://recipe-base.wearemachina.com/logo-black.svg';
   const url = `https://recipe-base.wearemachina.com/recipe/${recipe.id}`;
+
+  const title = escapeHtml(rawTitle);
+  const desc = escapeHtml(rawDesc);
+  const image = escapeHtml(rawImage);
 
   // Replace Title
   let newHtml = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
