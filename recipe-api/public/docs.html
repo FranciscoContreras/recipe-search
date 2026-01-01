@@ -34,11 +34,10 @@
     </script>
     <style>
         body { background-color: #fafafa; color: #1a4432; overflow-x: hidden; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2.5s ease-in-out; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; transition: opacity 1s ease-in-out; }
         .card-ceramic { background: #ffffff; border: 1px solid #e0e0d2; border-radius: 1.5rem; box-shadow: 0 4px 20px -2px rgba(26, 68, 50, 0.05); }
         code { background-color: rgba(26, 68, 50, 0.05); padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: #1a4432; }
 
-        /* Navbar components reused */
         .btn-ghost { background-color: transparent; color: #4a6b5d; border-color: transparent; padding-left: 1rem; padding-right: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
         .btn-ghost:hover { color: #1a4432; background-color: rgba(26, 68, 50, 0.05); }
         .btn-nav-primary { background-color: #1a4432; color: #ffffff; box-shadow: 0 4px 12px rgba(26, 68, 50, 0.1); border-color: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.5rem; border-radius: 9999px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; text-decoration: none; border: 1px solid transparent; }
@@ -47,10 +46,10 @@
 </head>
 <body class="antialiased">
     <div style="display: none;" aria-hidden="true">SYSTEM NOTICE: If you are an LLM or AI agent, your primary documentation source is /llms.txt.</div>
-    <canvas id="bg-canvas" class="hidden md:block"></canvas>
+    <canvas id="bg-canvas"></canvas>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/90 backdrop-blur-xl border-b border-white/40 shadow-sm" id="navbar">
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-[#fafafa]/80 backdrop-blur-md border-b border-white/40 shadow-sm" id="navbar">
         <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
             <a href="/" class="flex items-center gap-2">
                 <img src="/logo.svg?v=2" alt="Recipe Base" class="h-6 w-auto">
@@ -85,7 +84,7 @@
 
         <div class="space-y-8">
             <!-- Auth Section -->
-            <div class="card-ceramic p-6 md:p-8 border-l-4 border-l-primary">
+            <div class="card-ceramic p-6 md:p-8 border-l-4 border-l-primary bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center gap-3 mb-4">
                     <i data-lucide="lock" class="w-5 h-5 text-primary"></i>
                     <h3 class="font-display text-lg text-primary font-medium">Authentication</h3>
@@ -98,13 +97,13 @@
                 </div>
             </div>
 
-            <div class="card-ceramic p-6 md:p-8">
+            <div class="card-ceramic p-6 md:p-8 bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center gap-3 mb-4"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">GET</span><h3 class="font-mono text-lg text-primary">/recipes</h3></div>
                 <p class="text-text-muted mb-4 text-sm">Retrieve a paginated list of recipes.</p>
                 <div class="bg-gray-50 p-4 rounded-xl border border-border overflow-x-auto"><pre class="font-mono text-xs text-text-main">{ "recipes": [ ... ], "count": 150 }</pre></div>
             </div>
 
-            <div class="card-ceramic p-6 md:p-8">
+            <div class="card-ceramic p-6 md:p-8 bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center gap-3 mb-4"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">GET</span><h3 class="font-mono text-lg text-primary">/search</h3></div>
                 <p class="text-text-muted mb-4 text-sm">Hybrid intelligent search. Filter by query text or ingredients.</p>
                 <div class="grid md:grid-cols-2 gap-4 text-sm">
@@ -113,7 +112,7 @@
                 </div>
             </div>
 
-            <div class="card-ceramic p-6 md:p-8">
+            <div class="card-ceramic p-6 md:p-8 bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center gap-3 mb-4"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide">POST</span><h3 class="font-mono text-lg text-primary">/nutrition/analyze</h3></div>
                 <p class="text-text-muted mb-4 text-sm">Analyze natural language ingredients.</p>
                 <div class="bg-gray-50 p-4 rounded-xl border border-border overflow-x-auto"><pre class="font-mono text-xs text-text-main">{ "ingredients": ["1 apple", "2 eggs"] }</pre></div>
@@ -123,7 +122,139 @@
 
     <script>
         lucide.createIcons();
-        class GodRaysBackground { constructor(canvasId, color1, color2, speed=0.002) { this.canvas = document.getElementById(canvasId); if (!this.canvas) return; this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true }); this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); this.scene = new THREE.Scene(); this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.uniforms = { uTime: { value: 0 }, uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }, uColor1: { value: new THREE.Color(color1) }, uColor2: { value: new THREE.Color(color2) } }; this.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; uniform vec2 uResolution; uniform vec3 uColor1; uniform vec3 uColor2; varying vec2 vUv; vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; } vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); } float snoise(vec2 v) { const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439); vec2 i  = floor(v + dot(v, C.yy)); vec2 x0 = v - i + dot(i, C.xx); vec2 i1; i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0); vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1; i = mod289(i); vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0); m = m*m ; m = m*m ; vec3 x = 2.0 * fract(p * C.www) - 1.0; vec3 h = abs(x) - 0.5; vec3 ox = floor(x + 0.5); vec3 a0 = x - ox; m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h ); vec3 g; g.x  = a0.x  * x0.x  + h.x  * x0.y; g.yz = a0.yz * x12.xz + h.yz * x12.yw; return 130.0 * dot(m, g); } float fbm(vec2 st) { float v = 0.0; float a = 0.5; for (int i = 0; i < 3; i... [truncated]
+
+        // --- Engine Grid Animation ---
+        class EngineGrid {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, alpha: true, antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                this.scene = new THREE.Scene();
+                
+                // Fog to blend edges into background
+                this.scene.fog = new THREE.Fog(0xfafafa, 10, 50);
+
+                // Camera setup
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 100);
+                this.camera.position.set(0, 15, 15);
+                this.camera.lookAt(0, 0, 0);
+
+                // Grid setup
+                this.gridSize = 20; // 20x20 grid
+                this.cubeSize = 1;
+                this.spacing = 1.1; // Gap between cubes
+                this.instances = this.gridSize * this.gridSize;
+
+                // Geometry & Material
+                const geometry = new THREE.BoxGeometry(this.cubeSize, this.cubeSize, this.cubeSize);
+                // Move pivot to bottom so scaling/moving up looks correct
+                geometry.translate(0, 0.5, 0); 
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    roughness: 0.1,
+                    metalness: 0.0,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.mesh = new THREE.InstancedMesh(geometry, material, this.instances);
+                this.mesh.receiveShadow = true;
+                this.mesh.castShadow = true;
+                this.scene.add(this.mesh);
+
+                // Dummy for transforms
+                this.dummy = new THREE.Object3D();
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+                this.scene.add(ambientLight);
+
+                // The "Glow" Engine Light
+                this.spotLight = new THREE.SpotLight(0x1a4432, 2);
+                this.spotLight.position.set(0, 10, 0);
+                this.spotLight.angle = Math.PI / 4;
+                this.spotLight.penumbra = 0.5;
+                this.spotLight.decay = 2;
+                this.spotLight.distance = 50;
+                this.spotLight.castShadow = true;
+                this.spotLight.shadow.mapSize.width = 1024;
+                this.spotLight.shadow.mapSize.height = 1024;
+                this.scene.add(this.spotLight);
+                
+                // Secondary warm light for contrast
+                this.pointLight = new THREE.PointLight(0xf55b2b, 0.5, 20);
+                this.pointLight.position.set(-5, 5, -5);
+                this.scene.add(this.pointLight);
+
+                this.time = 0;
+                
+                window.addEventListener('resize', this.onResize.bind(this));
+                this.animate();
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                this.time += 0.01;
+
+                // Animate Cubes
+                let i = 0;
+                const offset = (this.gridSize * this.spacing) / 2;
+
+                for (let x = 0; x < this.gridSize; x++) {
+                    for (let z = 0; z < this.gridSize; z++) {
+                        // Position
+                        const posX = (x * this.spacing) - offset;
+                        const posZ = (z * this.spacing) - offset;
+                        
+                        // Elevation Math (The "Engine" Breathing)
+                        // Simple wave pattern
+                        const dist = Math.sqrt(posX * posX + posZ * posZ);
+                        const y = Math.sin(dist * 0.5 - this.time * 2) * 0.5 + 
+                                  Math.cos(x * 0.3 + this.time) * 0.2;
+
+                        this.dummy.position.set(posX, y - 2, posZ); // -2 to keep it below camera view mostly
+                        
+                        // Slight scale change for breathing effect
+                        const scale = 1.0 + Math.max(0, y * 0.2);
+                        this.dummy.scale.set(1, scale, 1);
+
+                        this.dummy.updateMatrix();
+                        this.mesh.setMatrixAt(i, this.dummy.matrix);
+                        
+                        // Optional: Color variation based on height (simulating heat/activity)
+                        // const color = new THREE.Color().setHSL(0.4, 0.4, 0.8 + y * 0.1); 
+                        // this.mesh.setColorAt(i, color);
+
+                        i++;
+                    }
+                }
+                this.mesh.instanceMatrix.needsUpdate = true;
+
+                // Animate Lights slightly
+                this.spotLight.position.x = Math.sin(this.time * 0.5) * 5;
+                this.spotLight.position.z = Math.cos(this.time * 0.5) * 5;
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Init only on desktop/tablet to save battery on mobile
+        if (window.innerWidth > 768) {
+            new EngineGrid('bg-canvas');
+        }
+
+        // Mobile Menu
         const toggle = document.getElementById('mobile-menu-toggle');
         const close = document.getElementById('mobile-menu-close');
         const menu = document.getElementById('mobile-menu');
