@@ -28,3 +28,5 @@ debug_keys.log
 .temp/
 tmp/
 coverage/
+GEMINI.md
+.gemini/
