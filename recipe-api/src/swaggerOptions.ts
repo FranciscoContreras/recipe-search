@@ -5,8 +5,8 @@ export const swaggerOptions: Options = {
     openapi: '3.0.0',
     info: {
       title: 'Recipe Base API',
-      version: '1.2.0',
-      description: 'The infrastructure for culinary data. Parse unstructured recipes, normalize units, and enrich ingredients with USDA-verified nutrition.',
+      version: '1.5.0',
+      description: 'The infrastructure for culinary data. Parse unstructured recipes, normalize units, and enrich ingredients with USDA-verified nutrition. Includes cooking state inference, dish context detection, barcode lookup, and Open Food Facts integration.',
       contact: {
         name: 'Recipe Base Support',
         url: 'https://recipe-base.wearemachina.com',

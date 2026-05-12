@@ -54,6 +54,29 @@ describe('Packaged food routing — OFF called first', () => {
     expect(mockUsda).not.toHaveBeenCalled();
   });
 
+  // Regression: looksLikePackagedFood must check the FULL original line, not just the
+  // parsed description. parse-ingredient strips "can" into the unit field; if only the
+  // parsed description ('chickpeas') is checked, the packaged signal is lost and
+  // the ingredient is incorrectly routed to USDA first.
+  it('"1 can chickpeas" — packaged signal in the unit field, not description', async () => {
+    mockOff.mockResolvedValue(MOCK_RESULT);
+
+    const { breakdown } = await NutritionEngine.analyze(['1 can chickpeas']);
+
+    // OFF must be tried first regardless of where parse-ingredient puts 'can'
+    expect(breakdown[0].source).toBe('openfoodfacts');
+    expect(mockUsda).not.toHaveBeenCalled();
+  });
+
+  it('"1 can black beans" — same as above for black beans', async () => {
+    mockOff.mockResolvedValue(MOCK_RESULT);
+
+    const { breakdown } = await NutritionEngine.analyze(['1 can black beans']);
+
+    expect(breakdown[0].source).toBe('openfoodfacts');
+    expect(mockUsda).not.toHaveBeenCalled();
+  });
+
   it('routes "tin of chickpeas" to OFF before USDA', async () => {
     mockOff.mockResolvedValue(MOCK_RESULT);
 

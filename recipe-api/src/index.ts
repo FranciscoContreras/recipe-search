@@ -24,6 +24,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Trust the first proxy (nginx) so req.ip reflects the real client IP.
+// Without this, all requests appear to come from 127.0.0.1 behind nginx and
+// rate limiting applies to everyone as a single bucket instead of per-client.
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for now to avoid breaking inline scripts/styles in existing HTML
@@ -148,7 +153,9 @@ async function refreshRecipeStats() {
   } catch { /* non-critical — view will serve cached data */ }
 }
 
-// Refresh stats every 5 minutes
+// Refresh immediately on startup, then every 5 minutes.
+// Without the immediate call, /health returns stale zeros for the first 5 minutes.
+refreshRecipeStats();
 setInterval(refreshRecipeStats, 5 * 60 * 1000);
 
 app.get('/health', async (req: Request, res: Response) => {

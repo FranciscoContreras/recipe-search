@@ -12,7 +12,10 @@ import {
     detectCookingState,
     resolveCookingState,
     inferDishContext,
+    resolveContext,
     getCookedDensity,
+    DISH_CONTEXT_DESCRIPTIONS,
+    DishContext,
 } from '../utils/cookingState';
 
 // ─── detectCookingState ────────────────────────────────────────────────────────
@@ -279,5 +282,66 @@ describe('getCookedDensity', () => {
     it('matches by substring (e.g. "whole lentils" matches "lentils")', () => {
         expect(getCookedDensity('whole lentils')).not.toBeNull();
         expect(getCookedDensity('cooked chickpeas')).not.toBeNull();
+    });
+});
+
+// ─── resolveContext ───────────────────────────────────────────────────────────
+
+describe('resolveContext', () => {
+    it('returns explicit context when valid', () => {
+        expect(resolveContext('assembled', null)).toEqual({ context: 'assembled', inferred: false });
+        expect(resolveContext('simmered',  null)).toEqual({ context: 'simmered',  inferred: false });
+        expect(resolveContext('stir-fry',  null)).toEqual({ context: 'stir-fry',  inferred: false });
+        expect(resolveContext('baked',     null)).toEqual({ context: 'baked',     inferred: false });
+        expect(resolveContext('standard',  null)).toEqual({ context: 'standard',  inferred: false });
+    });
+
+    it('rejects unknown explicit values and falls through to recipeName', () => {
+        const result = resolveContext('deep-fried' as DishContext, 'Quinoa Salad');
+        expect(result.context).toBe('assembled');
+        expect(result.inferred).toBe(true);
+    });
+
+    it('infers context from recipeName when explicit is null', () => {
+        expect(resolveContext(null, 'Lentil Stew').context).toBe('simmered');
+        expect(resolveContext(null, 'Egg Fried Rice').context).toBe('stir-fry');
+        expect(resolveContext(null, 'Quinoa Salad').context).toBe('assembled');
+    });
+
+    it('marks inferred=true only when auto-detected away from standard', () => {
+        expect(resolveContext(null, 'Lentil Stew').inferred).toBe(true);
+        expect(resolveContext(null, 'Grilled Chicken').inferred).toBe(false); // → standard
+    });
+
+    it('returns standard with inferred=false when both are missing', () => {
+        expect(resolveContext(null, null)).toEqual({ context: 'standard', inferred: false });
+        expect(resolveContext(null, '')).toEqual({ context: 'standard', inferred: false });
+        expect(resolveContext(undefined, undefined)).toEqual({ context: 'standard', inferred: false });
+    });
+
+    it('explicit takes priority over recipeName', () => {
+        // Even though recipeName says "stew", explicit says "assembled"
+        const result = resolveContext('assembled', 'Lentil Stew');
+        expect(result.context).toBe('assembled');
+        expect(result.inferred).toBe(false);
+    });
+});
+
+// ─── DISH_CONTEXT_DESCRIPTIONS completeness ───────────────────────────────────
+
+describe('DISH_CONTEXT_DESCRIPTIONS', () => {
+    const ALL_CONTEXTS: DishContext[] = ['standard', 'assembled', 'simmered', 'stir-fry', 'baked'];
+
+    it('has a description for every DishContext value', () => {
+        for (const ctx of ALL_CONTEXTS) {
+            expect(DISH_CONTEXT_DESCRIPTIONS[ctx]).toBeTruthy();
+            expect(typeof DISH_CONTEXT_DESCRIPTIONS[ctx]).toBe('string');
+        }
+    });
+
+    it('descriptions are non-empty and human readable (>20 chars)', () => {
+        for (const ctx of ALL_CONTEXTS) {
+            expect(DISH_CONTEXT_DESCRIPTIONS[ctx].length).toBeGreaterThan(20);
+        }
     });
 });
