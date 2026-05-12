@@ -611,8 +611,11 @@ export class NutritionEngine {
             const pkgM = processedLine.match(/^(\d+(?:\.\d+)?)\s*\(\s*(\d+(?:\.\d+)?)\s*-?\s*(g|grams?|oz|ounces?|lbs?|pounds?)\s*\)/i);
             // Pattern B: parenthetical inline "(about 240g)" or "(7 ounces)"
             const parM = processedLine.match(/\((?:about|approximately|approx\.?)?\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\s*(?:each|total)?\s*\)/i);
-            // Pattern C: slash-separated "1 cup/240g flour"
-            const slM  = processedLine.match(/\/\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\b/i);
+            // Pattern C: slash-separated "1 cup/240g flour" or "1/2 cup / 120ml"
+            // Use (?<!\d) negative lookbehind to skip fraction denominators:
+            //   "3/4 ounce" → "/" is preceded by "3" (digit) → NO MATCH (correct)
+            //   "3 cups/360g" → "/" is preceded by "s" (letter) → MATCH (correct)
+            const slM  = processedLine.match(/(?<!\d)\/\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\b/i);
 
             if (pkgM)                     explicitWeightG = parseFloat(pkgM[1]) * parseW(pkgM[2], pkgM[3]);
             else if (parM)                explicitWeightG = parseW(parM[1], parM[2]);
