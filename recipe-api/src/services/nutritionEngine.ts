@@ -354,6 +354,14 @@ export class NutritionEngine {
             else if (lowerName.includes('potato chip') || lowerName.includes('chip')) unitWeight = 2;
             else if (lowerName.includes('tortilla chip')) unitWeight = 6;
             else if (lowerName.includes('gummy') || lowerName.includes('candy')) unitWeight = 4;
+            // ── Cube/block descriptor in the name (parse-ingredient may put 'cubes' ──
+            // in the description rather than the unit field, so handle it here too.
+            else if (lowerName.includes('cube') || lowerName.includes('block')) {
+                if      (lowerName.includes('bouillon') || lowerName.includes('stock') || lowerName.includes('broth')) unitWeight = 5;
+                else if (lowerName.includes('chocolate'))  unitWeight = 30;
+                else if (lowerName.includes('tofu'))       unitWeight = 70;
+                else                                       unitWeight = 15; // fermented bean curd, etc.
+            }
 
             return qty * unitWeight;
         }
@@ -620,11 +628,32 @@ export class NutritionEngine {
                 for (const term of searchTerms) {
                     const offData = await searchOpenFoodFacts(term);
                     if (offData) {
-                        nutritionInfo = offData as any; source = 'openfoodfacts'; usedTerm = term;
-                        supabase.from('ingredient_cache')
-                            .upsert({ term: cacheKey, nutrition: offData as any, source: 'openfoodfacts' })
-                            .then();
-                        break;
+                        // Plausibility gate: for non-packaged raw ingredients, reject OFW
+                        // results that exceed the expected calorie density for the ingredient
+                        // category. OFW often returns processed products (e.g., "Cauliflower
+                        // Gratin" at 75 kcal/100g for raw cauliflower at 25 kcal/100g).
+                        let offPlausible = true;
+                        if (!isPackaged) {
+                            const offCal = (offData.calories ?? 0) / (offData.serving_size_g || 100) * 100;
+                            const tl = term.toLowerCase();
+                            // Reject OFW results with implausibly high calorie densities for raw
+                            // low-calorie vegetables. Cauliflower raw = 25 kcal/100g; if OFW
+                            // returns 75 kcal/100g it matched a processed product (gratin, etc.).
+                            // Thresholds are generous to avoid false rejections.
+                            // Note: mushroom is intentionally excluded — cooked mushrooms with oil
+                            // can reach 60-100 kcal/100g and are not reliably distinguishable from
+                            // processed mushroom products via calorie density alone.
+                            if (/cauliflower|broccoli|zucchini|cucumber|celery|radish|asparagus|artichoke|cabbage|lettuce|spinach|kale|chard/.test(tl) && offCal > 60) offPlausible = false;
+                            if (/squash|pumpkin|eggplant|tomato|onion|carrot|beet|turnip|parsnip/.test(tl) && offCal > 80) offPlausible = false;
+                            if (/\bmilk\b/.test(tl) && offCal > 80) offPlausible = false;
+                        }
+                        if (offPlausible) {
+                            nutritionInfo = offData as any; source = 'openfoodfacts'; usedTerm = term;
+                            supabase.from('ingredient_cache')
+                                .upsert({ term: cacheKey, nutrition: offData as any, source: 'openfoodfacts' })
+                                .then();
+                            break;
+                        }
                     }
                 }
             }
