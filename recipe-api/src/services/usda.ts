@@ -95,7 +95,7 @@ export async function searchUsda(query: string, preferCooked = false): Promise<U
             //
             // Check: the result description has a word that appears AFTER the query term
             // and is not found in the query itself, AND it's a known type-changer.
-            const TYPE_CHANGERS = /\b(squash|juice|oil|sauce|paste|butter|vinegar|syrup|powder|flour|cream|milk|wine|beer|broth|stock|soup|stew|salad)\b/i;
+            const TYPE_CHANGERS = /\b(squash|juice|oil|sauce|paste|butter|vinegar|syrup|powder|flour|cream|milk|wine|beer|broth|stock|soup|stew|salad|chip|chips|starch|flake|flakes|granule)\b/i;
             const resultAfterQuery = desc.replace(q, '').trim();
             const typeChangerInResult = TYPE_CHANGERS.exec(resultAfterQuery);
             if (typeChangerInResult && !TYPE_CHANGERS.test(q)) {

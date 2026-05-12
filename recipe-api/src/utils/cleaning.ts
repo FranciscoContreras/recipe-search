@@ -42,6 +42,9 @@ export function cleanIngredientTerm(term: string): string {
         'cut', 'into', 'pieces', 'chunks', 'wedges', 'strips', 'rings',
         // Explanatory / example phrases: "such as X, Y" → strip "such", "as"
         'such', 'as',
+        // Recipe instruction words that survive parenthetical removal
+        // "see note", "see headnote" → "note" / "see" end up as search terms
+        'see', 'note', 'headnote',
         // Count/container descriptors that aren't part of the food name
         'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
         'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',

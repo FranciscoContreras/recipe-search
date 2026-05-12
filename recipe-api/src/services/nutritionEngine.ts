@@ -272,9 +272,13 @@ export class NutritionEngine {
         // ── Head/whole vegetable units ─────────────────────────────────────────────
         else if (['head'].includes(u)) {
             const ln = ingredientName.toLowerCase();
-            if      (ln.includes('cauliflower'))                        weightG = qty * 600;
+            // Baby/mini varieties must come BEFORE their full-size counterparts
+            if      (ln.includes('baby') && (ln.includes('bok choy') || ln.includes('bok choi'))) weightG = qty * 100;
+            else if (ln.includes('baby') && ln.includes('cabbage'))     weightG = qty * 300;
+            else if (ln.includes('cauliflower'))                        weightG = qty * 600;
             else if (ln.includes('broccoli'))                           weightG = qty * 350;
             else if (ln.includes('cabbage'))                            weightG = qty * 900;
+            else if (ln.includes('bok choy') || ln.includes('bok choi')) weightG = qty * 400;
             else if (ln.includes('romaine') || ln.includes('lettuce'))  weightG = qty * 500;
             else if (ln.includes('garlic'))                             weightG = qty * 40;
             else if (ln.includes('celery'))                             weightG = qty * 454;
@@ -845,8 +849,18 @@ export class NutritionEngine {
         if (portionWeight !== null) {
             const perItemPortion   = portionWeight   / Math.max(qty, 1);
             const perItemHeuristic = heuristicWeight / Math.max(qty, 1);
-            if (isCountBased && perItemPortion > perItemHeuristic * 3 && perItemHeuristic < sizeThreshold) {
-                weightGrams = heuristicWeight; // prefer our per-item table for small count foods
+
+            // Over-sized portion: USDA "1 medium serving" is for N items, not 1.
+            // e.g. "50 Oreo cookies" → portion=24,350g (package), heuristic=550g → use heuristic.
+            const portionTooBig = isCountBased && perItemPortion > perItemHeuristic * 3 && perItemHeuristic < sizeThreshold;
+
+            // Under-sized portion: USDA matched the wrong (much smaller) food.
+            // e.g. "1 large daikon radish" → USDA portion=9g (tiny garden radish), heuristic=450g.
+            // If portion is <10% of heuristic and heuristic is substantial, USDA found the wrong food.
+            const portionTooSmall = isCountBased && portionWeight < heuristicWeight * 0.10 && heuristicWeight > 80;
+
+            if (portionTooBig || portionTooSmall) {
+                weightGrams = heuristicWeight;
             } else {
                 weightGrams = portionWeight;
             }
