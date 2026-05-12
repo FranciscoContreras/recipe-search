@@ -432,6 +432,9 @@ export class NutritionEngine {
             else if (lowerName.includes('mussel'))    unitWeight = 18;
             else if (lowerName.includes('meatball'))  unitWeight = 30;  // standard meatball ≈ 30g
             // ── Bread & baked goods ─────────────────────────────────────────────
+            // ── Cured/smoked meats ──────────────────────────────────────────────
+            else if (lowerName.includes('bacon') && (lowerName.includes('strip') || lowerName.includes('rasher') || lowerName.includes('slice'))) unitWeight = 15; // 1 bacon strip ≈ 15g raw
+            else if (lowerName.includes('bacon'))       unitWeight = 30;  // 1 piece/slice bacon
             else if (lowerName.includes('pita'))       unitWeight = 70;  // 1 pita bread ≈ 60-80g
             else if (lowerName.includes('tortilla'))   unitWeight = 45;  // 1 flour tortilla ≈ 45g
             else if (lowerName.includes('naan'))       unitWeight = 90;  // 1 naan ≈ 90g
@@ -659,7 +662,7 @@ export class NutritionEngine {
         // Non-food / inedible tool detection.
         // Skewers, toothpicks, etc. are listed as ingredients but are never consumed.
         // Short-circuit before any lookup to avoid OFW matching them to caloric foods.
-        const NON_FOOD_PATTERN = /\b(bamboo\s+skewer|wooden\s+skewer|metal\s+skewer|skewer|toothpick|wooden\s+pick|popsicle\s+stick|lollipop\s+stick|wooden\s+stick)\b/i;
+        const NON_FOOD_PATTERN = /\b(bamboo\s+skewers?|wooden\s+skewers?|metal\s+skewers?|skewers?|toothpicks?|wooden\s+picks?|popsicle\s+sticks?|lollipop\s+sticks?|wooden\s+sticks?)\b/i;
         if (NON_FOOD_PATTERN.test(line)) {
             const ZERO_STATS = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0, calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0 };
             return {
