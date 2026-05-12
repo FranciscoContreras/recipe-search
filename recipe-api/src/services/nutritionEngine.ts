@@ -795,6 +795,7 @@ export class NutritionEngine {
                 /squash|pumpkin|eggplant|aubergine|turnip|parsnip|beet/.test(keyLower) ? 80 :
                 /\bpotato\b|\byam\b|\btaro\b|\byuca\b|\bcassava\b/.test(keyLower)      ? 130 :  // raw potato ~77; mashed ~113
                 /\bchicken\b|\bturkey\b|\bduck\b/.test(keyLower) && !/fried|schmaltz/.test(keyLower) ? 220 : // raw/roasted poultry ≤220
+                /raspberr|strawberr|blueberr|blackberr|currant|gooseberr|cranberr|fresh.?fruit/.test(keyLower) ? 100 : // fresh berries ~30-60 kcal/100g
                 /tomato|pepper|onion|carrot|green.?bean|mushroom|corn/.test(keyLower)  ? 80 :
                 // Dairy — condensed/evaporated are legitimately high; whole milk ~61
                 /\bmilk/.test(keyLower)                              ? 80  :
@@ -865,6 +866,10 @@ export class NutritionEngine {
                             if (/\bpotato\b/.test(tl) && offCal > 130) offPlausible = false;
                             if (/\bchile\b|\bchili\b|\bjalapeno\b|\bbird.?s.?eye\b|\bhabanero\b/.test(tl) && offCal > 80) offPlausible = false;
                             if (/zest/.test(tl) && offCal > 200) offPlausible = false;
+                            // Fresh fruits: blueberries ~57, raspberries ~52, strawberries ~32 kcal/100g
+                            // Dried fruits are higher (250+) but labeled as "dried", not "fresh"
+                            if (/(?:fresh\s+)?(?:raspberr|strawberr|blueberr|blackberr|cherr|currant|gooseberr|cranberr)\b/.test(tl) && offCal > 100) offPlausible = false;
+                            if (/\bfresh\s+(?:peach|plum|pear|mango|kiwi|papaya|passion.?fruit|fig|apricot)\b/.test(tl) && offCal > 100) offPlausible = false;
                             if (/\bsalt\b/.test(tl)   && offCal > 5)   offPlausible = false;
                             if (/lemon.?juice|lime.?juice/.test(tl) && offCal > 40) offPlausible = false;
                             if (/\bjuice\b/.test(tl)  && offCal > 120) offPlausible = false;
