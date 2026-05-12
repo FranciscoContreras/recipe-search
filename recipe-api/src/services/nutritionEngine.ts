@@ -553,7 +553,9 @@ export class NutritionEngine {
             // For specific low-calorie ingredient types, apply tighter limits to catch
             // bad OFW matches at moderate densities (e.g., "water" cached at 100 kcal/100g,
             // "cauliflower" cached as cauliflower gratin at 75 kcal/100g).
-            const keyLower = cacheKey.replace(/^v11:/, '').replace(/:cooked$/, '');
+            const keyRaw   = cacheKey.replace(/^v11:/, '');              // e.g. "spaghetti" or "spaghetti:cooked"
+            const keyLower = keyRaw.replace(/:cooked$/, '');              // e.g. "spaghetti"
+            const isCookedKey = keyRaw.endsWith(':cooked');               // true when calorie data should be for cooked
             // NOTE: No trailing \b on ingredient roots — "onion" must also match "onions",
             // "tomato" must match "tomatoes", "cherr" must match "cherries", etc.
             const maxCal =
@@ -572,10 +574,14 @@ export class NutritionEngine {
 
             // Minimum calorie density for inherently high-calorie ingredient types.
             // Evict entries that are suspiciously TOO LOW — a sign that USDA returned
-            // a wrong food (e.g., "spaghetti" → "spaghetti squash" at 31 kcal/100g
-            // instead of dry pasta at 371 kcal/100g).
+            // a wrong food. Two common failure modes:
+            //   "spaghetti" → "spaghetti squash, raw" at 31 kcal/100g (wrong food entirely)
+            //   "spaghetti" (raw key) → Survey FNDDS "Spaghetti" at cooked density ~170 kcal/100g
+            //     (right food but cooked values stored in the raw-key slot)
+            const IS_PASTA = /pasta|spaghetti|noodle|fettuccine|penne|rigatoni|linguine|fusilli|farfalle|orzo|macaroni|lasagna/.test(keyLower);
             const minCal =
-                /pasta|spaghetti|noodle|fettuccine|penne|rigatoni|linguine|fusilli|farfalle|orzo|macaroni|lasagna/.test(keyLower) ? 100 :
+                IS_PASTA && !isCookedKey ? 280 :  // dry pasta: ~350-380 kcal/100g; cooked FNDDS ~170 → evict
+                IS_PASTA &&  isCookedKey ? 100 :  // cooked pasta: ~130-175 kcal/100g is fine
                 /\bbread\b|\bbagel\b|\bcroissant\b|\broll\b|\bbun\b/.test(keyLower) ? 150 :
                 /\bchees/.test(keyLower) ? 100 :
                 0; // no minimum for everything else
