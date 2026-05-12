@@ -140,7 +140,10 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
         let portions: { measure: string, gramWeight: number }[] = [];
         if (food.foodPortions) {
              portions = food.foodPortions.map((p: any) => ({
-                 measure: p.measureUnit?.name || p.modifier || 'unit',
+                 // portionDescription is the full human-readable text (Foundation Foods)
+                 // measureUnit.name works for SR Legacy (e.g. "large", "medium")
+                 // modifier is a fallback for older SR Legacy entries
+                 measure: p.portionDescription || p.modifier || p.measureUnit?.name || 'unit',
                  gramWeight: p.gramWeight
              }));
         }
@@ -161,7 +164,17 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
         };
 
     } catch (e: any) {
-        console.error('USDA API Error:', e.message);
+        const status  = e.response?.status;
+        const body    = e.response?.data;
+        // The USDA gateway (nginx) returns an HTML 400 when the API key is rate-limited rather
+        // than a proper 429, so we detect it by the HTML body content.
+        if (status === 400 && typeof body === 'string' && body.includes('<html>')) {
+            console.warn(`USDA rate-limited (HTTP 400 gateway rejection) for "${query}". Falling through to FatSecret.`);
+        } else if (status === 404) {
+            console.warn(`USDA food detail 404 for "${query}" — food may have been removed from DB.`);
+        } else {
+            console.error('USDA API Error:', e.message);
+        }
         return null;
     }
 }

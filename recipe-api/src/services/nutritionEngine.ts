@@ -1,10 +1,20 @@
 import { supabase } from '../supabaseClient';
 import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
-import { cleanIngredientTerm } from '../utils/cleaning';
+import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
+import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
 
-// Bypass TS import issues for this specific library
-const parse = require('parse-ingredient');
+/**
+ * Returns true when the ingredient string looks like a packaged or branded product.
+ * These tend to be better covered by Open Food Facts than USDA.
+ */
+function looksLikePackagedFood(name: string): boolean {
+    const signals = /\b(can|canned|tin|tinned|jar|packet|sachet|box|carton|bottle|bag|pouch|brand|store.?bought|pre.?made|ready.?made)\b/i;
+    return signals.test(name);
+}
+
+// The library exports named functions, not a default export.
+const { parseIngredient } = require('parse-ingredient');
 
 interface NutritionTotal {
     calories: number;
@@ -51,9 +61,25 @@ const DENSITY_TABLE: Record<string, number> = {
     'herb': 0.15
 };
 
+// Runs tasks with at most `limit` in-flight at once, preserving result order.
+async function withConcurrency<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
+    const results: T[] = new Array(tasks.length);
+    let next = 0;
+
+    async function worker() {
+        while (next < tasks.length) {
+            const i = next++;
+            results[i] = await tasks[i]();
+        }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+    return results;
+}
+
 export class NutritionEngine {
-    
-    private static getDensity(ingredientName: string): number {
+
+    static getDensity(ingredientName: string): number {
         const lowerName = ingredientName.toLowerCase();
         for (const [key, density] of Object.entries(DENSITY_TABLE)) {
             if (lowerName.includes(key)) {
@@ -63,9 +89,14 @@ export class NutritionEngine {
         return 1.0; // Default to water density
     }
 
-    private static unitToGrams(unit: string, qty: number, ingredientName: string): number {
+    static unitToGrams(unit: string, qty: number, ingredientName: string): number {
+        // Culinary convention: 'T' = tablespoon, 't' = teaspoon.
+        // These must be checked before lowercasing or the distinction is lost.
+        if (unit === 'T') return qty * 14.79;
+        if (unit === 't') return qty * 4.93;
+
         const u = unit ? unit.toLowerCase().replace(/s$/, '') : ''; // singularize
-        
+
         // 1. Convert Unit to ML (Volume) or Grams (Weight) directly
         let volumeMl = 0;
         let weightG = 0;
@@ -75,56 +106,59 @@ export class NutritionEngine {
         else if (['kg', 'kilogram'].includes(u)) weightG = qty * 1000;
         else if (['oz', 'ounce'].includes(u)) weightG = qty * 28.35;
         else if (['lb', 'pound'].includes(u)) weightG = qty * 453.59;
-        
+
         // Volume -> Need Density
         else if (['ml', 'milliliter'].includes(u)) volumeMl = qty;
         else if (['l', 'liter'].includes(u)) volumeMl = qty * 1000;
-        else if (['cup', 'c'].includes(u)) volumeMl = qty * 236.59; 
-        else if (['tbsp', 'tablespoon', 'tbs', 'T'].includes(u)) volumeMl = qty * 14.79;
-        else if (['tsp', 'teaspoon', 'tspn', 't'].includes(u)) volumeMl = qty * 4.93;
+        else if (['cup', 'c'].includes(u)) volumeMl = qty * 236.59;
+        else if (['tbsp', 'tablespoon', 'tbs', 'tb'].includes(u)) volumeMl = qty * 14.79; // 'T' handled above; 'tbs' singularizes to 'tb'
+        else if (['tsp', 'teaspoon', 'tspn'].includes(u)) volumeMl = qty * 4.93; // 't' handled above
         else if (['fl oz', 'floz'].includes(u)) volumeMl = qty * 29.57;
         else if (['pint', 'pt'].includes(u)) volumeMl = qty * 473.18;
         else if (['quart', 'qt'].includes(u)) volumeMl = qty * 946.35;
         else if (['gallon', 'gal'].includes(u)) volumeMl = qty * 3785.41;
 
         // Abstract / Count
-        else if (['pinch', 'pn'].includes(u)) weightG = qty * 0.3; // Salt assumption
+        else if (['pinch', 'pn'].includes(u)) weightG = qty * 0.3;
         else if (['dash'].includes(u)) weightG = qty * 0.6;
         else if (['slice'].includes(u)) weightG = qty * 30; // bread/cheese avg
         else if (['clove'].includes(u)) weightG = qty * 5; // garlic
         else {
-            // No unit (e.g. "2 apples") or Unknown unit
-            // Count-based assumptions
+            // No unit (e.g. "2 apples") or unknown unit — count-based assumptions
             const lowerName = ingredientName.toLowerCase();
-            
-            // Check for spices/seasonings first (default to ~2g, approx 1 tsp)
-            const spiceKeywords = ['salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'turmeric', 
-                                   'oregano', 'thyme', 'rosemary', 'basil', 'parsley', 'cilantro', 
-                                   'dill', 'chive', 'sage', 'bay leaf', 'vanilla', 'extract', 
+
+            const spiceKeywords = ['salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'turmeric',
+                                   'oregano', 'thyme', 'rosemary', 'basil', 'parsley', 'cilantro',
+                                   'dill', 'chive', 'sage', 'bay leaf', 'vanilla', 'extract',
                                    'powder', 'seasoning', 'spice', 'clove', 'nutmeg', 'ginger'];
-            if (spiceKeywords.some(k => lowerName.includes(k))) {
-                 return qty * 2; 
-            }
+            if (spiceKeywords.some(k => lowerName.includes(k))) return qty * 2;
 
-            let unitWeight = 100; // Default
-
-            if (lowerName.includes('egg')) unitWeight = 50;
-            else if (lowerName.includes('banana')) unitWeight = 120;
-            else if (lowerName.includes('apple')) unitWeight = 180;
-            else if (lowerName.includes('slice')) unitWeight = 30; // "slice of bread"
-            else if (lowerName.includes('bread')) unitWeight = 30; // "2 bread" -> 2 slices
-            else if (lowerName.includes('chicken') && (lowerName.includes('breast') || lowerName.includes('thigh'))) unitWeight = 200; 
-            else if (lowerName.includes('avocado')) unitWeight = 150;
-            else if (lowerName.includes('onion')) unitWeight = 110;
-            else if (lowerName.includes('carrot')) unitWeight = 60;
-            else if (lowerName.includes('potato')) unitWeight = 213;
+            let unitWeight = 100; // Default — more specific checks must come first
+            if      (lowerName.includes('egg yolk'))  unitWeight = 17;  // 1 yolk ≈ 17g
+            else if (lowerName.includes('egg white')) unitWeight = 33;  // 1 white ≈ 33g
+            else if (lowerName.includes('egg'))       unitWeight = 50;  // whole egg ≈ 50g
+            else if (lowerName.includes('banana'))    unitWeight = 120;
+            else if (lowerName.includes('apple'))     unitWeight = 180;
+            else if (lowerName.includes('romaine'))   unitWeight = 500; // 1 head romaine ≈ 500g
+            else if (lowerName.includes('lettuce'))   unitWeight = 400; // 1 head generic lettuce
+            else if (lowerName.includes('cabbage'))   unitWeight = 900;
+            else if (lowerName.includes('slice'))     unitWeight = 30;
+            else if (lowerName.includes('bread'))     unitWeight = 30;
+            else if (lowerName.includes('chicken') && (lowerName.includes('breast') || lowerName.includes('thigh'))) unitWeight = 200;
+            else if (lowerName.includes('avocado'))   unitWeight = 150;
+            else if (lowerName.includes('onion'))     unitWeight = 110;
+            else if (lowerName.includes('carrot'))    unitWeight = 60;
+            else if (lowerName.includes('potato'))    unitWeight = 213;
+            else if (lowerName.includes('tomato'))    unitWeight = 120;
+            else if (lowerName.includes('pepper') && !spiceKeywords.some(k => lowerName.includes(k))) unitWeight = 150;
+            else if (lowerName.includes('lemon'))     unitWeight = 60;
+            else if (lowerName.includes('lime'))      unitWeight = 45;
 
             return qty * unitWeight;
         }
 
         if (weightG > 0) return weightG;
 
-        // Convert Volume to Weight using Density
         if (volumeMl > 0) {
             const density = this.getDensity(ingredientName);
             return volumeMl * density;
@@ -133,7 +167,7 @@ export class NutritionEngine {
         return 100 * qty;
     }
 
-    private static parseQuantity(qtyStr: string): number {
+    static parseQuantity(qtyStr: string): number {
         if (!qtyStr) return 1;
         try {
             const parts = qtyStr.trim().split(' ');
@@ -150,170 +184,266 @@ export class NutritionEngine {
         } catch (e) { return 1; }
     }
 
-    static async analyze(ingredients: string[]): Promise<{ total: NutritionTotal, breakdown: any[] }> {
-        const total: NutritionTotal = { 
-            calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0,
-            calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0
-        };
-        const breakdown = [];
+    /**
+     * Resolve weight for an ingredient that has a count/size-based unit (or no unit)
+     * using the USDA portion table returned with the food detail.
+     *
+     * Priority:
+     *  1. Explicit size qualifier match (medium, large, small, whole, piece, stalk, head…)
+     *  2. Any "medium" or "whole" portion as a general default for count items
+     *
+     * Returns null if no usable portion is found — caller falls back to unitToGrams.
+     */
+    private static resolveWeightFromPortions(
+        portions: { measure: string; gramWeight: number }[],
+        unit: string,
+        qty: number,
+    ): number | null {
+        if (!portions || portions.length === 0) return null;
 
-        for (const line of ingredients) {
-            // Pre-clean unicode fractions
-            const processedLine = line
-                .replace(/½/g, ' 1/2 ')
-                .replace(/⅓/g, ' 1/3 ').replace(/⅔/g, ' 2/3 ')
-                .replace(/¼/g, ' 1/4 ').replace(/¾/g, ' 3/4 ')
-                .replace(/⅕/g, ' 1/5 ').replace(/⅖/g, ' 2/5 ').replace(/⅗/g, ' 3/5 ').replace(/⅘/g, ' 4/5 ')
-                .replace(/⅙/g, ' 1/6 ').replace(/⅚/g, ' 5/6 ')
-                .replace(/⅛/g, ' 1/8 ').replace(/⅜/g, ' 3/8 ').replace(/⅝/g, ' 5/8 ').replace(/⅞/g, ' 7/8 ');
+        const u = unit ? unit.toLowerCase().replace(/s$/, '') : '';
 
-            // 1. Parse
-            let parsed;
-            try {
-                const results = parse(processedLine);
-                parsed = Array.isArray(results) ? results[0] : results; 
-            } catch (e) {
-                parsed = null;
-            }
+        // Volume and weight units are handled by unitToGrams — don't override them here
+        const METRIC_UNITS = ['g','gram','kg','kilogram','oz','ounce','lb','pound',
+                              'ml','milliliter','l','liter','cup','tbsp','tablespoon',
+                              'tbs','tb','tsp','teaspoon','fl','pint','pt','quart',
+                              'qt','gallon','gal'];
+        if (METRIC_UNITS.includes(u)) return null;
 
-            // Fallback Regex
-            if (!parsed || !parsed.description) {
-                const regex = /^((?:\d+\s+)?\d+\/\d+|\d+(?:\.\d+)?|\d+)\s*([a-zA-Z]+)?\s+(.*)$/;
-                const match = processedLine.match(regex);
-                if (match) {
-                    parsed = {
-                        quantity: this.parseQuantity(match[1]),
-                        unitOfMeasure: match[2] || null,
-                        description: match[3]
-                    };
-                } else {
-                    parsed = { description: processedLine, quantity: 1, unitOfMeasure: null };
-                }
-            }
+        // Size qualifiers to match against USDA portion descriptions
+        const SIZE_KEYWORDS: [string, string[]][] = [
+            [u,        [u]],                           // exact match on the unit string
+            ['large',  ['large', 'xl', 'extra large']],
+            ['medium', ['medium', 'med']],
+            ['small',  ['small', 'sm']],
+            ['whole',  ['whole', 'item', 'piece', 'each']],
+            ['stalk',  ['stalk', 'stem', 'spear']],
+            ['head',   ['head']],
+            ['bunch',  ['bunch', 'bundle']],
+            ['slice',  ['slice', 'piece']],
+            ['leaf',   ['leaf', 'leave']],
+            ['sprig',  ['sprig']],
+            ['clove',  ['clove']],
+            ['ear',    ['ear']],
+        ];
 
-            const name = parsed.description || processedLine; 
-            const qty = typeof parsed.quantity === 'string' ? this.parseQuantity(parsed.quantity) : (parsed.quantity || 1);
-            const unit = parsed.unitOfMeasure || '';
-            
-            // Clean name for Search
-            const searchName = cleanIngredientTerm(name);
+        for (const [key, synonyms] of SIZE_KEYWORDS) {
+            if (!key || key.length < 2) continue;
+            const matched = portions.find(p =>
+                synonyms.some(s => p.measure.toLowerCase().includes(s))
+            );
+            if (matched) return matched.gramWeight * qty;
+        }
 
-            // Cache Versioning
-            const cacheKey = `v9:${searchName.toLowerCase()}`; // Bumped version
+        // Fall through: no size qualifier — for a plain count ("2 apples") use medium
+        const medium = portions.find(p => {
+            const pm = p.measure.toLowerCase();
+            return pm.includes('medium') || pm.includes('whole') || pm.includes('piece');
+        });
+        if (medium) return medium.gramWeight * qty;
 
-            // 2. Check Cache / Fetch
-            let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
-            let source = 'usda';
+        return null;
+    }
 
-            const { data: cached } = await supabase
-                .from('ingredient_cache')
-                .select('*')
-                .eq('term', cacheKey)
-                .single();
+    // Looks up nutrition for a single ingredient line with a multi-strategy search.
+    private static async lookupIngredient(line: string): Promise<{
+        breakdown: any;
+        stats: NutritionTotal | null;
+    }> {
+        // Normalise unicode fractions so the parser handles them
+        const processedLine = line
+            .replace(/½/g, ' 1/2 ').replace(/⅓/g, ' 1/3 ').replace(/⅔/g, ' 2/3 ')
+            .replace(/¼/g, ' 1/4 ').replace(/¾/g, ' 3/4 ')
+            .replace(/⅕/g, ' 1/5 ').replace(/⅖/g, ' 2/5 ').replace(/⅗/g, ' 3/5 ').replace(/⅘/g, ' 4/5 ')
+            .replace(/⅙/g, ' 1/6 ').replace(/⅚/g, ' 5/6 ')
+            .replace(/⅛/g, ' 1/8 ').replace(/⅜/g, ' 3/8 ').replace(/⅝/g, ' 5/8 ').replace(/⅞/g, ' 7/8 ');
 
-            if (cached) {
-                nutritionInfo = cached.nutrition as any;
-                source = cached.source;
-            } else {
-                // 3. Fetch from USDA (Fresh)
-                const usdaData = await searchUsda(searchName);
-                if (usdaData) {
-                    nutritionInfo = usdaData;
-                    source = 'usda';
-                    // Async Cache Update
-                    supabase.from('ingredient_cache').upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' }).then();
-                } else {
-                    // 4. Fallback to FatSecret
-                    const fsData = await searchFatSecret(searchName);
-                    if (fsData) {
-                        nutritionInfo = fsData;
-                        source = 'fatsecret';
-                         supabase.from('ingredient_cache').upsert({ term: cacheKey, nutrition: fsData as any, source: 'fatsecret' }).then();
+        // 1. Parse
+        let parsed: any = null;
+        try {
+            const results = parseIngredient(processedLine);
+            const first = Array.isArray(results) ? results[0] : results;
+            if (first && first.description) parsed = first;
+        } catch (_) { /* fall through */ }
+
+        if (!parsed) {
+            const regex = /^((?:\d+\s+)?\d+\/\d+|\d+(?:\.\d+)?|\d+)\s*([a-zA-Z]+)?\s+(.*)$/;
+            const match = processedLine.match(regex);
+            parsed = match
+                ? { quantity: this.parseQuantity(match[1]), unitOfMeasure: match[2] || null, description: match[3] }
+                : { description: processedLine, quantity: 1, unitOfMeasure: null };
+        }
+
+        const name: string  = parsed.description || processedLine;
+        const qty:  number  = parsed.quantity ?? 1;
+        const unit: string  = parsed.unitOfMeasure || '';
+
+        // 2. Build ordered list of search terms — progressively simpler
+        //    e.g. "almond flour" → ["almond flour", "almond"] (not "flour wheat all-purpose")
+        const searchTerms = getSearchTerms(name);
+        const primaryTerm = searchTerms[0] ?? name;
+        const cacheKey    = `v11:${primaryTerm.toLowerCase()}`; // v11: using getSearchTerms
+
+        // 3. Cache lookup
+        let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
+        let source    = 'usda';
+        let usedTerm  = primaryTerm;
+
+        const { data: cached } = await supabase
+            .from('ingredient_cache')
+            .select('*')
+            .eq('term', cacheKey)
+            .single();
+
+        if (cached) {
+            nutritionInfo = cached.nutrition as any;
+            source        = cached.source;
+        } else {
+            // Detect packaged/branded foods — route to Open Food Facts first
+            const isPackaged = looksLikePackagedFood(name);
+
+            // ── Source 1: USDA (primary for raw ingredients) ───────────────────
+            if (!isPackaged) {
+                for (const term of searchTerms) {
+                    const usdaData = await searchUsda(term);
+                    if (usdaData) {
+                        nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
+                        supabase.from('ingredient_cache')
+                            .upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' })
+                            .then();
+                        break;
                     }
                 }
             }
 
-            // 5. Calculate Weight (Prioritize Portions)
-            let weightGrams = 0;
-            // First estimate (fallback logic)
-            weightGrams = this.unitToGrams(unit, qty, name);
-
-            if (nutritionInfo && (nutritionInfo as any).portions) {
-                 const portions = (nutritionInfo as any).portions;
-                 const u = unit ? unit.toLowerCase().replace(/s$/, '') : '';
-                 
-                 let match = portions.find((p: any) => {
-                     const pm = p.measure.toLowerCase();
-                     if (u === 'cup' && pm.includes('cup')) return true;
-                     if ((u === 'tbsp' || u === 'tablespoon') && (pm.includes('tbsp') || pm.includes('tablespoon'))) return true;
-                     if ((u === 'tsp' || u === 'teaspoon') && (pm.includes('tsp') || pm.includes('teaspoon'))) return true;
-                     if (u === 'slice' && pm.includes('slice')) return true;
-                     if (u === 'oz' && pm.includes('oz')) return true;
-                     // Count logic for USDA (e.g. "large", "small", "medium") - often "unit" or "item" isn't explicit but modifier is
-                     if (u === '' && (pm.includes('large') || pm.includes('small') || pm.includes('medium') || pm.includes('item') || pm.includes('whole'))) return true;
-                     return false;
-                 });
-
-                 if (match) {
-                     console.log(`DEBUG: Found USDA portion match for "${name}": ${match.measure} = ${match.gramWeight}g`);
-                     weightGrams = match.gramWeight * qty;
-                 }
+            // ── Source 2: Open Food Facts (packaged goods + USDA fallback) ─────
+            // Free, no key, 4M+ products — best for canned/branded items.
+            if (!nutritionInfo) {
+                for (const term of searchTerms) {
+                    const offData = await searchOpenFoodFacts(term);
+                    if (offData) {
+                        nutritionInfo = offData as any; source = 'openfoodfacts'; usedTerm = term;
+                        supabase.from('ingredient_cache')
+                            .upsert({ term: cacheKey, nutrition: offData as any, source: 'openfoodfacts' })
+                            .then();
+                        break;
+                    }
+                }
             }
 
-            // 6. Calculate contribution
-            if (nutritionInfo) {
-                const baseWeight = nutritionInfo.serving_size_g || 100;
-                const ratio = weightGrams / baseWeight;
-                
-                const n = nutritionInfo as any; 
+            // ── Source 3: USDA second pass (for packaged items USDA does carry) ─
+            if (!nutritionInfo && isPackaged) {
+                for (const term of searchTerms) {
+                    const usdaData = await searchUsda(term);
+                    if (usdaData) {
+                        nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
+                        supabase.from('ingredient_cache')
+                            .upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' })
+                            .then();
+                        break;
+                    }
+                }
+            }
 
-                const itemStats = {
-                    calories: (n.calories || 0) * ratio,
-                    protein: (n.protein || 0) * ratio,
-                    fat: (n.fat || 0) * ratio,
-                    carbs: (n.carbs || 0) * ratio,
-                    fiber: (n.fiber || 0) * ratio,
-                    sugar: (n.sugar || 0) * ratio,
-                    calcium_mg: (n.calcium_mg || 0) * ratio,
-                    iron_mg: (n.iron_mg || 0) * ratio,
-                    vitamin_a_mcg: (n.vitamin_a_mcg || 0) * ratio,
-                    vitamin_c_mg: (n.vitamin_c_mg || 0) * ratio
-                };
-
-                // Add to total
-                total.calories += itemStats.calories;
-                total.protein += itemStats.protein;
-                total.fat += itemStats.fat;
-                total.carbs += itemStats.carbs;
-                total.fiber += itemStats.fiber;
-                total.sugar += itemStats.sugar;
-                total.calcium_mg += itemStats.calcium_mg;
-                total.iron_mg += itemStats.iron_mg;
-                total.vitamin_a_mcg += itemStats.vitamin_a_mcg;
-                total.vitamin_c_mg += itemStats.vitamin_c_mg;
-
-                breakdown.push({
-                    ingredient: line,
-                    parsed: { name, searchName, weightGrams, unit, qty },
-                    stats: itemStats,
-                    source: source
-                });
-            } else {
-                breakdown.push({ ingredient: line, status: 'not_found' });
+            // ── Source 4: FatSecret (production only — IP whitelisted) ──────────
+            if (!nutritionInfo) {
+                for (const term of searchTerms) {
+                    const fsData = await searchFatSecret(term);
+                    if (fsData) {
+                        nutritionInfo = fsData; source = 'fatsecret'; usedTerm = term;
+                        supabase.from('ingredient_cache')
+                            .upsert({ term: cacheKey, nutrition: fsData as any, source: 'fatsecret' })
+                            .then();
+                        break;
+                    }
+                }
             }
         }
 
-        // Round totals
-        total.calories = Math.round(total.calories);
-        total.protein = Math.round(total.protein);
-        total.fat = Math.round(total.fat);
-        total.carbs = Math.round(total.carbs);
-        total.fiber = Math.round(total.fiber);
-        total.sugar = Math.round(total.sugar);
-        total.calcium_mg = Math.round(total.calcium_mg);
-        total.iron_mg = parseFloat(total.iron_mg.toFixed(1));
+        if (!nutritionInfo) {
+            return {
+                breakdown: {
+                    ingredient: line,
+                    status: 'not_found',
+                    tried: searchTerms,
+                },
+                stats: null,
+            };
+        }
+
+        // 6. Weight calculation
+        //    Priority: explicit metric unit → USDA portion data → unitToGrams heuristic
+        const portions = (nutritionInfo as any).portions as { measure: string; gramWeight: number }[] | undefined;
+
+        const portionWeight = this.resolveWeightFromPortions(portions ?? [], unit, qty);
+        const weightGrams   = portionWeight ?? this.unitToGrams(unit, qty, name);
+
+        // 7. Compute contribution  (USDA nutrients are per 100 g)
+        const baseWeight = nutritionInfo.serving_size_g || 100;
+        const ratio      = weightGrams / baseWeight;
+        const n          = nutritionInfo as any;
+
+        const stats: NutritionTotal = {
+            calories:      (n.calories      || 0) * ratio,
+            protein:       (n.protein       || 0) * ratio,
+            fat:           (n.fat           || 0) * ratio,
+            carbs:         (n.carbs         || 0) * ratio,
+            fiber:         (n.fiber         || 0) * ratio,
+            sugar:         (n.sugar         || 0) * ratio,
+            calcium_mg:    (n.calcium_mg    || 0) * ratio,
+            iron_mg:       (n.iron_mg       || 0) * ratio,
+            vitamin_a_mcg: (n.vitamin_a_mcg || 0) * ratio,
+            vitamin_c_mg:  (n.vitamin_c_mg  || 0) * ratio,
+        };
+
+        return {
+            breakdown: {
+                ingredient: line,
+                parsed: { name, searchTerm: usedTerm, weightGrams, unit, qty },
+                stats,
+                source,
+            },
+            stats,
+        };
+    }
+
+    static async analyze(ingredients: string[]): Promise<{ total: NutritionTotal, breakdown: any[] }> {
+        // Process up to 4 ingredients concurrently to keep external API calls manageable
+        const tasks = ingredients.map(line => () => NutritionEngine.lookupIngredient(line));
+        const results = await withConcurrency(tasks, 4);
+
+        const total: NutritionTotal = {
+            calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0,
+            calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0,
+        };
+        const breakdown: any[] = [];
+
+        for (const { breakdown: item, stats } of results) {
+            breakdown.push(item);
+            if (stats) {
+                total.calories      += stats.calories;
+                total.protein       += stats.protein;
+                total.fat           += stats.fat;
+                total.carbs         += stats.carbs;
+                total.fiber         += stats.fiber;
+                total.sugar         += stats.sugar;
+                total.calcium_mg    += stats.calcium_mg;
+                total.iron_mg       += stats.iron_mg;
+                total.vitamin_a_mcg += stats.vitamin_a_mcg;
+                total.vitamin_c_mg  += stats.vitamin_c_mg;
+            }
+        }
+
+        total.calories      = Math.round(total.calories);
+        total.protein       = Math.round(total.protein);
+        total.fat           = Math.round(total.fat);
+        total.carbs         = Math.round(total.carbs);
+        total.fiber         = Math.round(total.fiber);
+        total.sugar         = Math.round(total.sugar);
+        total.calcium_mg    = Math.round(total.calcium_mg);
+        total.iron_mg       = parseFloat(total.iron_mg.toFixed(1));
         total.vitamin_a_mcg = Math.round(total.vitamin_a_mcg);
-        total.vitamin_c_mg = parseFloat(total.vitamin_c_mg.toFixed(1));
+        total.vitamin_c_mg  = parseFloat(total.vitamin_c_mg.toFixed(1));
 
         return { total, breakdown };
     }
