@@ -337,7 +337,12 @@ export class NutritionEngine {
             const spiceKeywords = ['salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'turmeric',
                                    'oregano', 'thyme', 'rosemary', 'basil', 'parsley', 'cilantro',
                                    'dill', 'chive', 'sage', 'bay leaf', 'vanilla', 'extract',
-                                   'powder', 'seasoning', 'spice', 'clove', 'nutmeg', 'ginger'];
+                                   'powder', 'seasoning', 'spice', 'clove', 'nutmeg', 'ginger',
+                                   // Additional spices/hot peppers commonly listed without quantity
+                                   'cayenne', 'saffron', 'cardamom', 'fennel seed', 'fenugreek',
+                                   'za\'atar', 'sumac', 'harissa', 'mace', 'aleppo',
+                                   // Tiny count-based ingredients treated as spice-level amounts
+                                   'coffee bean', 'vanilla bean', 'star anise', 'bay leave'];
             if (spiceKeywords.some(k => lowerName.includes(k))) return qty * 2;
 
             let unitWeight = 100; // Default — more specific checks must come first
@@ -417,6 +422,9 @@ export class NutritionEngine {
             else if (lowerName.includes('mussel'))    unitWeight = 18;
             else if (lowerName.includes('meatball'))  unitWeight = 30;  // standard meatball ≈ 30g
             // ── Bread & baked goods ─────────────────────────────────────────────
+            else if (lowerName.includes('pita'))       unitWeight = 70;  // 1 pita bread ≈ 60-80g
+            else if (lowerName.includes('tortilla'))   unitWeight = 45;  // 1 flour tortilla ≈ 45g
+            else if (lowerName.includes('naan'))       unitWeight = 90;  // 1 naan ≈ 90g
             else if (lowerName.includes('slice') || lowerName.includes('bread')) unitWeight = 30;
             // ── Small packaged/bite-size items ────────────────────────────────
             // Critical: these are often given as counts ("50 Oreo cookies", "20 crackers")
@@ -766,6 +774,8 @@ export class NutritionEngine {
                             if (/cauliflower|broccoli|zucchini|cucumber|celery|radish|asparagus|artichoke|cabbage|lettuce|spinach|kale|chard/.test(tl) && offCal > 60) offPlausible = false;
                             if (/squash|pumpkin|eggplant|tomato|onion|carrot|beet|turnip|parsnip/.test(tl) && offCal > 80) offPlausible = false;
                             if (/\bpotato\b/.test(tl) && offCal > 130) offPlausible = false;
+                            if (/\bchile\b|\bchili\b|\bjalapeno\b|\bbird.?s.?eye\b|\bhabanero\b/.test(tl) && offCal > 80) offPlausible = false;
+                            if (/zest/.test(tl) && offCal > 200) offPlausible = false;
                             if (/\bsalt\b/.test(tl)   && offCal > 5)   offPlausible = false;
                             if (/lemon.?juice|lime.?juice/.test(tl) && offCal > 40) offPlausible = false;
                             if (/\bjuice\b/.test(tl)  && offCal > 120) offPlausible = false;
@@ -888,9 +898,11 @@ export class NutritionEngine {
         // Ingredients listed as "for garnish", "for greasing", "to taste" etc. have no
         // meaningful measured quantity. Cap their weight to a tiny culinary amount so they
         // don't inflate totals (e.g., "nonstick cooking spray" shouldn't add 897 kcal).
-        const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|as\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray|optional|if\s+desired)\b/i;
-        if (TRACE_PATTERN.test(line) && !unit && !qty) {
-            weightGrams = 2; // 2g is a reasonable trace amount for any garnish/spray
+        const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|as\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|for\s+sprinkling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray|optional|if\s+desired)\b/i;
+        // Note: qty defaults to 1, so we cannot use !qty as a "no quantity" signal.
+        // Instead cap any trace/garnish ingredient that resolved to a large weight.
+        if (TRACE_PATTERN.test(line) && weightGrams > 15) {
+            weightGrams = 5; // 5g is a reasonable trace amount for a garnish or topping
         } else if (/\bcooking\s+spray\b/i.test(line) && weightGrams > 5) {
             weightGrams = 1; // cooking spray delivers ~0.3–1g per use
         } else if (/\bfor\s+garnish\b|\bas\s+garnish\b/i.test(line) && weightGrams > 10) {

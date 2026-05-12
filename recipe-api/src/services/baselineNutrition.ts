@@ -309,6 +309,9 @@ const BASELINE_TABLE: Record<string, BaselineEntry> = {
 
     // ─── Liquids & acids ─────────────────────────────────────────────────────
     'water':                 [  0,   0,     0,     0,    0,    0],
+    'lemon zest':            [ 47,   1.5,   0.3,  16.0,  10.6, 4.5],  // 1 tbsp ≈ 6g
+    'orange zest':           [ 97,   1.5,   0.2,  25.0,  10.6, 4.3],
+    'lime zest':             [ 30,   0.7,   0.2,  10.5,  10.5, 1.7],
     'lemon juice':           [ 22,   0.4,   0.2,   6.9,  0.3,  2.5],
     'fresh lemon juice':     [ 22,   0.4,   0.2,   6.9,  0.3,  2.5],
     'lime juice':            [ 25,   0.4,   0.1,   8.4,  0.4,  1.7],
