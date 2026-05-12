@@ -547,13 +547,19 @@ export class NutritionEngine {
             // Ingredient-type-specific maximum calorie densities.
             // Pure fat caps at ~884 kcal/100g — anything above that is physically impossible.
             // For specific low-calorie ingredient types, apply tighter limits to catch
-            // bad OFW matches at moderate densities (e.g., "water" cached at 100 kcal/100g).
+            // bad OFW matches at moderate densities (e.g., "water" cached at 100 kcal/100g,
+            // "cauliflower" cached as cauliflower gratin at 75 kcal/100g).
             const keyLower = cacheKey.replace(/^v11:/, '').replace(/:cooked$/, '');
             const maxCal =
+                // Near-zero-calorie liquids
                 /^water$|^(chicken|beef|vegetable)\s+broth$|^(chicken|beef|vegetable)\s+stock$|^broth$|^stock$/.test(keyLower) ? 15 :
                 /broth|stock/.test(keyLower)                         ? 30  :
-                /\bcabbage\b|\blettuce\b|\bspinach\b|\bkale\b/.test(keyLower) ? 100 :
-                /\bmilk\b/.test(keyLower)                            ? 80  :  // whole milk ~61; oat milk ~47; condensed would be >300
+                // Low-calorie non-starchy vegetables (raw ≤30, cooked with oil ≤60)
+                /\bcauliflower\b|\bbroccoli\b|\bzucchini\b|\bcucumber\b|\bcelery\b|\bradish\b|\basparagus\b|\bartichoke\b/.test(keyLower) ? 60 :
+                /\bcabbage\b|\blettuce\b|\bspinach\b|\bkale\b|\bbok choy\b|\bchard\b/.test(keyLower) ? 60 :
+                /\btomato\b|\bpepper\b|\bonion\b|\bcarrot\b|\bgreen bean\b/.test(keyLower) ? 80  :
+                // Dairy — condensed/evaporated are high; whole milk ~61; heavy cream ~334
+                /\bmilk\b/.test(keyLower)                            ? 80  :
                 900; // hard physical limit for everything else
 
             if (calPer100g <= maxCal) {
