@@ -182,10 +182,10 @@ describe('Calorie accuracy — count ingredients using unitToGrams table', () =>
     expect(breakdown[0].parsed.weightGrams).toBe(120);
   });
 
-  it('"1 apple" → 180g weight', async () => {
+  it('"1 apple" → 182g weight (USDA medium apple)', async () => {
     mockUsda.mockResolvedValue(DUMMY(52));
     const { breakdown } = await NutritionEngine.analyze(['1 apple']);
-    expect(breakdown[0].parsed.weightGrams).toBe(180);
+    expect(breakdown[0].parsed.weightGrams).toBe(182);
   });
 
   it('"1 medium potato" → 213g weight', async () => {

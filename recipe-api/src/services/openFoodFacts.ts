@@ -30,6 +30,37 @@ export interface OffNutrition {
     serving_size_g: number;
 }
 
+// ─── Relevance guard ──────────────────────────────────────────────────────────
+//
+// Open Food Facts is a packaged-product database. Its text search (FTS) may rank
+// a product by keyword overlap without semantic understanding, so "green cabbage"
+// can return a coleslaw kit with dressing (~542 kcal/100g) instead of raw cabbage
+// (~25 kcal/100g). This function gates every result: at least one significant word
+// from the search query must appear in the matched product name.
+//
+// Examples caught by this guard:
+//   query="green cabbage"  product="Cole Slaw Kit"                → REJECT ("cabbage" absent)
+//   query="milk"           product="Chocolate Fudge Brownie"      → REJECT ("milk" absent)
+//   query="chicken stock"  product="Pretzels, Salted"             → REJECT
+//   query="olive oil"      product="Extra Virgin Olive Oil"       → ACCEPT ("olive"/"oil" match)
+//
+// We intentionally don't reject on calorie density alone (e.g., cream cheese IS
+// high-calorie, so a density check would create false positives). Name relevance
+// is the reliable signal.
+
+function isRelevantOffResult(productName: string | null | undefined, query: string): boolean {
+    if (!productName) return false;
+    const nameLower = productName.toLowerCase();
+    // Extract words ≥4 chars — shorter words ("oil", "mix") are too ambiguous.
+    // We keep 3-char words that are the ENTIRE query (single-word searches like "egg").
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length >= (query.trim().includes(' ') ? 4 : 3));
+    if (queryWords.length === 0) {
+        // Fallback: at least the full query is a substring of the name
+        return nameLower.includes(query.toLowerCase().trim());
+    }
+    return queryWords.some(w => nameLower.includes(w));
+}
+
 // ─── Local DB helpers ─────────────────────────────────────────────────────────
 
 function offRowToNutrition(row: OffRow | any): OffNutrition {
@@ -52,12 +83,14 @@ function offRowToNutrition(row: OffRow | any): OffNutrition {
 async function searchLocal(query: string): Promise<OffNutrition | null> {
     // 1. VPS PostgreSQL (fastest — local socket on the production server)
     const vpsRow = await offVpsSearch(query);
-    if (vpsRow) return offRowToNutrition(vpsRow);
+    if (vpsRow && isRelevantOffResult(vpsRow.product_name, query)) {
+        return offRowToNutrition(vpsRow);
+    }
 
     // 2. Supabase fallback (if off_products exists there — requires Pro plan)
     const { data, error } = await supabase
         .from('off_products')
-        .select('calories_100g, protein_100g, fat_100g, carbs_100g, fiber_100g, sugar_100g, calcium_100g, iron_100g, vitamin_c_100g')
+        .select('product_name, calories_100g, protein_100g, fat_100g, carbs_100g, fiber_100g, sugar_100g, calcium_100g, iron_100g, vitamin_c_100g')
         .textSearch('fts', query, { type: 'websearch', config: 'english' })
         .not('calories_100g', 'is', null)
         .gt('calories_100g', 0)
@@ -65,6 +98,7 @@ async function searchLocal(query: string): Promise<OffNutrition | null> {
         .single();
 
     if (error || !data) return null;
+    if (!isRelevantOffResult((data as any).product_name, query)) return null;
     return offRowToNutrition(data);
 }
 
@@ -128,6 +162,7 @@ async function searchLiveAPI(query: string): Promise<OffNutrition | null> {
 
         const data = await res.json();
         for (const product of (data.products ?? [])) {
+            if (!isRelevantOffResult(product.product_name, query)) continue;
             const nutrition = extractNutrients(product.nutriments);
             if (nutrition && nutrition.calories > 0) return nutrition;
         }

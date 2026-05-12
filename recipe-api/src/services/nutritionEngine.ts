@@ -30,36 +30,122 @@ interface NutritionTotal {
     vitamin_c_mg: number;
 }
 
+// IMPORTANT: More specific keys must appear BEFORE less specific ones because
+// getDensity() iterates in insertion order and returns the first substring match.
+// e.g., 'cream cheese' before 'cream', 'brown sugar' before 'sugar', 'almond flour' before 'flour'.
 const DENSITY_TABLE: Record<string, number> = {
-    // value = grams per ml (water = 1.0)
-    'flour': 0.55,       // ~125g / cup (236ml)
-    'sugar': 0.85,       // ~200g / cup
-    'brown sugar': 0.93, // ~220g / cup
-    'butter': 0.96,      // ~227g / cup
-    'oil': 0.92,         // ~216g / cup
-    'oats': 0.40,        // ~95g / cup
-    'rice': 0.85,        // ~200g / cup (raw)
-    'wheat berries': 0.80,
-    'quinoa': 0.75,
-    'couscous': 0.60,
-    'milk': 1.03,
-    'cream': 1.01,
-    'honey': 1.42,
-    'molasses': 1.40,
-    'syrup': 1.35,
-    'water': 1.0,
-    'cocoa': 0.45,
-    'powdered sugar': 0.50,
-    'cornstarch': 0.55,
-    'cheese': 0.45, // Grated/Shredded loosely
-    'nuts': 0.60,   // Chopped
-    'spinach': 0.12, // Raw leaves, loosely packed
-    'lettuce': 0.15,
-    'parsley': 0.15,
-    'cilantro': 0.15,
-    'basil': 0.15,
-    'mint': 0.15,
-    'herb': 0.15
+    // ─── Flours & dry baking ──────────────────────────────────────────────────
+    'almond flour':    0.44,  // ~104g / cup
+    'coconut flour':   0.40,  // ~90g / cup
+    'whole wheat flour': 0.52,
+    'bread flour':     0.53,
+    'cake flour':      0.48,
+    'flour':           0.55,  // all-purpose: ~125g / cup
+    'baking soda':     0.85,
+    'baking powder':   0.75,
+    'cornstarch':      0.55,
+    'cornmeal':        0.60,
+    'panko':           0.28,  // panko breadcrumbs: ~65g / cup (very light)
+    'breadcrumb':      0.42,  // dry: ~100g / cup
+    // ─── Sugars ───────────────────────────────────────────────────────────────
+    'brown sugar':     0.93,  // packed: ~220g / cup
+    'powdered sugar':  0.50,  // ~120g / cup
+    'caster sugar':    0.85,
+    'sugar':           0.85,  // granulated: ~200g / cup
+    // ─── Fats & oils ──────────────────────────────────────────────────────────
+    'coconut oil':     0.92,
+    'shortening':      0.88,
+    'lard':            0.96,
+    'butter':          0.96,  // ~227g / cup
+    'oil':             0.92,  // vegetable/olive: ~216g / cup
+    // ─── Grains, seeds & legumes (dry, uncooked) ─────────────────────────────
+    'rolled oats':     0.40,
+    'quick oats':      0.40,
+    'oats':            0.40,  // ~95g / cup
+    'bulgur':          0.70,
+    'millet':          0.80,
+    'wheat berries':   0.80,
+    'quinoa':          0.75,
+    'couscous':        0.60,
+    'rice':            0.85,  // raw: ~185g / cup
+    'chia seeds':      0.69,
+    'flaxseed':        0.62,
+    'sesame seeds':    0.60,
+    'pumpkin seeds':   0.58,
+    'sunflower seeds': 0.55,
+    'pine nuts':       0.58,
+    'peanuts':         0.58,
+    'cashews':         0.57,
+    'almonds':         0.55,
+    'pecans':          0.42,
+    'walnuts':         0.45,
+    'nuts':            0.55,  // chopped mixed nuts
+    // ─── Puffed / airy foods — critical for accuracy ─────────────────────────
+    // These are FAR less dense than water; defaulting to water = 30–70x overcount
+    'popcorn':         0.034, // popped: ~8g / cup — the most error-prone ingredient
+    'puffed rice':     0.025, // ~6g / cup
+    'puffed wheat':    0.025,
+    'corn puffs':      0.04,
+    'cornflakes':      0.12,  // ~28g / cup
+    'cereal':          0.10,  // generic dry cereal
+    'granola':         0.52,  // ~122g / cup
+    // ─── Dairy & alternatives ─────────────────────────────────────────────────
+    'cream cheese':    0.97,  // ~230g / cup (softened)
+    'sour cream':      0.97,
+    'coconut milk':    0.96,  // full-fat canned: ~227g / cup
+    'almond milk':     1.04,
+    'oat milk':        1.03,
+    'buttermilk':      1.03,
+    'yogurt':          1.04,  // ~245g / cup
+    'cream':           1.01,  // heavy cream: ~238g / cup
+    'milk':            1.03,  // whole milk: ~244g / cup
+    // ─── Condiments, pastes & thick liquids ──────────────────────────────────
+    'peanut butter':   1.09,  // smooth: ~258g / cup
+    'almond butter':   1.09,
+    'nut butter':      1.09,
+    'tahini':          1.02,  // ~240g / cup
+    'miso':            1.08,
+    'tomato paste':    1.15,
+    'ketchup':         1.15,
+    'mayonnaise':      0.93,
+    'hummus':          1.03,
+    'salsa':           1.03,
+    // ─── Sweeteners & syrups ─────────────────────────────────────────────────
+    'maple syrup':     1.35,
+    'corn syrup':      1.38,
+    'agave':           1.35,
+    'honey':           1.42,
+    'molasses':        1.40,
+    'syrup':           1.35,
+    // ─── Beverages & cooking liquids ─────────────────────────────────────────
+    'broth':           1.0,
+    'stock':           1.0,
+    'wine':            1.0,
+    'vinegar':         1.01,
+    'beer':            1.0,
+    'juice':           1.04,
+    'water':           1.0,
+    // ─── Cocoa & chocolate ───────────────────────────────────────────────────
+    'cocoa':           0.45,  // unsweetened powder: ~85g / cup
+    // ─── Cheese (grated/crumbled, measured by volume) ────────────────────────
+    'parmesan':        0.25,  // finely grated: ~100g / cup (very light)
+    'feta':            0.44,  // crumbled: ~105g / cup
+    'cheese':          0.45,  // generic shredded/grated loosely
+    // ─── Fresh produce (loosely packed leaves / shredded) ────────────────────
+    'cabbage':         0.38,  // shredded: ~90g / cup
+    'bok choy':        0.15,  // shredded
+    'kale':            0.15,  // torn leaves
+    'arugula':         0.10,
+    'spinach':         0.12,  // raw baby leaves: ~28g / cup
+    'lettuce':         0.08,  // loosely packed leaves: ~20g / cup
+    // ─── Fresh herbs ─────────────────────────────────────────────────────────
+    'parsley':         0.12,
+    'cilantro':        0.12,
+    'basil':           0.12,
+    'dill':            0.12,
+    'mint':            0.12,
+    'chive':           0.10,
+    'herb':            0.12,
 };
 
 // Runs tasks with at most `limit` in-flight at once, preserving result order.
@@ -135,25 +221,71 @@ export class NutritionEngine {
             if (spiceKeywords.some(k => lowerName.includes(k))) return qty * 2;
 
             let unitWeight = 100; // Default — more specific checks must come first
+            // ── Eggs ────────────────────────────────────────────────────────────
             if      (lowerName.includes('egg yolk'))  unitWeight = 17;  // 1 yolk ≈ 17g
             else if (lowerName.includes('egg white')) unitWeight = 33;  // 1 white ≈ 33g
             else if (lowerName.includes('egg'))       unitWeight = 50;  // whole egg ≈ 50g
+            // ── Fruits ──────────────────────────────────────────────────────────
             else if (lowerName.includes('banana'))    unitWeight = 120;
-            else if (lowerName.includes('apple'))     unitWeight = 180;
+            else if (lowerName.includes('apple'))     unitWeight = 182;
+            else if (lowerName.includes('avocado'))   unitWeight = 150;
+            else if (lowerName.includes('lemon'))     unitWeight = 60;
+            else if (lowerName.includes('lime'))      unitWeight = 45;
+            else if (lowerName.includes('orange'))    unitWeight = 130;
+            else if (lowerName.includes('grapefruit'))unitWeight = 230;
+            else if (lowerName.includes('pear'))      unitWeight = 180;
+            else if (lowerName.includes('peach'))     unitWeight = 150;
+            else if (lowerName.includes('mango'))     unitWeight = 200;
+            else if (lowerName.includes('plum'))      unitWeight = 65;
+            else if (lowerName.includes('apricot'))   unitWeight = 35;
+            else if (lowerName.includes('fig'))       unitWeight = 40;
+            else if (lowerName.includes('date'))      unitWeight = 7;   // medjool date ≈ 24g; deglet ≈ 7g
+            else if (lowerName.includes('strawberry'))unitWeight = 12;  // 1 medium strawberry ≈ 12g
+            else if (lowerName.includes('cherry'))    unitWeight = 8;
+            // ── Vegetables ──────────────────────────────────────────────────────
             else if (lowerName.includes('romaine'))   unitWeight = 500; // 1 head romaine ≈ 500g
             else if (lowerName.includes('lettuce'))   unitWeight = 400; // 1 head generic lettuce
             else if (lowerName.includes('cabbage'))   unitWeight = 900;
-            else if (lowerName.includes('slice'))     unitWeight = 30;
-            else if (lowerName.includes('bread'))     unitWeight = 30;
-            else if (lowerName.includes('chicken') && (lowerName.includes('breast') || lowerName.includes('thigh'))) unitWeight = 200;
-            else if (lowerName.includes('avocado'))   unitWeight = 150;
             else if (lowerName.includes('onion'))     unitWeight = 110;
             else if (lowerName.includes('carrot'))    unitWeight = 60;
             else if (lowerName.includes('potato'))    unitWeight = 213;
-            else if (lowerName.includes('tomato'))    unitWeight = 120;
+            else if (lowerName.includes('sweet potato')) unitWeight = 130;
+            else if (lowerName.includes('zucchini') || lowerName.includes('courgette')) unitWeight = 200;
+            else if (lowerName.includes('eggplant') || lowerName.includes('aubergine')) unitWeight = 420;
+            else if (lowerName.includes('bell pepper') || lowerName.includes('red pepper') || lowerName.includes('green pepper'))
+                                                      unitWeight = 150;
             else if (lowerName.includes('pepper') && !spiceKeywords.some(k => lowerName.includes(k))) unitWeight = 150;
-            else if (lowerName.includes('lemon'))     unitWeight = 60;
-            else if (lowerName.includes('lime'))      unitWeight = 45;
+            else if (lowerName.includes('tomato'))    unitWeight = 120;
+            else if (lowerName.includes('beet'))      unitWeight = 82;
+            else if (lowerName.includes('turnip'))    unitWeight = 120;
+            else if (lowerName.includes('parsnip'))   unitWeight = 100;
+            else if (lowerName.includes('cucumber'))  unitWeight = 300;
+            else if (lowerName.includes('corn'))      unitWeight = 90;  // 1 ear shucked
+            else if (lowerName.includes('artichoke')) unitWeight = 120;
+            else if (lowerName.includes('mushroom'))  unitWeight = 20;  // 1 button mushroom ≈ 18-20g
+            // ── Proteins ────────────────────────────────────────────────────────
+            else if (lowerName.includes('chicken') && (lowerName.includes('breast') || lowerName.includes('thigh'))) unitWeight = 200;
+            else if (lowerName.includes('shrimp') || lowerName.includes('prawn')) unitWeight = 12; // 1 large shrimp ≈ 12g
+            else if (lowerName.includes('scallop'))   unitWeight = 25;
+            else if (lowerName.includes('oyster'))    unitWeight = 20;
+            else if (lowerName.includes('clam'))      unitWeight = 15;
+            else if (lowerName.includes('mussel'))    unitWeight = 18;
+            else if (lowerName.includes('meatball'))  unitWeight = 30;  // standard meatball ≈ 30g
+            // ── Bread & baked goods ─────────────────────────────────────────────
+            else if (lowerName.includes('slice') || lowerName.includes('bread')) unitWeight = 30;
+            // ── Small packaged/bite-size items ────────────────────────────────
+            // Critical: these are often given as counts ("50 Oreo cookies", "20 crackers")
+            // and would otherwise default to 100g each — 10-20x too heavy.
+            else if (lowerName.includes('oreo'))      unitWeight = 11;  // 1 Oreo ≈ 11.3g
+            else if (lowerName.includes('cookie') || lowerName.includes('biscuit')) unitWeight = 15;
+            else if (lowerName.includes('wafer'))     unitWeight = 7;   // vanilla wafer ≈ 7g
+            else if (lowerName.includes('cracker'))   unitWeight = 7;   // 1 cracker ≈ 4-10g
+            else if (lowerName.includes('pretzel') && (lowerName.includes('mini') || lowerName.includes('small')))
+                                                      unitWeight = 3;
+            else if (lowerName.includes('pretzel'))   unitWeight = 15;  // medium soft pretzel ≈ 60g; hard ≈ 15g
+            else if (lowerName.includes('potato chip') || lowerName.includes('chip')) unitWeight = 2;
+            else if (lowerName.includes('tortilla chip')) unitWeight = 6;
+            else if (lowerName.includes('gummy') || lowerName.includes('candy')) unitWeight = 4;
 
             return qty * unitWeight;
         }
@@ -238,12 +370,23 @@ export class NutritionEngine {
             if (matched) return matched.gramWeight * qty;
         }
 
-        // Fall through: no size qualifier — for a plain count ("2 apples") use medium
-        const medium = portions.find(p => {
-            const pm = p.measure.toLowerCase();
-            return pm.includes('medium') || pm.includes('whole') || pm.includes('piece');
-        });
-        if (medium) return medium.gramWeight * qty;
+        // Fall through: no size qualifier — for a plain count ("2 apples") use medium.
+        // Sort by gramWeight ascending so we prefer individual-item portions over
+        // container/package-level portions (e.g., "1 cookie" at 11g beats "1 package" at 487g).
+        const matchingPortions = portions
+            .filter(p => {
+                const pm = p.measure.toLowerCase();
+                return pm.includes('medium') || pm.includes('whole') || pm.includes('piece') ||
+                       pm.includes('item') || pm.includes('each');
+            })
+            .sort((a, b) => a.gramWeight - b.gramWeight);
+
+        // Reject implausibly large "per item" weights when we have a high item count.
+        // If qty > 3 and every matching portion is >150g, it's almost certainly a
+        // container measure, not a single-item measure — fall back to unitToGrams.
+        const MAX_PER_ITEM_G = qty > 3 ? 150 : 2000;
+        const best = matchingPortions.find(p => p.gramWeight <= MAX_PER_ITEM_G);
+        if (best) return best.gramWeight * qty;
 
         return null;
     }
@@ -307,9 +450,25 @@ export class NutritionEngine {
             .single();
 
         if (cached) {
-            nutritionInfo = cached.nutrition as any;
-            source        = cached.source;
-        } else {
+            const n = cached.nutrition as any;
+            const serv = n?.serving_size_g || 100;
+            const calPer100g = ((n?.calories ?? 0) / serv) * 100;
+
+            // Reject poisoned cache entries (calorie density that defies physics).
+            // Pure fat caps at ~884 kcal/100g; anything higher signals a bad OFW match
+            // that was cached (e.g., "milk" cached as sweetened condensed milk at 534+,
+            // or "green cabbage" cached as a coleslaw kit at 542 kcal/100g).
+            // A legitimate food can be up to ~900 kcal/100g — reject above that threshold.
+            if (calPer100g <= 900) {
+                nutritionInfo = n;
+                source        = cached.source;
+            } else {
+                // Evict the bad entry so the next pass re-queries correctly.
+                supabase.from('ingredient_cache').delete().eq('term', cacheKey).then();
+            }
+        }
+
+        if (!nutritionInfo) {
             // Detect packaged/branded foods — check the FULL original line, not just
             // the parsed description. parse-ingredient extracts 'chickpeas' from
             // '1 can chickpeas', so checking name alone would miss the 'can' signal.
@@ -390,7 +549,20 @@ export class NutritionEngine {
         const portions = (nutritionInfo as any).portions as { measure: string; gramWeight: number }[] | undefined;
 
         const portionWeight = this.resolveWeightFromPortions(portions ?? [], unit, qty);
-        const weightGrams   = portionWeight ?? this.unitToGrams(unit, qty, name, cookingState);
+        let weightGrams     = portionWeight ?? this.unitToGrams(unit, qty, name, cookingState);
+
+        // 6a. Trace / garnish override
+        // Ingredients listed as "for garnish", "for greasing", "to taste" etc. have no
+        // meaningful measured quantity. Cap their weight to a tiny culinary amount so they
+        // don't inflate totals (e.g., "nonstick cooking spray" shouldn't add 897 kcal).
+        const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray)\b/i;
+        if (TRACE_PATTERN.test(line) && !unit && !qty) {
+            weightGrams = 2; // 2g is a reasonable trace amount for any garnish/spray
+        } else if (/\bcooking\s+spray\b/i.test(line) && weightGrams > 5) {
+            weightGrams = 1; // cooking spray delivers ~0.3–1g per use
+        } else if (/\bfor\s+garnish\b|\bas\s+garnish\b/i.test(line) && weightGrams > 10) {
+            weightGrams = 2; // garnish items: 1–3g
+        }
 
         // 7. Compute contribution  (USDA nutrients are per 100 g)
         const baseWeight = nutritionInfo.serving_size_g || 100;
