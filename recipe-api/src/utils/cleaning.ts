@@ -89,6 +89,9 @@ export function cleanIngredientTerm(term: string): string {
         'courgette':         'zucchini',
         'coriander':         'cilantro',
         'rocket':            'arugula',
+        // Root vegetables — USDA has specific entries but generic searches miss them
+        'daikon':            'daikon radish',   // prevents matching tiny garden "Radishes, raw"
+        'daikon radish':     'daikon radish',
         // Meat
         'minced beef':       'ground beef',
         'minced pork':       'ground pork',

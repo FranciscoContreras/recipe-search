@@ -71,6 +71,7 @@ const DENSITY_TABLE: Record<string, number> = {
     'chia seeds':      0.69,
     'flaxseed':        0.62,
     'sesame seeds':    0.60,
+    'pepitas':         0.59,  // shelled pumpkin seeds: 1 cup ≈ 140g
     'pumpkin seeds':   0.58,
     'sunflower seeds': 0.55,
     'pine nuts':       0.58,
@@ -366,8 +367,29 @@ export class NutritionEngine {
             else if (lowerName.includes('cabbage'))   unitWeight = 900;
             else if (lowerName.includes('onion'))     unitWeight = 110;
             else if (lowerName.includes('carrot'))    unitWeight = 60;
+            // ── Starchy roots & tubers ──────────────────────────────────────────
+            else if (lowerName.includes('sweet potato') || lowerName.includes('yam')) unitWeight = 130;
             else if (lowerName.includes('potato'))    unitWeight = 213;
-            else if (lowerName.includes('sweet potato')) unitWeight = 130;
+            // ── Large whole squash / gourds ─────────────────────────────────────
+            // These are often listed as "1 kabocha squash" with no unit — default 100g is
+            // wildly wrong (a kabocha squash is ~1.3 kg).
+            else if (lowerName.includes('kabocha'))       unitWeight = 1361; // ~3 lbs
+            else if (lowerName.includes('butternut'))     unitWeight = 1000;
+            else if (lowerName.includes('acorn squash'))  unitWeight = 680;
+            else if (lowerName.includes('delicata'))      unitWeight = 340;
+            else if (lowerName.includes('honeynut') || lowerName.includes('honey nut')) unitWeight = 680;
+            else if (lowerName.includes('squash') && !lowerName.includes('summer') && !lowerName.includes('zucchini')) unitWeight = 900;
+            // ── Large radishes / daikon ──────────────────────────────────────────
+            else if (lowerName.includes('daikon'))    unitWeight = 450; // 1 large daikon ≈ 400-500g (not 9g like a garden radish)
+            // ── Dried whole chiles ───────────────────────────────────────────────
+            // Dried chiles are tiny: árbol ≈ 2g, guajillo ≈ 6g, ancho ≈ 20g.
+            // Fresh chiles are ~15-30g each. "dried" is in PREP_WORDS so check the raw name.
+            else if (lowerName.includes('chile') || lowerName.includes('chili') || lowerName.includes('chilli')) {
+                const isDried = lowerName.includes('dried') || lowerName.includes('árbol') || lowerName.includes('arbol')
+                                || lowerName.includes('guajillo') || lowerName.includes('ancho') || lowerName.includes('mulato')
+                                || lowerName.includes('pasilla') || lowerName.includes('chipotle');
+                unitWeight = isDried ? 3 : 15; // dried ~3g each; fresh ~15g each
+            }
             else if (lowerName.includes('zucchini') || lowerName.includes('courgette')) unitWeight = 200;
             else if (lowerName.includes('eggplant') || lowerName.includes('aubergine')) unitWeight = 420;
             else if (lowerName.includes('bell pepper') || lowerName.includes('red pepper') || lowerName.includes('green pepper'))
@@ -535,13 +557,22 @@ export class NutritionEngine {
 
         // ── Pre-parse normalizations ──────────────────────────────────────────────
         //
-        // 1. Range quantities: "8 to 8 1/2 cups flour" → "8 cups flour"
+        // 1a. Range quantities — "X to Y": "8 to 8 1/2 cups flour" → "8 cups flour"
         //    Recipe writers often use "X to Y" to indicate flexibility. parse-ingredient
         //    only extracts the first number but leaves "to Y" as garbage in the description,
         //    which confuses unit detection and produces count-based 100g-per-item weights.
         processedLine = processedLine.replace(
             /^(\d+(?:\s+\d+\/\d+|\.\d+)?)\s+to\s+(?:\d+(?:\s+\d+\/\d+|\.\d+)?\s+)/i,
             '$1 '
+        );
+
+        // 1b. Range quantities — "X-Y" (hyphen as range separator):
+        //    "4-6 heads baby bok choy" → "4 heads baby bok choy"
+        //    "2-3 tablespoons oil"     → "2 tablespoons oil"
+        //    Only normalise when the hyphen is between two integers at the start of the line.
+        processedLine = processedLine.replace(
+            /^(\d+)-(\d+)(\s)/,
+            '$1$3'
         );
 
         // 2. Trailing unit descriptors: "olive oil, dash" / "oil, a drizzle"
@@ -657,6 +688,7 @@ export class NutritionEngine {
                 /cabbage|lettuce|spinach|kale|bok.?choy|chard/.test(keyLower) ? 60 :
                 // Moderate-calorie veg (starchy or slightly denser; raw ≤80 kcal/100g)
                 /squash|pumpkin|eggplant|aubergine|turnip|parsnip|beet/.test(keyLower) ? 80 :
+                /\bpotato\b|\byam\b|\btaro\b|\byuca\b|\bcassava\b/.test(keyLower)      ? 130 :  // raw potato ~77; mashed ~113
                 /tomato|pepper|onion|carrot|green.?bean|mushroom|corn/.test(keyLower)  ? 80 :
                 // Dairy — condensed/evaporated are legitimately high; whole milk ~61
                 /\bmilk/.test(keyLower)                              ? 80  :
@@ -724,6 +756,7 @@ export class NutritionEngine {
                             if (/brassica|crucifer|romanesco/.test(tl) && offCal > 60)          offPlausible = false;
                             if (/cauliflower|broccoli|zucchini|cucumber|celery|radish|asparagus|artichoke|cabbage|lettuce|spinach|kale|chard/.test(tl) && offCal > 60) offPlausible = false;
                             if (/squash|pumpkin|eggplant|tomato|onion|carrot|beet|turnip|parsnip/.test(tl) && offCal > 80) offPlausible = false;
+                            if (/\bpotato\b/.test(tl) && offCal > 130) offPlausible = false;
                             if (/\bsalt\b/.test(tl)   && offCal > 5)   offPlausible = false;
                             if (/lemon.?juice|lime.?juice/.test(tl) && offCal > 40) offPlausible = false;
                             if (/\bjuice\b/.test(tl)  && offCal > 120) offPlausible = false;
@@ -802,17 +835,34 @@ export class NutritionEngine {
                                          'tbs','tb','tsp','teaspoon','fl','pint','pt','quart','qt','gallon','gal']);
         const isCountBased = !METRIC_UNIT_SET.has(unit.toLowerCase().replace(/s$/, ''));
 
+        // "baby" / "mini" qualifiers make items significantly smaller than the USDA head/portion.
+        // Raise the per-item heuristic threshold when these modifiers are present so the
+        // smart comparison can override USDA portion data for undersized produce.
+        const hasBabyModifier = name.toLowerCase().includes('baby') || name.toLowerCase().includes('mini');
+        const sizeThreshold   = hasBabyModifier ? 300 : 50;
+
         let weightGrams: number;
         if (portionWeight !== null) {
             const perItemPortion   = portionWeight   / Math.max(qty, 1);
             const perItemHeuristic = heuristicWeight / Math.max(qty, 1);
-            if (isCountBased && perItemPortion > perItemHeuristic * 3 && perItemHeuristic < 50) {
+            if (isCountBased && perItemPortion > perItemHeuristic * 3 && perItemHeuristic < sizeThreshold) {
                 weightGrams = heuristicWeight; // prefer our per-item table for small count foods
             } else {
                 weightGrams = portionWeight;
             }
         } else {
             weightGrams = heuristicWeight;
+        }
+
+        // 6a-extra: No-quantity pure fat → cooking-portion default
+        // "olive oil" / "butter" with no numeric content gets 100g (884 kcal) by default.
+        // When no digits appear anywhere in the ingredient line, treat it as an unmeasured
+        // cooking medium and assign 1 tablespoon (~14g).
+        if (!/\d/.test(line) && isCountBased && weightGrams >= 100) {
+            const lln = name.toLowerCase();
+            if (/\boil\b/.test(lln) || /\bbutter\b/.test(lln) || /\blard\b/.test(lln) || /\bghee\b/.test(lln)) {
+                weightGrams = 14; // 1 tablespoon cooking fat
+            }
         }
 
         // 6a. Trace / garnish override
