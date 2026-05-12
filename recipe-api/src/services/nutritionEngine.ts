@@ -310,8 +310,10 @@ export class NutritionEngine {
             nutritionInfo = cached.nutrition as any;
             source        = cached.source;
         } else {
-            // Detect packaged/branded foods — route to Open Food Facts first
-            const isPackaged = looksLikePackagedFood(name);
+            // Detect packaged/branded foods — check the FULL original line, not just
+            // the parsed description. parse-ingredient extracts 'chickpeas' from
+            // '1 can chickpeas', so checking name alone would miss the 'can' signal.
+            const isPackaged = looksLikePackagedFood(line);
 
             // ── Source 1: USDA (primary for raw ingredients) ───────────────────
             if (!isPackaged) {
@@ -487,7 +489,12 @@ export class NutritionEngine {
         analyzedAt: string;
     }> {
         const { context: dishContext, inferred: contextInferred } = resolveContext(null, recipeName);
-        const { total, breakdown } = await this.analyze(ingredients, dishContext);
+        // Defensive: filter out null / non-string entries that may arrive from
+        // Supabase Json[] columns or poorly formatted crawled recipes.
+        const safeIngredients = ingredients.filter(
+            (i): i is string => typeof i === 'string' && i.trim().length > 0,
+        );
+        const { total, breakdown } = await this.analyze(safeIngredients, dishContext);
         return {
             total,
             breakdown,
