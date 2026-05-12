@@ -87,6 +87,22 @@ export async function searchUsda(query: string, preferCooked = false): Promise<U
             // Penalty for extra words (shorter is better)
             score -= desc.length;
 
+            // False-positive guard: penalize heavily when the description introduces
+            // a noun that changes the food type entirely vs what the query requested.
+            // Classic case: query="spaghetti" → result="spaghetti squash, raw" (a vegetable,
+            // not pasta). The "squash" was not in the query, so it's a type-shift, not
+            // a modifier. Other examples: "grape" → "grape juice", "chicken" → "chicken pox".
+            //
+            // Check: the result description has a word that appears AFTER the query term
+            // and is not found in the query itself, AND it's a known type-changer.
+            const TYPE_CHANGERS = /\b(squash|juice|oil|sauce|paste|butter|vinegar|syrup|powder|flour|cream|milk|wine|beer|broth|stock|soup|stew|salad)\b/i;
+            const resultAfterQuery = desc.replace(q, '').trim();
+            const typeChangerInResult = TYPE_CHANGERS.exec(resultAfterQuery);
+            if (typeChangerInResult && !TYPE_CHANGERS.test(q)) {
+                // The result adds a food-type-changing term not in the query
+                score -= 350;
+            }
+
             // Calorie Sanity Check
             const energy = f.foodNutrients.find((n: any) => n.nutrientId === 1008)?.value || 0;
             const isLowCal = /water|salt|diet|tea|coffee|soda|coke|pepsi|spice|seasoning|baking powder|baking soda/i.test(q);
