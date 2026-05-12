@@ -570,12 +570,22 @@ export class NutritionEngine {
                 /\bmilk/.test(keyLower)                              ? 80  :
                 900; // hard physical limit for everything else
 
-            if (calPer100g <= maxCal) {
-                nutritionInfo = n;
-                source        = cached.source;
-            } else {
+            // Minimum calorie density for inherently high-calorie ingredient types.
+            // Evict entries that are suspiciously TOO LOW — a sign that USDA returned
+            // a wrong food (e.g., "spaghetti" → "spaghetti squash" at 31 kcal/100g
+            // instead of dry pasta at 371 kcal/100g).
+            const minCal =
+                /pasta|spaghetti|noodle|fettuccine|penne|rigatoni|linguine|fusilli|farfalle|orzo|macaroni|lasagna/.test(keyLower) ? 100 :
+                /\bbread\b|\bbagel\b|\bcroissant\b|\broll\b|\bbun\b/.test(keyLower) ? 150 :
+                /\bchees/.test(keyLower) ? 100 :
+                0; // no minimum for everything else
+
+            if (calPer100g < minCal || calPer100g > maxCal) {
                 // Evict the bad entry so the next pass re-queries correctly.
                 supabase.from('ingredient_cache').delete().eq('term', cacheKey).then();
+            } else {
+                nutritionInfo = n;
+                source        = cached.source;
             }
         }
 
