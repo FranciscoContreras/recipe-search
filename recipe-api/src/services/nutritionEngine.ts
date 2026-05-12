@@ -794,6 +794,7 @@ export class NutritionEngine {
                 // Moderate-calorie veg (starchy or slightly denser; raw ≤80 kcal/100g)
                 /squash|pumpkin|eggplant|aubergine|turnip|parsnip|beet/.test(keyLower) ? 80 :
                 /\bpotato\b|\byam\b|\btaro\b|\byuca\b|\bcassava\b/.test(keyLower)      ? 130 :  // raw potato ~77; mashed ~113
+                /\bchicken\b|\bturkey\b|\bduck\b/.test(keyLower) && !/fried|schmaltz/.test(keyLower) ? 220 : // raw/roasted poultry ≤220
                 /tomato|pepper|onion|carrot|green.?bean|mushroom|corn/.test(keyLower)  ? 80 :
                 // Dairy — condensed/evaporated are legitimately high; whole milk ~61
                 /\bmilk/.test(keyLower)                              ? 80  :

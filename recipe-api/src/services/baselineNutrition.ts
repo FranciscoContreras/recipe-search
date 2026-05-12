@@ -264,8 +264,13 @@ const BASELINE_TABLE: Record<string, BaselineEntry> = {
 
     // ─── Proteins ─────────────────────────────────────────────────────────────
     'whole chicken':         [189,  18.6,  12.6,   0,    0,    0],  // whole raw with skin ≈ 189 kcal/100g
+    'whole small chicken':   [189,  18.6,  12.6,   0,    0,    0],
+    'small chicken':         [189,  18.6,  12.6,   0,    0,    0],
+    'whole large chicken':   [189,  18.6,  12.6,   0,    0,    0],
     'whole roast chicken':   [215,  24.7,  12.5,   0,    0,    0],
+    'roast chicken':         [215,  24.7,  12.5,   0,    0,    0],
     'spatchcock chicken':    [189,  18.6,  12.6,   0,    0,    0],
+    'spatchcocked chicken':  [189,  18.6,  12.6,   0,    0,    0],
     'chicken breast':        [120,  22.5,   2.6,   0,    0,    0],
     'chicken thigh':         [179,  16.7,  12.0,   0,    0,    0],
     'ground beef':           [253,  17.2,  20.0,   0,    0,    0],
