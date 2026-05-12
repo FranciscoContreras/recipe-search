@@ -47,6 +47,7 @@ export function cleanIngredientTerm(term: string): string {
         'see', 'note', 'headnote',
         // Vegetable prep state words not already covered
         'root', 'roots', 'ends', 'trimmed', 'off',
+        'washed', 'scrubbed', 'cleaned', 'blanched',
         // Count/container descriptors that aren't part of the food name
         'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
         'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',
