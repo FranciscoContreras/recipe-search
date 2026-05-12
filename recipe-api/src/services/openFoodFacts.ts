@@ -87,7 +87,7 @@ async function lookupLocalBarcode(barcode: string): Promise<any | null> {
 
 // ─── Live API helpers ─────────────────────────────────────────────────────────
 
-function extractNutrients(nutriments: any): OffNutrition | null {
+export function extractNutrients(nutriments: any): OffNutrition | null {
     if (!nutriments) return null;
 
     const cal = parseFloat(nutriments['energy-kcal_100g'] ?? nutriments['energy_100g'] ?? 0);

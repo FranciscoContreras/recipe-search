@@ -14,6 +14,7 @@ import { injectMetaTags } from './services/seo';
 import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 import { lookupBarcode } from './services/openFoodFacts';
+import { isSafePublicUrl } from './utils/url';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -549,24 +550,6 @@ app.get('/search', async (req: Request, res: Response) => {
   res.status(200).json({ recipes: finalData, count: (data || []).length });
 });
 
-function isSafePublicUrl(rawUrl: string): boolean {
-  try {
-    const { hostname, protocol } = new URL(rawUrl);
-    if (!['http:', 'https:'].includes(protocol)) return false;
-    const h = hostname.toLowerCase();
-    // Block localhost variants
-    if (h === 'localhost' || h === '0.0.0.0' || h === '::1') return false;
-    // Block private IPv4 ranges (RFC 1918 + link-local + loopback)
-    if (/^127\./.test(h)) return false;
-    if (/^10\./.test(h)) return false;
-    if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
-    if (/^192\.168\./.test(h)) return false;
-    if (/^169\.254\./.test(h)) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 app.post('/crawl', async (req: Request, res: Response) => {
   let { url } = req.body;
