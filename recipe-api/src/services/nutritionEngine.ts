@@ -448,6 +448,10 @@ export class NutritionEngine {
             // ── Cured/smoked meats ──────────────────────────────────────────────
             else if (lowerName.includes('bacon') && (lowerName.includes('strip') || lowerName.includes('rasher') || lowerName.includes('slice'))) unitWeight = 15; // 1 bacon strip ≈ 15g raw
             else if (lowerName.includes('bacon'))       unitWeight = 30;  // 1 piece/slice bacon
+            // ── Bread forms — order: most specific first ──────────────────────────
+            // "loaf" MUST come before the generic "bread" check (30g/slice) because
+            // "1 loaf sourdough bread" contains both "loaf" and "bread".
+            else if (lowerName.includes('loaf') && (lowerName.includes('bread') || lowerName.includes('sourdough') || lowerName.includes('baguette') || lowerName.includes('challah') || lowerName.includes('brioche') || lowerName.includes('focaccia'))) unitWeight = 500;
             else if (lowerName.includes('pita'))       unitWeight = 70;  // 1 pita bread ≈ 60-80g
             else if (lowerName.includes('tortilla'))   unitWeight = 45;  // 1 flour tortilla ≈ 45g
             else if (lowerName.includes('naan'))       unitWeight = 90;  // 1 naan ≈ 90g
