@@ -605,7 +605,8 @@ export class NutritionEngine {
                 return v; // grams
             };
             // Pattern A: "N (X oz/g) container/can/pkg" → total = N × X × conv
-            const pkgM = processedLine.match(/^(\d+(?:\.\d+)?)\s*\(\s*(\d+(?:\.\d+)?)\s*(g|grams?|oz|ounces?|lbs?|pounds?)\s*\)/i);
+            // Handles hyphenated units: "2 (7-ounce) cans" and bare: "2 (7 ounce) cans"
+            const pkgM = processedLine.match(/^(\d+(?:\.\d+)?)\s*\(\s*(\d+(?:\.\d+)?)\s*-?\s*(g|grams?|oz|ounces?|lbs?|pounds?)\s*\)/i);
             // Pattern B: parenthetical inline "(about 240g)" or "(7 ounces)"
             const parM = processedLine.match(/\((?:about|approximately|approx\.?)?\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\s*(?:each|total)?\s*\)/i);
             // Pattern C: slash-separated "1 cup/240g flour"
