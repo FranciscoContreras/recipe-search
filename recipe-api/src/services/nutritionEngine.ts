@@ -131,6 +131,20 @@ const DENSITY_TABLE: Record<string, number> = {
     'parmesan':        0.25,  // finely grated: ~100g / cup (very light)
     'feta':            0.44,  // crumbled: ~105g / cup
     'cheese':          0.45,  // generic shredded/grated loosely
+    // ─── Alcoholic beverages (~0.94 g/ml for 40% ABV spirits) ───────────────
+    // Water density (1.0) overcounts spirits: 2 cups whiskey → 473g not 447g (~6% error).
+    // More importantly it must match an eviction threshold, so explicit density helps.
+    'whiskey':         0.94,
+    'whisky':          0.94,
+    'bourbon':         0.94,
+    'vodka':           0.94,
+    'gin':             0.92,
+    'rum':             0.94,
+    'tequila':         0.93,
+    'brandy':          0.94,
+    'cognac':          0.94,
+    'schnapps':        0.94,
+    'liqueur':         1.10,  // liqueurs are sweeter/denser
     // ─── Fresh produce (loosely packed leaves / shredded) ────────────────────
     'cabbage':         0.38,  // shredded: ~90g / cup
     'bok choy':        0.15,  // shredded
@@ -138,6 +152,37 @@ const DENSITY_TABLE: Record<string, number> = {
     'arugula':         0.10,
     'spinach':         0.12,  // raw baby leaves: ~28g / cup
     'lettuce':         0.08,  // loosely packed leaves: ~20g / cup
+    // ─── Chopped / sliced vegetables — critical for volume measurements ───────
+    // Without these, USDA density defaults to water (1.0 g/ml) causing 2-3× weight errors.
+    // MUST come before bare 'pepper', 'onion', 'tomato' etc. (more specific → first).
+    'bell pepper':     0.39,  // chopped: 1 cup ≈ 92g
+    'green pepper':    0.39,
+    'red pepper':      0.39,
+    'yellow pepper':   0.39,
+    'orange pepper':   0.39,
+    'jalapeno':        0.39,
+    'poblano':         0.39,
+    'pepper':          0.39,  // generic "pepper" when used as vegetable (chopped/sliced)
+    'onion':           0.68,  // chopped: 1 cup ≈ 160g
+    'shallot':         0.60,
+    'leek':            0.55,  // sliced: 1 cup ≈ 130g
+    'carrot':          0.52,  // sliced: 1 cup ≈ 122g
+    'celery':          0.43,  // sliced: 1 cup ≈ 101g
+    'tomato':          0.76,  // diced: 1 cup ≈ 180g
+    'cucumber':        0.50,  // sliced: 1 cup ≈ 119g
+    'zucchini':        0.48,  // sliced: 1 cup ≈ 113g
+    'courgette':       0.48,
+    'broccoli':        0.38,  // florets: 1 cup ≈ 91g
+    'cauliflower':     0.38,  // florets: 1 cup ≈ 91g
+    'mushroom':        0.30,  // sliced: 1 cup ≈ 70g
+    'asparagus':       0.57,  // chopped: 1 cup ≈ 134g
+    'peas':            0.73,  // shelled: 1 cup ≈ 145g
+    'corn':            0.63,  // kernels: 1 cup ≈ 149g
+    'beet':            0.68,  // diced: 1 cup ≈ 136g
+    'eggplant':        0.40,  // cubed: 1 cup ≈ 99g
+    'aubergine':       0.40,
+    'pumpkin':         0.47,  // cubed: 1 cup ≈ 116g
+    'squash':          0.47,
     // ─── Fresh herbs ─────────────────────────────────────────────────────────
     'parsley':         0.12,
     'cilantro':        0.12,
@@ -473,12 +518,32 @@ export class NutritionEngine {
         dishContext: DishContext = 'standard',
     ): Promise<{ breakdown: any; stats: NutritionTotal | null }> {
         // Normalise unicode fractions so the parser handles them
-        const processedLine = line
+        let processedLine = line
             .replace(/½/g, ' 1/2 ').replace(/⅓/g, ' 1/3 ').replace(/⅔/g, ' 2/3 ')
             .replace(/¼/g, ' 1/4 ').replace(/¾/g, ' 3/4 ')
             .replace(/⅕/g, ' 1/5 ').replace(/⅖/g, ' 2/5 ').replace(/⅗/g, ' 3/5 ').replace(/⅘/g, ' 4/5 ')
             .replace(/⅙/g, ' 1/6 ').replace(/⅚/g, ' 5/6 ')
             .replace(/⅛/g, ' 1/8 ').replace(/⅜/g, ' 3/8 ').replace(/⅝/g, ' 5/8 ').replace(/⅞/g, ' 7/8 ');
+
+        // ── Pre-parse normalizations ──────────────────────────────────────────────
+        //
+        // 1. Range quantities: "8 to 8 1/2 cups flour" → "8 cups flour"
+        //    Recipe writers often use "X to Y" to indicate flexibility. parse-ingredient
+        //    only extracts the first number but leaves "to Y" as garbage in the description,
+        //    which confuses unit detection and produces count-based 100g-per-item weights.
+        processedLine = processedLine.replace(
+            /^(\d+(?:\s+\d+\/\d+|\.\d+)?)\s+to\s+(?:\d+(?:\s+\d+\/\d+|\.\d+)?\s+)/i,
+            '$1 '
+        );
+
+        // 2. Trailing unit descriptors: "olive oil, dash" / "oil, a drizzle"
+        //    When a size/quantity word follows a comma at the END of the ingredient line
+        //    (not at the start where parse-ingredient would recognise it as a unit),
+        //    we move it to the front so parse-ingredient handles it correctly.
+        processedLine = processedLine.replace(
+            /^(.+?),\s*(a\s+)?(dash|drizzle|drop|pinch|splash)\s*$/i,
+            '$3 of $1'
+        );
 
         // 1. Parse
         let parsed: any = null;
@@ -567,10 +632,19 @@ export class NutritionEngine {
             // NOTE: No trailing \b on ingredient roots — "onion" must also match "onions",
             // "tomato" must match "tomatoes", "cherr" must match "cherries", etc.
             const maxCal =
-                // Near-zero-calorie liquids
+                // Near-zero-calorie ingredients: salt is NaCl = 0 kcal; water ~0
                 /^water$|^(chicken|beef|vegetable)\s+broth$|^(chicken|beef|vegetable)\s+stock$|^broth$|^stock$/.test(keyLower) ? 15 :
+                /\bsalt\b|\bsodium chloride\b|\bkosher salt\b|\bsea salt\b/.test(keyLower) ? 5  :
                 /broth|stock/.test(keyLower)                         ? 30  :
-                // Low-calorie non-starchy vegetables (raw ≤30 kcal/100g, cooked with oil ≤60)
+                // Fruit juices: fresh lemon/lime juice ~22 kcal/100ml, grape ~60; concentrated higher
+                /lemon.?juice|lime.?juice|citrus.?juice/.test(keyLower) ? 40 :
+                /orange.?juice|apple.?juice|fruit.?juice|\bjuice\b/.test(keyLower) ? 100 :
+                // Spirits (~220-280 kcal/100g at 40% ABV); liqueurs higher but still ≤400
+                /whiskey|whisky|bourbon|vodka|\brum\b|\bgin\b|tequila|brandy|cognac|schnapps/.test(keyLower) ? 300 :
+                /liqueur|amaretto|kahlua|baileys|triple.?sec|cointreau/.test(keyLower) ? 400 :
+                // Cruciferous / brassica (raw ≤40 kcal/100g; cooked with oil ≤60)
+                /brassica|crucifer|romanesco/.test(keyLower) ? 60 :
+                // Low-calorie non-starchy vegetables
                 /cauliflower|broccoli|zucchini|courgette|cucumber|celery|radish|asparagus|artichoke/.test(keyLower) ? 60 :
                 /cabbage|lettuce|spinach|kale|bok.?choy|chard/.test(keyLower) ? 60 :
                 // Moderate-calorie veg (starchy or slightly denser; raw ≤80 kcal/100g)
@@ -636,16 +710,17 @@ export class NutritionEngine {
                         if (!isPackaged) {
                             const offCal = (offData.calories ?? 0) / (offData.serving_size_g || 100) * 100;
                             const tl = term.toLowerCase();
-                            // Reject OFW results with implausibly high calorie densities for raw
-                            // low-calorie vegetables. Cauliflower raw = 25 kcal/100g; if OFW
-                            // returns 75 kcal/100g it matched a processed product (gratin, etc.).
-                            // Thresholds are generous to avoid false rejections.
-                            // Note: mushroom is intentionally excluded — cooked mushrooms with oil
-                            // can reach 60-100 kcal/100g and are not reliably distinguishable from
-                            // processed mushroom products via calorie density alone.
+                            // Reject OFW results with implausibly high calorie densities for known
+                            // low-calorie ingredient categories. Thresholds are generous (2-3×
+                            // the raw value) so that legitimately richer preparations still pass.
+                            if (/brassica|crucifer|romanesco/.test(tl) && offCal > 60)          offPlausible = false;
                             if (/cauliflower|broccoli|zucchini|cucumber|celery|radish|asparagus|artichoke|cabbage|lettuce|spinach|kale|chard/.test(tl) && offCal > 60) offPlausible = false;
                             if (/squash|pumpkin|eggplant|tomato|onion|carrot|beet|turnip|parsnip/.test(tl) && offCal > 80) offPlausible = false;
-                            if (/\bmilk\b/.test(tl) && offCal > 80) offPlausible = false;
+                            if (/\bsalt\b/.test(tl)   && offCal > 5)   offPlausible = false;
+                            if (/lemon.?juice|lime.?juice/.test(tl) && offCal > 40) offPlausible = false;
+                            if (/\bjuice\b/.test(tl)  && offCal > 120) offPlausible = false;
+                            if (/whiskey|whisky|bourbon|vodka|\brum\b|\bgin\b|tequila|brandy/.test(tl) && offCal > 300) offPlausible = false;
+                            if (/\bmilk\b/.test(tl)   && offCal > 80)  offPlausible = false;
                         }
                         if (offPlausible) {
                             nutritionInfo = offData as any; source = 'openfoodfacts'; usedTerm = term;
@@ -736,7 +811,7 @@ export class NutritionEngine {
         // Ingredients listed as "for garnish", "for greasing", "to taste" etc. have no
         // meaningful measured quantity. Cap their weight to a tiny culinary amount so they
         // don't inflate totals (e.g., "nonstick cooking spray" shouldn't add 897 kcal).
-        const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray)\b/i;
+        const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|as\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray|optional|if\s+desired)\b/i;
         if (TRACE_PATTERN.test(line) && !unit && !qty) {
             weightGrams = 2; // 2g is a reasonable trace amount for any garnish/spray
         } else if (/\bcooking\s+spray\b/i.test(line) && weightGrams > 5) {

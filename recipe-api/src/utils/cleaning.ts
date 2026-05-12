@@ -59,20 +59,36 @@ export function cleanIngredientTerm(term: string): string {
     // These are cases where the generic cleaned name reliably matches the WRONG
     // food in USDA. Keep this list small and specific.
     const AMBIGUITY_FIXES: Record<string, string> = {
+        // Bell pepper → "Pepper, black" wins via USDA scoring because "Pepper, black"
+        // starts with "pepper," (score +300) while "Peppers, sweet, green" only contains
+        // "pepper" (score +10). Redirecting to "sweet pepper" fixes the score race.
+        'green bell pepper': 'sweet bell pepper',
+        'red bell pepper':   'sweet bell pepper',
+        'yellow bell pepper':'sweet bell pepper',
+        'orange bell pepper':'sweet bell pepper',
+        'bell pepper':       'sweet bell pepper',
+        // Green/spring onion variants → consistent USDA term
+        'scallions':         'green onions',
+        'spring onions':     'green onions',
+        // Tomato variants that match wrong foods without disambiguation
         'grape tomatoes':    'tomatoes',      // otherwise matches "Grape Juice"
         'cherry tomatoes':   'tomatoes',
         'sun dried tomatoes':'tomatoes',
+        // Grain disambiguation
         'wheat berries':     'wheat grain',   // otherwise matches generic "Berries"
-        'scallions':         'green onions',
-        'spring onions':     'green onions',
+        // Dairy
         'double cream':      'heavy cream',
         'single cream':      'light cream',
-        'aubergine':         'eggplant',      // British → American
+        // British → American (USDA uses American names)
+        'aubergine':         'eggplant',
         'courgette':         'zucchini',
-        'coriander':         'cilantro',      // British herb name → American
+        'coriander':         'cilantro',
         'rocket':            'arugula',
+        // Meat
         'minced beef':       'ground beef',
         'minced pork':       'ground pork',
+        // Alcohol — OFW sometimes returns wrong calorie-dense match for generic terms
+        'spirits':           'vodka',
     };
 
     return AMBIGUITY_FIXES[cleaned] ?? cleaned;
@@ -103,9 +119,23 @@ export function getSearchTerms(rawName: string): string[] {
     }
 
     if (words.length >= 2) {
-        // Try last word only (the core noun)
+        // Try last word only (the core noun) — but skip words that are too ambiguous
+        // when used alone because they reliably match the WRONG USDA food.
+        //   "bell pepper" → "pepper" → hits "Pepper, black, ground" (399 kcal/100g) not "Peppers, sweet"
+        //   "lemon juice" → "juice" → hits generic fruit juice
+        //   "heavy cream" → "cream" → could hit cream cheese or sour cream
+        //   "chicken stock" → "stock" → hits beef stock or vegetable stock
+        const BARE_AMBIGUOUS = new Set([
+            'pepper',  // disambiguated via AMBIGUITY_FIXES; bare "pepper" hits black pepper spice
+            'cream',   // too many cream variants in USDA
+            'juice',   // hits wrong juice
+            'stock',   // beef/chicken/veg disambiguation lost
+            'sauce',   // too many sauces
+            'butter',  // regular butter vs almond/peanut/cocoa butter
+            'oil',     // olive vs vegetable vs coconut all have very different nutrition
+        ]);
         const lastWord = words[words.length - 1];
-        if (!terms.includes(lastWord)) terms.push(lastWord);
+        if (!terms.includes(lastWord) && !BARE_AMBIGUOUS.has(lastWord)) terms.push(lastWord);
     }
 
     // Deduplicate while preserving order
