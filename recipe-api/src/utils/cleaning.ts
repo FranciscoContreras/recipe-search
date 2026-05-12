@@ -48,6 +48,9 @@ export function cleanIngredientTerm(term: string): string {
         // Vegetable prep state words not already covered
         'root', 'roots', 'ends', 'trimmed', 'off',
         'washed', 'scrubbed', 'cleaned', 'blanched',
+        // Shape-cut descriptors: "half-moons", "julienne", "matchsticks", "florets" (already there)
+        'moons', 'moon', 'julienne', 'matchstick', 'matchsticks', 'batons',
+        'crosswise', 'diagonal', 'lengthwise',  // already have some, ensuring coverage
         // Count/container descriptors that aren't part of the food name
         'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
         'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',

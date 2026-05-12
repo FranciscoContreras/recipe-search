@@ -252,6 +252,13 @@ export class NutritionEngine {
         else if (['quart', 'qt'].includes(u)) volumeMl = qty * 946.35;
         else if (['gallon', 'gal'].includes(u)) volumeMl = qty * 3785.41;
 
+        // ── Loaf unit ─────────────────────────────────────────────────────────────
+        // "1 loaf sourdough bread" is NOT 1 slice (30g); a loaf is 400-900g.
+        else if (['loaf'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if (ln.includes('banana') || ln.includes('zucchini') || ln.includes('quick')) weightG = qty * 600; // quick bread
+            else weightG = qty * 500; // sandwich/artisan loaf average
+        }
         // Pastry sheet units — when parse-ingredient parses "8 phyllo sheets" as unit="phyllo"
         // or when the description contains "pastry sheets", apply per-sheet weight.
         else if (['phyllo', 'filo'].includes(u)) weightG = qty * 10; // 1 phyllo sheet ≈ 10g
@@ -426,6 +433,10 @@ export class NutritionEngine {
             else if (lowerName.includes('artichoke')) unitWeight = 120;
             else if (lowerName.includes('mushroom'))  unitWeight = 20;  // 1 button mushroom ≈ 18-20g
             // ── Proteins ────────────────────────────────────────────────────────
+            // Whole birds — must check BEFORE specific cuts (breast/thigh) to avoid
+            // a whole chicken defaulting to 200g (a single cut weight)
+            else if ((lowerName.includes('whole') || lowerName.includes('spatchcock')) && lowerName.includes('chicken')) unitWeight = 1500; // whole chicken ≈ 1.3–1.8 kg
+            else if (lowerName.includes('whole') && (lowerName.includes('duck') || lowerName.includes('turkey'))) unitWeight = 3000;
             else if (lowerName.includes('chicken') && (lowerName.includes('breast') || lowerName.includes('thigh'))) unitWeight = 200;
             else if (lowerName.includes('shrimp') || lowerName.includes('prawn')) unitWeight = 12; // 1 large shrimp ≈ 12g
             else if (lowerName.includes('scallop'))   unitWeight = 25;
@@ -609,8 +620,9 @@ export class NutritionEngine {
             // Pattern A: "N (X oz/g) container/can/pkg" → total = N × X × conv
             // Handles hyphenated units: "2 (7-ounce) cans" and bare: "2 (7 ounce) cans"
             const pkgM = processedLine.match(/^(\d+(?:\.\d+)?)\s*\(\s*(\d+(?:\.\d+)?)\s*-?\s*(g|grams?|oz|ounces?|lbs?|pounds?)\s*\)/i);
-            // Pattern B: parenthetical inline "(about 240g)" or "(7 ounces)"
-            const parM = processedLine.match(/\((?:about|approximately|approx\.?)?\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\s*(?:each|total)?\s*\)/i);
+            // Pattern B: parenthetical inline "(about 240g)", "(7 ounces)", or "(3 to 3½ pounds)"
+            // The (?:...) range suffix handles "X to Y unit" — take the lower bound X.
+            const parM = processedLine.match(/\((?:about|approximately|approx\.?)?\s*(\d+(?:\.\d+)?)\s*(?:to\s+\d+(?:\s+\d+\/\d+|\.\d+)?\s+)?(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\s*(?:each|total)?\s*\)/i);
             // Pattern C: slash-separated "1 cup/240g flour" or "1/2 cup / 120ml"
             // Use (?<!\d) negative lookbehind to skip fraction denominators:
             //   "3/4 ounce" → "/" is preceded by "3" (digit) → NO MATCH (correct)
@@ -681,7 +693,11 @@ export class NutritionEngine {
         const STOCK_PATTERN   = /\bfor\s+(stock|broth|the\s+broth|the\s+stock)\b|\bmake\s+(the\s+)?(stock|broth)\b/i;
         const WATER_TERMS = new Set(['water', 'ice water', 'cold water', 'warm water', 'hot water',
                                       'boiling water', 'ice', 'sparkling water', 'mineral water',
-                                      'soda water', 'carbonated water', 'filtered water']);
+                                      'soda water', 'carbonated water', 'filtered water',
+                                      // Cooking-liquid derivatives: starch-water from pasta/rice/beans
+                                      // is nutritionally near-zero (baseline matches "pasta" not water!)
+                                      'pasta water', 'cooking water', 'reserved pasta water',
+                                      'starchy water', 'bean water', 'aquafaba']);
 
         // 2. Detect cooking state from the original line and the cleaned ingredient name
         const searchTerms = getSearchTerms(name);
@@ -963,13 +979,20 @@ export class NutritionEngine {
         // meaningful measured quantity. Cap their weight to a tiny culinary amount so they
         // don't inflate totals (e.g., "nonstick cooking spray" shouldn't add 897 kcal).
         const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|as\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|for\s+sprinkling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray|optional|if\s+desired)\b/i;
-        // "for serving" — only cap accompaniments that have NO explicit quantity at the start.
-        // "tortilla chips, for serving" (no qty) → cap; "8 tortillas ... plus more for serving" → keep.
         const FOR_SERVING_PATTERN = /\bfor\s+serving\b|\bfor\s+dipping\b|\bfor\s+dunking\b/i;
+        // "Garnish: X" labelling convention (no "for" or "as" prefix, just "Garnish:")
+        const GARNISH_LABEL = /^\s*garnish[:\s]/i;
         const lineStartsWithNumber = /^\s*(\d|[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/.test(line);
         // Note: qty defaults to 1, so we cannot use !qty as a "no quantity" signal.
-        // Instead cap any trace/garnish ingredient that resolved to a large weight.
-        if ((TRACE_PATTERN.test(line) || (FOR_SERVING_PATTERN.test(line) && !lineStartsWithNumber)) && weightGrams > 15) {
+        // Crucially: TRACE_PATTERN must respect lineStartsWithNumber, otherwise
+        // "3½ cups flour, sifted, plus more for dusting" is falsely capped to 5g
+        // because "for dusting" triggers the pattern despite having an explicit quantity.
+        const traceMatch = (
+            (TRACE_PATTERN.test(line)     && !lineStartsWithNumber) ||
+            (FOR_SERVING_PATTERN.test(line) && !lineStartsWithNumber) ||
+            GARNISH_LABEL.test(line)
+        );
+        if (traceMatch && weightGrams > 15) {
             weightGrams = 5; // 5g is a reasonable trace amount for a garnish or topping
         } else if (/\bcooking\s+spray\b/i.test(line) && weightGrams > 5) {
             weightGrams = 1; // cooking spray delivers ~0.3–1g per use
