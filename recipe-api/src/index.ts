@@ -15,6 +15,7 @@ import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 import { lookupBarcode } from './services/openFoodFacts';
 import { isSafePublicUrl } from './utils/url';
+import { inferDishContext, resolveCookingState, DishContext } from './utils/cookingState';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -473,17 +474,28 @@ app.post('/nutrition/barcode', async (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/NutritionAnalysis'
  */
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
-  const { ingredients, cookingContext } = req.body;
+  const { ingredients, dishContext, recipeName } = req.body;
   if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'ingredients must be an array of strings.' });
   if (ingredients.length === 0) return res.status(400).json({ error: 'ingredients array cannot be empty.' });
   if (ingredients.length > 50) return res.status(400).json({ error: 'Maximum 50 ingredients per request.' });
   if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
   if (ingredients.some((i: string) => i.length > 500)) return res.status(400).json({ error: 'Ingredient string too long (max 500 chars).' });
-  const ctx = cookingContext === 'assembled' ? 'assembled' : 'standard';
+
+  const VALID_CONTEXTS: DishContext[] = ['standard', 'assembled', 'simmered', 'stir-fry', 'baked'];
+
+  // Resolve dish context: explicit > auto-detected from recipeName > standard
+  let ctx: DishContext = 'standard';
+  let inferredFrom: string | null = null;
+  if (dishContext && VALID_CONTEXTS.includes(dishContext)) {
+    ctx = dishContext;
+  } else if (recipeName && typeof recipeName === 'string') {
+    ctx = inferDishContext(recipeName);
+    if (ctx !== 'standard') inferredFrom = recipeName;
+  }
 
   try {
     const result = await NutritionEngine.analyze(ingredients, ctx);
-    res.json(result);
+    res.json({ ...result, dishContext: ctx, ...(inferredFrom ? { inferredFrom } : {}) });
   } catch (e: any) {
     console.error('Analysis error:', e);
     res.status(500).json({ error: e.message });
@@ -497,11 +509,14 @@ app.post('/nutrition/analyze', async (req: Request, res: Response) => {
  * Useful for auditing recipe ingredient lists and understanding calorie differences.
  */
 app.post('/nutrition/cooking-states', async (req: Request, res: Response) => {
-  const { ingredients } = req.body;
+  const { ingredients, recipeName } = req.body;
   if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'ingredients must be an array of strings.' });
   if (ingredients.length === 0)  return res.status(400).json({ error: 'ingredients array cannot be empty.' });
   if (ingredients.length > 20)   return res.status(400).json({ error: 'Maximum 20 ingredients per request.' });
   if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
+
+  // Auto-detect context from recipe name if provided
+  const detectedContext = recipeName ? inferDishContext(String(recipeName)) : 'standard';
 
   try {
     const [asRaw, asCooked] = await Promise.all([
@@ -537,14 +552,32 @@ app.post('/nutrition/cooking-states', async (req: Request, res: Response) => {
       };
 
       if (isAmbiguous) {
-        entry.warning = `Ambiguous cooking state: raw ≈ ${entry.raw.calories} kcal vs cooked ≈ ${entry.cooked.calories} kcal. ` +
-          `Pass cookingContext="assembled" to /nutrition/analyze for assembled dishes (salads, grain bowls).`;
+        const contextHint = detectedContext !== 'standard'
+          ? `Detected dish context: "${detectedContext}". `
+          : '';
+        entry.warning =
+          `${contextHint}Ambiguous cooking state — ` +
+          `raw ≈ ${entry.raw.calories} kcal vs cooked ≈ ${entry.cooked.calories} kcal. ` +
+          `Pass dishContext ("standard"|"assembled"|"simmered"|"stir-fry"|"baked") or ` +
+          `recipeName to /nutrition/analyze for automatic inference.`;
+      }
+
+      // Attach the recommended calories based on detected context
+      if (isAmbiguous && detectedContext !== 'standard') {
+        const grainState = resolveCookingState('ambiguous', detectedContext);
+        entry.recommended = grainState === 'cooked' ? entry.cooked : entry.raw;
+      } else {
+        entry.recommended = entry.raw;
       }
 
       return entry;
     });
 
-    res.json({ ingredients: result });
+    res.json({
+      ingredients: result,
+      detectedContext,
+      ...(recipeName ? { recipeName } : {}),
+    });
   } catch (e: any) {
     console.error('Cooking states error:', e);
     res.status(500).json({ error: e.message });

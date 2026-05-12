@@ -3,7 +3,7 @@ import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
 import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
 import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
-import { detectCookingState, getCookedDensity, CookingState } from '../utils/cookingState';
+import { detectCookingState, resolveCookingState, getCookedDensity, CookingState, DishContext } from '../utils/cookingState';
 
 /**
  * Returns true when the ingredient string looks like a packaged or branded product.
@@ -251,7 +251,7 @@ export class NutritionEngine {
     // Looks up nutrition for a single ingredient line with a multi-strategy search.
     private static async lookupIngredient(
         line: string,
-        cookingContext: 'standard' | 'assembled' = 'standard',
+        dishContext: DishContext = 'standard',
     ): Promise<{ breakdown: any; stats: NutritionTotal | null }> {
         // Normalise unicode fractions so the parser handles them
         const processedLine = line
@@ -286,13 +286,9 @@ export class NutritionEngine {
         const primaryTerm = searchTerms[0] ?? name;
         const detectedState = detectCookingState(line, primaryTerm);
 
-        // Resolve ambiguous grains/legumes based on cooking context:
-        //   'assembled' (salad, grain bowl) → treat as cooked
-        //   'standard'  (recipe ingredient) → treat as raw (default convention)
-        const cookingState: CookingState =
-            detectedState === 'ambiguous'
-                ? (cookingContext === 'assembled' ? 'cooked' : 'raw')
-                : detectedState;
+        // Resolve ambiguous grains/legumes using the dish context.
+        // Each dish type has a defined rule (see cookingState.ts DISH_GRAIN_STATE).
+        const cookingState: CookingState = resolveCookingState(detectedState, dishContext);
 
         const preferCooked = cookingState === 'cooked';
 
@@ -426,10 +422,10 @@ export class NutritionEngine {
 
     static async analyze(
         ingredients: string[],
-        cookingContext: 'standard' | 'assembled' = 'standard',
+        dishContext: DishContext = 'standard',
     ): Promise<{ total: NutritionTotal, breakdown: any[] }> {
         // Process up to 4 ingredients concurrently to keep external API calls manageable
-        const tasks = ingredients.map(line => () => NutritionEngine.lookupIngredient(line, cookingContext));
+        const tasks = ingredients.map(line => () => NutritionEngine.lookupIngredient(line, dishContext));
         const results = await withConcurrency(tasks, 4);
 
         const total: NutritionTotal = {
