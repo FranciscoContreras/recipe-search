@@ -36,7 +36,7 @@ export interface UsdaNutrition {
     portions?: { measure: string; gramWeight: number }[];
 }
 
-export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
+export async function searchUsda(query: string, preferCooked = false): Promise<UsdaNutrition | null> {
     console.log(`DEBUG: USDA Searching for "${query}"`);
     if (!API_KEY) {
         console.warn('USDA API Key missing.');
@@ -61,12 +61,13 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
         let candidates = foods.filter((f: any) => f.dataType !== 'Branded');
         if (candidates.length === 0) candidates = foods;
 
-        // 2. Filter out processed/mixed items if user didn't ask for them
+        // 2. Filter out processed/mixed items if user didn't ask for them.
+        //    When preferCooked is true, skip this filter so cooked entries remain.
         const queryLower = query.toLowerCase();
         const processingTerms = /dried|dehydrated|powder|chip|candied|syrup|baked|fried|roasted|grilled|boiled|stewed|canned|cooked|mix|soup|stew|salad/i;
         const wantsProcessed = processingTerms.test(queryLower);
-        
-        if (!wantsProcessed) {
+
+        if (!wantsProcessed && !preferCooked) {
             const cleanCandidates = candidates.filter((f: any) => !processingTerms.test(f.description));
             if (cleanCandidates.length > 0) candidates = cleanCandidates;
         }
@@ -90,31 +91,32 @@ export async function searchUsda(query: string): Promise<UsdaNutrition | null> {
             else if (f.dataType === 'Survey (FNDDS)') score += 50;
 
             // Penalty for extra words (shorter is better)
-            score -= desc.length; 
+            score -= desc.length;
 
             // Calorie Sanity Check
             const energy = f.foodNutrients.find((n: any) => n.nutrientId === 1008)?.value || 0;
             const isLowCal = /water|salt|diet|tea|coffee|soda|coke|pepsi|spice|seasoning|baking powder|baking soda/i.test(q);
-            
-            if (energy === 0 && !isLowCal) {
-                score -= 200;
+            if (energy === 0 && !isLowCal) score -= 200;
+
+            // Cooking state preference
+            if (preferCooked) {
+                if (/\bcooked\b/i.test(f.description))           score += 200;
+                if (/\buncooked|raw\b/i.test(f.description))     score -= 200;
             }
 
             return score;
         };
 
         candidates.sort((a: any, b: any) => getScore(b) - getScore(a));
-        
+
         let foodCandidate = candidates[0];
         const isLowCal = /water|salt|diet|tea|coffee|soda|coke|pepsi|spice|seasoning|baking powder|baking soda/i.test(queryLower);
-        
-        if (foodCandidate && !isLowCal) {
+
+        // When not preferring cooked, scan for the first candidate with non-zero calories
+        if (!preferCooked && foodCandidate && !isLowCal) {
             for (const candidate of candidates) {
                 const cal = candidate.foodNutrients.find((n: any) => n.nutrientId === 1008)?.value;
-                if (cal > 0) {
-                    foodCandidate = candidate;
-                    break;
-                }
+                if (cal > 0) { foodCandidate = candidate; break; }
             }
         }
 

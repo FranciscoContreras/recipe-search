@@ -473,18 +473,80 @@ app.post('/nutrition/barcode', async (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/NutritionAnalysis'
  */
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
-  const { ingredients } = req.body;
+  const { ingredients, cookingContext } = req.body;
   if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'ingredients must be an array of strings.' });
   if (ingredients.length === 0) return res.status(400).json({ error: 'ingredients array cannot be empty.' });
   if (ingredients.length > 50) return res.status(400).json({ error: 'Maximum 50 ingredients per request.' });
   if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
   if (ingredients.some((i: string) => i.length > 500)) return res.status(400).json({ error: 'Ingredient string too long (max 500 chars).' });
+  const ctx = cookingContext === 'assembled' ? 'assembled' : 'standard';
 
   try {
-    const result = await NutritionEngine.analyze(ingredients);
+    const result = await NutritionEngine.analyze(ingredients, ctx);
     res.json(result);
   } catch (e: any) {
     console.error('Analysis error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * Inspect cooking state for a list of ingredients.
+ * Returns detectedState ('raw' | 'cooked' | 'ambiguous') and calorie estimates
+ * for both cooked and raw versions when the state is ambiguous.
+ * Useful for auditing recipe ingredient lists and understanding calorie differences.
+ */
+app.post('/nutrition/cooking-states', async (req: Request, res: Response) => {
+  const { ingredients } = req.body;
+  if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'ingredients must be an array of strings.' });
+  if (ingredients.length === 0)  return res.status(400).json({ error: 'ingredients array cannot be empty.' });
+  if (ingredients.length > 20)   return res.status(400).json({ error: 'Maximum 20 ingredients per request.' });
+  if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
+
+  try {
+    const [asRaw, asCooked] = await Promise.all([
+      NutritionEngine.analyze(ingredients, 'standard'),
+      NutritionEngine.analyze(ingredients, 'assembled'),
+    ]);
+
+    const result = asRaw.breakdown.map((rawItem: any, i: number) => {
+      const cookedItem = asCooked.breakdown[i];
+      const detectedState: string = rawItem.cookingState ?? 'raw';
+      const isAmbiguous = detectedState === 'ambiguous' ||
+        (rawItem.stats && cookedItem.stats &&
+         Math.abs(rawItem.stats.calories - cookedItem.stats.calories) > 30);
+
+      const entry: any = {
+        original:      rawItem.ingredient,
+        name:          rawItem.parsed?.name ?? rawItem.ingredient,
+        detectedState,
+      };
+
+      if (rawItem.status === 'not_found') {
+        entry.status = 'not_found';
+        return entry;
+      }
+
+      entry.raw = {
+        weightG:  rawItem.parsed?.weightGrams ?? null,
+        calories: Math.round(rawItem.stats?.calories ?? 0),
+      };
+      entry.cooked = {
+        weightG:  cookedItem.parsed?.weightGrams ?? null,
+        calories: Math.round(cookedItem.stats?.calories ?? 0),
+      };
+
+      if (isAmbiguous) {
+        entry.warning = `Ambiguous cooking state: raw ≈ ${entry.raw.calories} kcal vs cooked ≈ ${entry.cooked.calories} kcal. ` +
+          `Pass cookingContext="assembled" to /nutrition/analyze for assembled dishes (salads, grain bowls).`;
+      }
+
+      return entry;
+    });
+
+    res.json({ ingredients: result });
+  } catch (e: any) {
+    console.error('Cooking states error:', e);
     res.status(500).json({ error: e.message });
   }
 });

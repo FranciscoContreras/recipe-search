@@ -3,6 +3,7 @@ import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
 import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
 import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
+import { detectCookingState, getCookedDensity, CookingState } from '../utils/cookingState';
 
 /**
  * Returns true when the ingredient string looks like a packaged or branded product.
@@ -89,7 +90,7 @@ export class NutritionEngine {
         return 1.0; // Default to water density
     }
 
-    static unitToGrams(unit: string, qty: number, ingredientName: string): number {
+    static unitToGrams(unit: string, qty: number, ingredientName: string, cookingState?: CookingState): number {
         // Culinary convention: 'T' = tablespoon, 't' = teaspoon.
         // These must be checked before lowercasing or the distinction is lost.
         if (unit === 'T') return qty * 14.79;
@@ -160,7 +161,9 @@ export class NutritionEngine {
         if (weightG > 0) return weightG;
 
         if (volumeMl > 0) {
-            const density = this.getDensity(ingredientName);
+            const density = cookingState === 'cooked'
+                ? (getCookedDensity(ingredientName) ?? this.getDensity(ingredientName))
+                : this.getDensity(ingredientName);
             return volumeMl * density;
         }
 
@@ -246,10 +249,10 @@ export class NutritionEngine {
     }
 
     // Looks up nutrition for a single ingredient line with a multi-strategy search.
-    private static async lookupIngredient(line: string): Promise<{
-        breakdown: any;
-        stats: NutritionTotal | null;
-    }> {
+    private static async lookupIngredient(
+        line: string,
+        cookingContext: 'standard' | 'assembled' = 'standard',
+    ): Promise<{ breakdown: any; stats: NutritionTotal | null }> {
         // Normalise unicode fractions so the parser handles them
         const processedLine = line
             .replace(/½/g, ' 1/2 ').replace(/⅓/g, ' 1/3 ').replace(/⅔/g, ' 2/3 ')
@@ -278,11 +281,23 @@ export class NutritionEngine {
         const qty:  number  = parsed.quantity ?? 1;
         const unit: string  = parsed.unitOfMeasure || '';
 
-        // 2. Build ordered list of search terms — progressively simpler
-        //    e.g. "almond flour" → ["almond flour", "almond"] (not "flour wheat all-purpose")
+        // 2. Detect cooking state from the original line and the cleaned ingredient name
         const searchTerms = getSearchTerms(name);
         const primaryTerm = searchTerms[0] ?? name;
-        const cacheKey    = `v11:${primaryTerm.toLowerCase()}`; // v11: using getSearchTerms
+        const detectedState = detectCookingState(line, primaryTerm);
+
+        // Resolve ambiguous grains/legumes based on cooking context:
+        //   'assembled' (salad, grain bowl) → treat as cooked
+        //   'standard'  (recipe ingredient) → treat as raw (default convention)
+        const cookingState: CookingState =
+            detectedState === 'ambiguous'
+                ? (cookingContext === 'assembled' ? 'cooked' : 'raw')
+                : detectedState;
+
+        const preferCooked = cookingState === 'cooked';
+
+        // Cache key includes cooking state so cooked and raw variants are stored separately
+        const cacheKey = `v11:${primaryTerm.toLowerCase()}${preferCooked ? ':cooked' : ''}`;
 
         // 3. Cache lookup
         let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
@@ -305,7 +320,7 @@ export class NutritionEngine {
             // ── Source 1: USDA (primary for raw ingredients) ───────────────────
             if (!isPackaged) {
                 for (const term of searchTerms) {
-                    const usdaData = await searchUsda(term);
+                    const usdaData = await searchUsda(term, preferCooked);
                     if (usdaData) {
                         nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
                         supabase.from('ingredient_cache')
@@ -317,7 +332,6 @@ export class NutritionEngine {
             }
 
             // ── Source 2: Open Food Facts (packaged goods + USDA fallback) ─────
-            // Free, no key, 4M+ products — best for canned/branded items.
             if (!nutritionInfo) {
                 for (const term of searchTerms) {
                     const offData = await searchOpenFoodFacts(term);
@@ -334,7 +348,7 @@ export class NutritionEngine {
             // ── Source 3: USDA second pass (for packaged items USDA does carry) ─
             if (!nutritionInfo && isPackaged) {
                 for (const term of searchTerms) {
-                    const usdaData = await searchUsda(term);
+                    const usdaData = await searchUsda(term, preferCooked);
                     if (usdaData) {
                         nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
                         supabase.from('ingredient_cache')
@@ -366,6 +380,7 @@ export class NutritionEngine {
                     ingredient: line,
                     status: 'not_found',
                     tried: searchTerms,
+                    cookingState,
                 },
                 stats: null,
             };
@@ -373,10 +388,11 @@ export class NutritionEngine {
 
         // 6. Weight calculation
         //    Priority: explicit metric unit → USDA portion data → unitToGrams heuristic
+        //    For cooked grains/legumes, unitToGrams uses cooked-density table for volumes.
         const portions = (nutritionInfo as any).portions as { measure: string; gramWeight: number }[] | undefined;
 
         const portionWeight = this.resolveWeightFromPortions(portions ?? [], unit, qty);
-        const weightGrams   = portionWeight ?? this.unitToGrams(unit, qty, name);
+        const weightGrams   = portionWeight ?? this.unitToGrams(unit, qty, name, cookingState);
 
         // 7. Compute contribution  (USDA nutrients are per 100 g)
         const baseWeight = nutritionInfo.serving_size_g || 100;
@@ -400,6 +416,7 @@ export class NutritionEngine {
             breakdown: {
                 ingredient: line,
                 parsed: { name, searchTerm: usedTerm, weightGrams, unit, qty },
+                cookingState,
                 stats,
                 source,
             },
@@ -407,9 +424,12 @@ export class NutritionEngine {
         };
     }
 
-    static async analyze(ingredients: string[]): Promise<{ total: NutritionTotal, breakdown: any[] }> {
+    static async analyze(
+        ingredients: string[],
+        cookingContext: 'standard' | 'assembled' = 'standard',
+    ): Promise<{ total: NutritionTotal, breakdown: any[] }> {
         // Process up to 4 ingredients concurrently to keep external API calls manageable
-        const tasks = ingredients.map(line => () => NutritionEngine.lookupIngredient(line));
+        const tasks = ingredients.map(line => () => NutritionEngine.lookupIngredient(line, cookingContext));
         const results = await withConcurrency(tasks, 4);
 
         const total: NutritionTotal = {
