@@ -192,14 +192,14 @@
 
             const analyzeBtn = document.getElementById('analyze-btn');
             if (analyzeBtn && Array.isArray(recipe.recipe_ingredients)) {
-                analyzeBtn.addEventListener('click', () => analyzeNutrition(recipe.recipe_ingredients));
+                analyzeBtn.addEventListener('click', () => analyzeNutrition(recipe.recipe_ingredients, recipe.name));
             }
 
             lucide.createIcons();
         }
 
 
-        async function analyzeNutrition(ingredients) {
+        async function analyzeNutrition(ingredients, recipeName) {
             const btn = document.getElementById('analyze-btn');
             const container = document.getElementById('nutrition-result');
             if(!btn || !container) return;
@@ -213,7 +213,7 @@
                 const res = await fetch('/nutrition/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
-                    body: JSON.stringify({ ingredients })
+                    body: JSON.stringify({ ingredients, recipeName })
                 });
                 
                 if (!res.ok) throw new Error('Analysis failed');

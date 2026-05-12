@@ -153,6 +153,36 @@ export const COOKED_VOLUME_GRAMS: Record<string, number> = {
     'orzo':      140,
 };
 
+// ─── Human-readable context descriptions ──────────────────────────────────────
+
+export const DISH_CONTEXT_DESCRIPTIONS: Record<DishContext, string> = {
+    standard:   'Standard recipe convention — ingredients listed dry/raw before cooking',
+    assembled:  'Cold-assembled dish — grains/legumes pre-cooked then measured (salads, grain bowls, wraps)',
+    simmered:   'Wet-cooked dish — dry grains/legumes added to liquid and cook in the pot (soups, stews, curries, risotto)',
+    'stir-fry': 'Stir-fried dish — rice/noodles pre-cooked then wok-tossed (fried rice, pad thai)',
+    baked:      'Baked dish — dry pasta/grains absorb liquid in the oven (lasagna, pasta bake, casserole)',
+};
+
+/**
+ * Resolve dish context from an explicit value or by auto-inferring from a recipe name.
+ * Explicit always wins; recipeName auto-infers; falls back to 'standard'.
+ * Returns the resolved context and whether it was inferred (vs explicit or default).
+ */
+export function resolveContext(
+    explicit: string | null | undefined,
+    recipeName: string | null | undefined,
+): { context: DishContext; inferred: boolean } {
+    const VALID: DishContext[] = ['standard', 'assembled', 'simmered', 'stir-fry', 'baked'];
+    if (explicit && VALID.includes(explicit as DishContext)) {
+        return { context: explicit as DishContext, inferred: false };
+    }
+    if (recipeName) {
+        const ctx = inferDishContext(String(recipeName));
+        return { context: ctx, inferred: ctx !== 'standard' };
+    }
+    return { context: 'standard', inferred: false };
+}
+
 /** Returns cooked density (g/ml) for a volume-measured cooked ingredient, or null if not known. */
 export function getCookedDensity(ingredientName: string): number | null {
     const lower = ingredientName.toLowerCase();

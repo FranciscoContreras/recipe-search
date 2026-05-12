@@ -3,7 +3,7 @@ import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
 import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
 import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
-import { detectCookingState, resolveCookingState, getCookedDensity, CookingState, DishContext } from '../utils/cookingState';
+import { detectCookingState, resolveCookingState, resolveContext, getCookedDensity, CookingState, DishContext } from '../utils/cookingState';
 
 /**
  * Returns true when the ingredient string looks like a packaged or branded product.
@@ -462,5 +462,39 @@ export class NutritionEngine {
         total.vitamin_c_mg  = parseFloat(total.vitamin_c_mg.toFixed(1));
 
         return { total, breakdown };
+    }
+
+    /**
+     * Analyze a full recipe by name + ingredient list.
+     * Auto-infers dish context from the recipe name so any caller gets
+     * accurate cooking state without needing to know about DishContext.
+     *
+     * This is the canonical entry point for recipe-level nutrition analysis.
+     * Use this from the auditor, JIT enrichment, worker, and API routes alike.
+     *
+     * Returns a nutrition object ready to store in the database (flat `total`
+     * fields at the top level) plus provenance metadata.
+     */
+    static async analyzeRecipe(
+        recipeName: string,
+        ingredients: string[],
+    ): Promise<{
+        total: NutritionTotal;
+        breakdown: any[];
+        dishContext: DishContext;
+        contextInferred: boolean;
+        source: 'NutritionEngine';
+        analyzedAt: string;
+    }> {
+        const { context: dishContext, inferred: contextInferred } = resolveContext(null, recipeName);
+        const { total, breakdown } = await this.analyze(ingredients, dishContext);
+        return {
+            total,
+            breakdown,
+            dishContext,
+            contextInferred,
+            source:      'NutritionEngine',
+            analyzedAt:  new Date().toISOString(),
+        };
     }
 }

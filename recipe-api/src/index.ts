@@ -5,7 +5,6 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { supabase } from './supabaseClient';
 import { TablesInsert } from './database.types';
-import { findNutritionForRecipe } from './services/fatsecret';
 import { NutritionEngine } from './services/nutritionEngine';
 import { RecipeCrawlerService } from './crawler';
 import path from 'path';
@@ -15,7 +14,7 @@ import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 import { lookupBarcode } from './services/openFoodFacts';
 import { isSafePublicUrl } from './utils/url';
-import { inferDishContext, resolveCookingState, DishContext } from './utils/cookingState';
+import { inferDishContext, resolveContext, DISH_CONTEXT_DESCRIPTIONS, DishContext } from './utils/cookingState';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -316,23 +315,16 @@ app.get('/recipes/:id', async (req: Request, res: Response) => {
   let { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).neq('qa_status', 'quarantined').neq('qa_status', 'rejected').single();
   if (error || !recipe) return res.status(404).json({ error: 'Recipe not found' });
 
-  if (!recipe.nutrition) {
-      console.log(`[JIT] Enriching recipe ${id} (${recipe.name})...`);
+  if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
       const start = Date.now();
-      
-      // Fire-and-forget: Start enrichment in background but don't block response
-      findNutritionForRecipe(recipe.name)
-        .then(async (nutrition) => {
-            if (nutrition) {
-                await supabase.from('recipes').update({ nutrition }).eq('id', id);
-                console.log(`[JIT] Success for ${id} in ${Date.now() - start}ms`);
-            } else {
-                console.log(`[JIT] No nutrition found for ${id} in ${Date.now() - start}ms`);
-            }
+      // Fire-and-forget: enrich in background without blocking the response
+      NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients)
+        .then(async (result) => {
+            const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
+            await supabase.from('recipes').update({ nutrition }).eq('id', id);
+            console.log(`[JIT] Enriched ${id} (${result.dishContext}) in ${Date.now() - start}ms`);
         })
-        .catch((err) => {
-            console.error(`[JIT] Error for ${id} in ${Date.now() - start}ms:`, err);
-        });
+        .catch((err) => console.error(`[JIT] Error for ${id}:`, err));
   }
   res.status(200).json(recipe);
 });
@@ -348,14 +340,13 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   const updates: any[] = [];
   
   const enrichedRecipes = await Promise.all(recipes.map(async (recipe) => {
-      if (!recipe.nutrition) {
+      if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
           try {
-              const nutrition = await findNutritionForRecipe(recipe.name);
-              if (nutrition) {
-                  updates.push({ id: recipe.id, nutrition });
-                  return { ...recipe, nutrition };
-              }
-          } catch (e) { console.error(`Batch fail: ${recipe.id}`, e); }
+              const result = await NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients);
+              const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
+              updates.push({ id: recipe.id, nutrition });
+              return { ...recipe, nutrition };
+          } catch (e) { console.error(`Batch enrichment failed for ${recipe.id}:`, e); }
       }
       return recipe;
   }));
@@ -370,6 +361,29 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
 
 app.get('/nutrition/analyze', (req: Request, res: Response) => {
     res.status(405).send('<h1>Method Not Allowed</h1><p>Use POST.</p>');
+});
+
+/**
+ * Infer the dish context for a recipe name without running a full analysis.
+ * Useful for any product layer that needs to know what cooking assumptions
+ * the engine will make before committing to an analysis call.
+ *
+ * POST /nutrition/infer-context
+ * Body: { "recipeName": "Moroccan Chickpea Stew" }
+ * Returns: { "dishContext": "simmered", "description": "...", "grainState": "raw" }
+ */
+app.post('/nutrition/infer-context', (req: Request, res: Response) => {
+  const { recipeName } = req.body;
+  if (!recipeName || typeof recipeName !== 'string') {
+      return res.status(400).json({ error: 'recipeName is required.' });
+  }
+  const { context, inferred } = resolveContext(null, recipeName);
+  return res.json({
+      dishContext:  context,
+      description:  DISH_CONTEXT_DESCRIPTIONS[context],
+      grainState:   context === 'assembled' || context === 'stir-fry' ? 'cooked' : 'raw',
+      autoDetected: inferred,
+  });
 });
 
 /**
@@ -481,21 +495,11 @@ app.post('/nutrition/analyze', async (req: Request, res: Response) => {
   if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
   if (ingredients.some((i: string) => i.length > 500)) return res.status(400).json({ error: 'Ingredient string too long (max 500 chars).' });
 
-  const VALID_CONTEXTS: DishContext[] = ['standard', 'assembled', 'simmered', 'stir-fry', 'baked'];
-
-  // Resolve dish context: explicit > auto-detected from recipeName > standard
-  let ctx: DishContext = 'standard';
-  let inferredFrom: string | null = null;
-  if (dishContext && VALID_CONTEXTS.includes(dishContext)) {
-    ctx = dishContext;
-  } else if (recipeName && typeof recipeName === 'string') {
-    ctx = inferDishContext(recipeName);
-    if (ctx !== 'standard') inferredFrom = recipeName;
-  }
+  const { context: ctx, inferred } = resolveContext(dishContext, recipeName);
 
   try {
     const result = await NutritionEngine.analyze(ingredients, ctx);
-    res.json({ ...result, dishContext: ctx, ...(inferredFrom ? { inferredFrom } : {}) });
+    res.json({ ...result, dishContext: ctx, ...(inferred ? { inferredFrom: recipeName } : {}) });
   } catch (e: any) {
     console.error('Analysis error:', e);
     res.status(500).json({ error: e.message });
@@ -515,8 +519,7 @@ app.post('/nutrition/cooking-states', async (req: Request, res: Response) => {
   if (ingredients.length > 20)   return res.status(400).json({ error: 'Maximum 20 ingredients per request.' });
   if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
 
-  // Auto-detect context from recipe name if provided
-  const detectedContext = recipeName ? inferDishContext(String(recipeName)) : 'standard';
+  const { context: detectedContext } = resolveContext(null, recipeName);
 
   try {
     const [asRaw, asCooked] = await Promise.all([

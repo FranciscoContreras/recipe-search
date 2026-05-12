@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { findNutritionForRecipe } from './services/fatsecret';
+import { NutritionEngine } from './services/nutritionEngine';
 import { calculateScore } from './utils/scoring';
 
 const BATCH_SIZE = 10;
@@ -91,16 +91,21 @@ async function startAuditor() {
                 }
 
                 // C. Nutrition Enrichment (Backfill)
-                if (!recipe.nutrition) {
+                if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
                     console.log(`Attempting nutrition backfill for: ${recipe.name}`);
-                    const newNutrition = await findNutritionForRecipe(recipe.name);
-                    if (newNutrition) {
-                        nutritionUpdate = newNutrition;
-                        logs.push('Enriched nutrition via FatSecret API.');
-                        // If it was flagged ONLY for missing nutrition (unlikely logic above, but conceptually), we might upgrade status
-                    } else {
-                        logs.push('Missing nutrition (Lookup failed or no API key).');
+                    try {
+                        const result = await NutritionEngine.analyzeRecipe(
+                            recipe.name,
+                            recipe.recipe_ingredients,
+                        );
+                        // Store flat total + metadata so recipe.nutrition.calories still works
+                        nutritionUpdate = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
+                        logs.push(`Enriched nutrition via NutritionEngine (context: ${result.dishContext}).`);
+                    } catch (e: any) {
+                        logs.push(`Nutrition backfill failed: ${e.message}`);
                     }
+                } else if (!recipe.nutrition) {
+                    logs.push('Missing nutrition — no ingredients to analyze.');
                 }
 
                 // D. Clean Text — decode HTML entities that sneak in from crawler
