@@ -584,6 +584,38 @@ export class NutritionEngine {
 
         // ── Pre-parse normalizations ──────────────────────────────────────────────
         //
+        // 0. Parenthetical / slash explicit weight extraction.
+        //    Many quality recipes (NYT Cooking, Serious Eats, King Arthur) include
+        //    the precise gram or ounce weight inline:
+        //      "3 cups/360 grams flour"             → 360g
+        //      "1 tablespoon (15g) goat cheese"     → 15g
+        //      "2 (7-ounce) cans whole green chiles"→ 2 × 198g = 396g
+        //      "3 medium apples (about 1 pound)"    → 453g
+        //    We extract this before parsing so it is applied as the final weight
+        //    (overrides all heuristic calculation after weight-calc step 6c).
+        let explicitWeightG: number | null = null;
+        {
+            const parseW = (val: string, unit: string): number => {
+                const v = parseFloat(val);
+                const u = unit.toLowerCase();
+                if (u.startsWith('kg'))               return v * 1000;
+                if (u.startsWith('oz') || u.startsWith('ounce')) return v * 28.35;
+                if (u.startsWith('lb') || u.startsWith('pound')) return v * 453.59;
+                if (u.startsWith('ml') || u.startsWith('milliliter')) return v; // treat ml ≈ g
+                return v; // grams
+            };
+            // Pattern A: "N (X oz/g) container/can/pkg" → total = N × X × conv
+            const pkgM = processedLine.match(/^(\d+(?:\.\d+)?)\s*\(\s*(\d+(?:\.\d+)?)\s*(g|grams?|oz|ounces?|lbs?|pounds?)\s*\)/i);
+            // Pattern B: parenthetical inline "(about 240g)" or "(7 ounces)"
+            const parM = processedLine.match(/\((?:about|approximately|approx\.?)?\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\s*(?:each|total)?\s*\)/i);
+            // Pattern C: slash-separated "1 cup/240g flour"
+            const slM  = processedLine.match(/\/\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|oz|ounces?|lbs?|pounds?|ml|milliliters?)\b/i);
+
+            if (pkgM)                     explicitWeightG = parseFloat(pkgM[1]) * parseW(pkgM[2], pkgM[3]);
+            else if (parM)                explicitWeightG = parseW(parM[1], parM[2]);
+            else if (slM)                 explicitWeightG = parseW(slM[1],  slM[2]);
+        }
+
         // 1a. Range quantities — "X to Y": "8 to 8 1/2 cups flour" → "8 cups flour"
         //    Recipe writers often use "X to Y" to indicate flexibility. parse-ingredient
         //    only extracts the first number but leaves "to Y" as garbage in the description,
@@ -950,6 +982,16 @@ export class NutritionEngine {
         // Zero out weight (the broth itself is typically a separate ingredient line).
         if (STOCK_PATTERN.test(line)) {
             weightGrams = 0;
+        }
+
+        // 6d. Explicit parenthetical / slash weight override (highest priority).
+        //    If the ingredient line contained an explicit gram/oz/lb weight (extracted
+        //    in step 0), use it directly — it is more accurate than any heuristic.
+        //    Exception: do NOT override when the normal calculation gave a very small
+        //    trace/garnish amount (already correctly capped) or when the frying-oil
+        //    absorption adjustment already fired.
+        if (explicitWeightG !== null && explicitWeightG > 0 && weightGrams > 5) {
+            weightGrams = explicitWeightG;
         }
 
         // 7. Compute contribution  (USDA nutrients are per 100 g)

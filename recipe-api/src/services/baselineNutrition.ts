@@ -412,9 +412,23 @@ function entryToNutrition([cal, pro, fat, carb, fib, sug]: BaselineEntry): UsdaN
  *
  * Matching strategy:
  *   1. Exact match on the full cleaned term
- *   2. Longest prefix substring match (e.g. "unsalted butter at room temp" → "unsalted butter")
+ *   2. Longest WORD-BOUNDARY match — the key must appear as a complete phrase,
+ *      not embedded within a word.  CRITICAL: plain .includes() produced false
+ *      positives like "collard" → "lard" (902 kcal/100g instead of 32) because
+ *      "col**lard**" contains the substring "lard".
  *   3. Single-word fallback for the last significant word
  */
+
+// Pre-compiled regex cache for word-boundary matching (built once at module load)
+const _keyRegexCache = new Map<string, RegExp>();
+function keyRegex(key: string): RegExp {
+    if (!_keyRegexCache.has(key)) {
+        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        _keyRegexCache.set(key, new RegExp(`(?:^|\\s)${escaped}(?:\\s|$)`, 'i'));
+    }
+    return _keyRegexCache.get(key)!;
+}
+
 export function lookupBaseline(cleanedTerm: string): UsdaNutrition | null {
     const t = cleanedTerm.toLowerCase().trim();
     if (!t) return null;
@@ -422,16 +436,20 @@ export function lookupBaseline(cleanedTerm: string): UsdaNutrition | null {
     // 1. Exact match
     if (BASELINE_TABLE[t]) return entryToNutrition(BASELINE_TABLE[t]);
 
-    // 2. Longest substring match (handles extra adjectives like "fresh", "raw", "organic")
+    // 2. Longest word-boundary match — key must appear as a standalone phrase.
+    //    E.g., "unsalted butter at room temp" → matches "unsalted butter" ✓
+    //          "whole collard green leaves"   → does NOT match "lard"     ✓
+    //          "applewood smoked bacon"       → matches "bacon"           ✓
     let bestKey = '';
     for (const key of Object.keys(BASELINE_TABLE)) {
-        if (t.includes(key) && key.length > bestKey.length) {
+        if (key.length > bestKey.length && keyRegex(key).test(t)) {
             bestKey = key;
         }
     }
     if (bestKey) return entryToNutrition(BASELINE_TABLE[bestKey]);
 
     // 3. Single-word fallback (last significant word of the term)
+    //    Words are already complete tokens from the split so no boundary issue here.
     const words = t.split(/\s+/).filter(w => w.length >= 3);
     for (let i = words.length - 1; i >= 0; i--) {
         const w = words[i];
