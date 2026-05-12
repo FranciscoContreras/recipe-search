@@ -2,6 +2,7 @@ import { supabase } from '../supabaseClient';
 import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
 import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
+import { lookupBaseline } from './baselineNutrition';
 import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
 import { detectCookingState, resolveCookingState, resolveContext, getCookedDensity, CookingState, DishContext } from '../utils/cookingState';
 
@@ -648,11 +649,16 @@ export class NutritionEngine {
             };
         }
 
-        // 3. Cache lookup
-        let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
-        let source    = 'usda';
+        // 3. Baseline lookup — hardcoded USDA values for ~120 common ingredients.
+        //    Consulted FIRST, before the cache and any external API, so these results
+        //    are immune to USDA rate limits, OFW mismatches, and cache poisoning.
+        //    All downstream if(!nutritionInfo) guards naturally skip when this hits.
+        let nutritionInfo: UsdaNutrition | SimpleNutrition | null = lookupBaseline(primaryTerm);
+        let source    = nutritionInfo ? 'baseline' : 'usda';
         let usedTerm  = primaryTerm;
 
+        // 4. Cache lookup (no-op when baseline matched because if(cached) won't set
+        //    nutritionInfo again, and the api-chain's if(!nutritionInfo) will skip)
         const { data: cached } = await supabase
             .from('ingredient_cache')
             .select('*')

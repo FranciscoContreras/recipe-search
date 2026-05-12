@@ -13,6 +13,7 @@ jest.mock('../supabaseClient', () => ({
   },
 }));
 
+jest.mock('../services/baselineNutrition', () => ({ lookupBaseline: jest.fn().mockReturnValue(null) }));
 jest.mock('../services/usda',          () => ({ searchUsda:          jest.fn() }));
 jest.mock('../services/fatsecret',     () => ({ searchFatSecret:     jest.fn() }));
 jest.mock('../services/openFoodFacts', () => ({ searchOpenFoodFacts: jest.fn() }));
