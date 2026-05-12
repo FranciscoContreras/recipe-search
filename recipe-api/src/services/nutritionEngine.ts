@@ -359,12 +359,14 @@ export class NutritionEngine {
             if      (lowerName.includes('egg yolk'))  unitWeight = 17;  // 1 yolk ≈ 17g
             else if (lowerName.includes('egg white')) unitWeight = 33;  // 1 white ≈ 33g
             else if (lowerName.includes('egg'))       unitWeight = 50;  // whole egg ≈ 50g
-            // ── Fruits ──────────────────────────────────────────────────────────
-            else if (lowerName.includes('banana'))    unitWeight = 120;
-            else if (lowerName.includes('apple'))     unitWeight = 182;
-            else if (lowerName.includes('avocado'))   unitWeight = 150;
-            else if (lowerName.includes('lemon'))     unitWeight = 60;
-            else if (lowerName.includes('lime'))      unitWeight = 45;
+            // ── Fruits — use word-boundary test to avoid false positives ─────────
+            // "applewood smoked bacon" contains "apple" → gives 182g per bacon strip!
+            // "pineapple" also contains "apple". Use \b word-boundary matching.
+            else if (/\bbanana\b/.test(lowerName))    unitWeight = 120;
+            else if (/\bapple\b/.test(lowerName))     unitWeight = 182; // \b prevents "applewood"/"pineapple"
+            else if (/\bavocado\b/.test(lowerName))   unitWeight = 150;
+            else if (/\blemon\b/.test(lowerName))     unitWeight = 60;
+            else if (/\blime\b/.test(lowerName))      unitWeight = 45;
             else if (lowerName.includes('orange'))    unitWeight = 130;
             else if (lowerName.includes('grapefruit'))unitWeight = 230;
             else if (lowerName.includes('pear'))      unitWeight = 180;
