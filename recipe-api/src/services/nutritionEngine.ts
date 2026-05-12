@@ -205,11 +205,75 @@ export class NutritionEngine {
         else if (['quart', 'qt'].includes(u)) volumeMl = qty * 946.35;
         else if (['gallon', 'gal'].includes(u)) volumeMl = qty * 3785.41;
 
-        // Abstract / Count
+        // Abstract / Count — named culinary units with known gram weights
         else if (['pinch', 'pn'].includes(u)) weightG = qty * 0.3;
         else if (['dash'].includes(u)) weightG = qty * 0.6;
-        else if (['slice'].includes(u)) weightG = qty * 30; // bread/cheese avg
-        else if (['clove'].includes(u)) weightG = qty * 5; // garlic
+        else if (['clove'].includes(u)) weightG = qty * 5;    // garlic clove ≈ 5g
+        else if (['slice'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('bread') || ln.includes('toast')) weightG = qty * 30;
+            else if (ln.includes('cheese'))                         weightG = qty * 20;
+            else if (ln.includes('bacon') || ln.includes('prosciutto')) weightG = qty * 15;
+            else if (ln.includes('tomato') || ln.includes('onion'))     weightG = qty * 20;
+            else if (ln.includes('lemon') || ln.includes('lime'))       weightG = qty * 15;
+            else                                                    weightG = qty * 25;
+        }
+        // ── Head/whole vegetable units ─────────────────────────────────────────────
+        else if (['head'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('cauliflower'))                        weightG = qty * 600;
+            else if (ln.includes('broccoli'))                           weightG = qty * 350;
+            else if (ln.includes('cabbage'))                            weightG = qty * 900;
+            else if (ln.includes('romaine') || ln.includes('lettuce'))  weightG = qty * 500;
+            else if (ln.includes('garlic'))                             weightG = qty * 40;
+            else if (ln.includes('celery'))                             weightG = qty * 454;
+            else if (ln.includes('fennel'))                             weightG = qty * 250;
+            else                                                        weightG = qty * 500;
+        }
+        // ── Bundle / bunch units ───────────────────────────────────────────────────
+        else if (['bunch', 'bundle'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('spinach') || ln.includes('kale') || ln.includes('chard')) weightG = qty * 300;
+            else if (ln.includes('asparagus'))                          weightG = qty * 500;
+            else if (ln.includes('green onion') || ln.includes('scallion')) weightG = qty * 100;
+            else if (ln.includes('parsley') || ln.includes('cilantro') || ln.includes('herb')) weightG = qty * 50;
+            else                                                        weightG = qty * 100;
+        }
+        // ── Stalk / rib / spear units ──────────────────────────────────────────────
+        else if (['stalk', 'rib', 'stick', 'spear', 'stem'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('celery'))                             weightG = qty * 40;
+            else if (ln.includes('asparagus'))                          weightG = qty * 20;
+            else if (ln.includes('lemongrass'))                         weightG = qty * 30;
+            else if (ln.includes('cinnamon'))                           weightG = qty * 3;
+            else                                                        weightG = qty * 30;
+        }
+        // ── Small block / cube units ───────────────────────────────────────────────
+        else if (['cube', 'block', 'square'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('bouillon') || ln.includes('stock') || ln.includes('broth')) weightG = qty * 5;
+            else if (ln.includes('chocolate'))                          weightG = qty * 30;
+            else if (ln.includes('tofu'))                               weightG = qty * 70;
+            else                                                        weightG = qty * 15; // fermented bean curd cubes ≈ 15g each
+        }
+        // ── Sheet / layer units ───────────────────────────────────────────────────
+        else if (['sheet', 'layer', 'leaf', 'leave'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if (ln.includes('nori') || ln.includes('seaweed'))         weightG = qty * 3;
+            else if (ln.includes('lasagna') || ln.includes('pasta'))   weightG = qty * 25;
+            else if (ln.includes('phyllo') || ln.includes('filo'))     weightG = qty * 10;
+            else if (ln.includes('bay'))                                weightG = qty * 0.5;
+            else                                                        weightG = qty * 5;
+        }
+        // ── Can / tin units ───────────────────────────────────────────────────────
+        else if (['can', 'tin'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if      (ln.includes('coconut milk'))                       weightG = qty * 400;
+            else if (ln.includes('tomato'))                             weightG = qty * 400;
+            else if (ln.includes('beans') || ln.includes('chickpea') || ln.includes('lentil')) weightG = qty * 400;
+            else if (ln.includes('tuna') || ln.includes('salmon') || ln.includes('sardine')) weightG = qty * 140;
+            else                                                        weightG = qty * 400;
+        }
         else {
             // No unit (e.g. "2 apples") or unknown unit — count-based assumptions
             const lowerName = ingredientName.toLowerCase();
