@@ -12,8 +12,66 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_hash: string
+          last_used_at: string | null
+          owner_email: string | null
+          owner_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash: string
+          last_used_at?: string | null
+          owner_email?: string | null
+          owner_name: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash?: string
+          last_used_at?: string | null
+          owner_email?: string | null
+          owner_name?: string
+        }
+        Relationships: []
+      }
       crawl_jobs: {
         Row: {
           created_at: string
@@ -77,6 +135,96 @@ export type Database = {
           source?: string
           term?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      off_products: {
+        Row: {
+          additives_tags: string[] | null
+          allergens_tags: string[] | null
+          brands: string | null
+          calcium_100g: number | null
+          calories_100g: number | null
+          carbs_100g: number | null
+          categories_tags: string[] | null
+          code: string
+          ecoscore_grade: string | null
+          fat_100g: number | null
+          fiber_100g: number | null
+          fts: unknown
+          image_url: string | null
+          ingredients_text: string | null
+          iron_100g: number | null
+          labels_tags: string[] | null
+          last_modified_t: number | null
+          nova_group: number | null
+          nutriscore_grade: string | null
+          product_name: string | null
+          protein_100g: number | null
+          quantity: string | null
+          sodium_100g: number | null
+          sugar_100g: number | null
+          synced_at: string | null
+          traces_tags: string[] | null
+          vitamin_c_100g: number | null
+        }
+        Insert: {
+          additives_tags?: string[] | null
+          allergens_tags?: string[] | null
+          brands?: string | null
+          calcium_100g?: number | null
+          calories_100g?: number | null
+          carbs_100g?: number | null
+          categories_tags?: string[] | null
+          code: string
+          ecoscore_grade?: string | null
+          fat_100g?: number | null
+          fiber_100g?: number | null
+          fts?: unknown
+          image_url?: string | null
+          ingredients_text?: string | null
+          iron_100g?: number | null
+          labels_tags?: string[] | null
+          last_modified_t?: number | null
+          nova_group?: number | null
+          nutriscore_grade?: string | null
+          product_name?: string | null
+          protein_100g?: number | null
+          quantity?: string | null
+          sodium_100g?: number | null
+          sugar_100g?: number | null
+          synced_at?: string | null
+          traces_tags?: string[] | null
+          vitamin_c_100g?: number | null
+        }
+        Update: {
+          additives_tags?: string[] | null
+          allergens_tags?: string[] | null
+          brands?: string | null
+          calcium_100g?: number | null
+          calories_100g?: number | null
+          carbs_100g?: number | null
+          categories_tags?: string[] | null
+          code?: string
+          ecoscore_grade?: string | null
+          fat_100g?: number | null
+          fiber_100g?: number | null
+          fts?: unknown
+          image_url?: string | null
+          ingredients_text?: string | null
+          iron_100g?: number | null
+          labels_tags?: string[] | null
+          last_modified_t?: number | null
+          nova_group?: number | null
+          nutriscore_grade?: string | null
+          product_name?: string | null
+          protein_100g?: number | null
+          quantity?: string | null
+          sodium_100g?: number | null
+          sugar_100g?: number | null
+          synced_at?: string | null
+          traces_tags?: string[] | null
+          vitamin_c_100g?: number | null
         }
         Relationships: []
       }
@@ -157,7 +305,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      recipe_stats: {
+        Row: {
+          avg_quality_score: number | null
+          computed_at: string | null
+          flagged: number | null
+          pending: number | null
+          quarantined: number | null
+          rejected: number | null
+          total: number | null
+          verified: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_recipe_quality: {
@@ -168,6 +328,28 @@ export type Database = {
         Args: { ingredients: Json }
         Returns: string[]
       }
+      next_crawl_job: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          log: string | null
+          next_retry_at: string | null
+          recipes_found: number
+          retry_count: number
+          status: string
+          updated_at: string
+          url: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "crawl_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      refresh_materialized_view_stats: { Args: never; Returns: undefined }
       search_recipes: {
         Args: { search_query: string }
         Returns: {
@@ -225,8 +407,6 @@ export type Database = {
           updated_at: string
         }[]
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       update_recipe_nutritions: { Args: { payload: Json }; Returns: undefined }
     }
     Enums: {
@@ -356,6 +536,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

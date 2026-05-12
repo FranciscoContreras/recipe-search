@@ -4,9 +4,12 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_RifArRK5_9Y2gxrmp3kkGRy1jznGVdFxG'; // Fallback for dev
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+if (!RESEND_API_KEY) {
+    console.warn('⚠️  RESEND_API_KEY missing. Email delivery will fail.');
+}
 
-const resend = new Resend(RESEND_API_KEY);
+const resend = new Resend(RESEND_API_KEY!);
 
 export async function sendApiKeyEmail(email: string, apiKey: string) {
     try {

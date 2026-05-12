@@ -1,4 +1,4 @@
-import { CheerioCrawler, Dataset } from 'crawlee';
+import { CheerioCrawler } from 'crawlee';
 import { supabase } from './supabaseClient';
 import { Database } from './database.types';
 import { calculateScore } from './utils/scoring';
@@ -6,10 +6,8 @@ import path from 'path';
 
 type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'blocked' | 'cooling_down';
 
-let shouldStopAllCrawls = false;
-
 // Helper to normalize URLs (strip query params and fragments)
-function normalizeUrl(url: string): string {
+export function normalizeUrl(url: string): string {
     try {
         const u = new URL(url);
         u.search = '';
@@ -37,7 +35,9 @@ export class RecipeCrawlerService {
     const errors: string[] = [];
 
     const instanceId = process.env.INSTANCE_ID || 'default';
-    const storageDir = path.join(process.cwd(), `storage-${instanceId}`);
+    // Each PM2 worker instance gets its own Crawlee storage directory to prevent
+    // multiple workers from sharing a request queue and double-processing URLs.
+    process.env.CRAWLEE_STORAGE_DIR = path.join(process.cwd(), `storage-${instanceId}`);
 
     this.crawler = new CheerioCrawler({
       // Gentle & Polite settings
@@ -69,12 +69,6 @@ export class RecipeCrawlerService {
              throw new Error('Crawl stopped by user'); 
         }
         */
-
-        if (shouldStopAllCrawls) {
-            log.info(`Stopping crawl for job ${this.jobId} due to global stop signal.`);
-            await this.updateJobStatus('failed', recipesFound, `Crawl aborted: ${normalizedUrl}`);
-            return; 
-        }
 
         // BLOCKING DETECTION
         const statusCode = response.statusCode;
@@ -119,9 +113,7 @@ export class RecipeCrawlerService {
           strategy: 'same-hostname',
           globs: [
             '**/recipe/**',
-            '**/*recipe*', 
-            'https://www.recipetineats.com/*/', 
-            'https://www.recipetineats.com/*/*/'
+            '**/*recipe*',
           ],
           selector: 'a.entry-title-link, .entry-title a, article a, .post-summary a, .pagination a',
           label: 'RECIPE_OR_PAGINATION'
@@ -307,7 +299,4 @@ export class RecipeCrawlerService {
     await supabase.from('crawl_jobs').update({ recipes_found: count }).eq('id', this.jobId);
   }
 
-  static setStopAllCrawls(value: boolean) {
-    shouldStopAllCrawls = value;
-  }
 }

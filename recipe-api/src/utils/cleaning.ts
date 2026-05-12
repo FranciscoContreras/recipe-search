@@ -1,96 +1,113 @@
+/**
+ * Strips preparation noise from an ingredient string so it can be used as a
+ * search term against USDA / FatSecret.
+ *
+ * Design principles:
+ *  1. Remove cooking STATE words (melted, chopped, dried…) — they change nothing
+ *     nutritionally and confuse search.
+ *  2. Remove filler/instruction words (for, about, to taste…).
+ *  3. Do NOT remap ingredient names to specific USDA titles — that only covers
+ *     ingredients we thought of. Let the search engine handle disambiguation.
+ *  4. Keep a tiny list of TRUE AMBIGUITY FIXES where the generic name would
+ *     reliably match the wrong food (e.g. "grape tomatoes" → "Grape Juice").
+ */
 export function cleanIngredientTerm(term: string): string {
     if (!term) return '';
-    
-    let cleaned = term.toLowerCase();
 
-    // Remove content in parentheses (often quantity info or alternates that confuse search)
-    // e.g. "1 cup (about 200g) sugar" -> "1 cup sugar"
-    cleaned = cleaned.replace(/\([^)]*\)/g, ' ');
+    let cleaned = term.toLowerCase()
+        // Remove parenthetical asides: "butter (softened)" → "butter"
+        .replace(/\([^)]*\)/g, ' ')
+        // Remove punctuation (use space to avoid merging adjacent words)
+        .replace(/[.,/#!$%^&*;:{}=\-_`~]/g, ' ')
+        // Remove digits — quantity parsing has already happened
+        .replace(/[0-9]/g, ' ');
 
-    // Remove preparation states and noise words that confuse search
-    const prepWords = [
-        // Prep methods
-        'melted', 'softened', 'chopped', 'sliced', 'diced', 'minced', 
-        'crushed', 'beaten', 'sifted', 'warm', 'cold', 'hot', 'boiling',
-        'room temperature', 'granulated', 'all-purpose', 'all purpose',
-        'dried', 'raw', 'cooked', 'steamed', 'baked', 'fried', 'grilled',
-        'presoaked', 'soaked', 'drained', 'rinsed', 'peeled', 'cored', 
-        'seeded', 'halved', 'quartered', 'cubed', 'grated', 'shredded',
-        'mashed', 'pureed', 'julienned', 'toasted', 'roasted',
-        // Cuts/Shapes
-        'lengthwise', 'crosswise', 'thinly', 'thickly', 'finely', 
-        'coarsely', 'roughly', 'boneless', 'skinless',
-        // State/Condition
-        'packed', 'tightly', 'loosely', 'divided', 'separated', 
-        'reserved', 'removed', 'discarded', 'pitted',
-        // Adjectives/Types that often confuse fuzzy search
-        'fresh', 'frozen', 'canned', // controversial but often safer for generic match
-        'flat-leaf', 'flat leaf', 'curly',
-        'heirloom', 'baby', 'extra virgin', 'virgin',
-        // Quantity/Instruction noise
-        'about', 'plus', 'more', 'garnish', 'taste', 'serving',
-        'pinch', 'dash', 'handful', 'bunch',
-        'hours', 'minutes', 'overnight', 'possible', 'needed', 'necessary',
-        // Conjunctions/Prepositions
+    // Preparation methods and states — nutritionally irrelevant for search
+    const PREP_WORDS = [
+        'melted', 'softened', 'chopped', 'sliced', 'diced', 'minced', 'crushed',
+        'beaten', 'sifted', 'warm', 'cold', 'hot', 'boiling', 'room temperature',
+        'ripe', 'raw', 'cooked', 'steamed', 'baked', 'fried', 'grilled', 'broiled',
+        'freshly', 'lightly', 'heavily', 'gently', 'quickly',
+        'sautéed', 'sauteed', 'presoaked', 'soaked', 'drained', 'rinsed', 'peeled',
+        'cored', 'seeded', 'halved', 'quartered', 'cubed', 'grated', 'shredded',
+        'mashed', 'pureed', 'julienned', 'toasted', 'roasted', 'smoked', 'pickled',
+        'lengthwise', 'crosswise', 'thinly', 'thickly', 'finely', 'coarsely',
+        'roughly', 'boneless', 'skinless', 'packed', 'tightly', 'loosely',
+        'divided', 'separated', 'reserved', 'removed', 'discarded', 'pitted',
+        'fresh', 'frozen', 'canned', 'dried',
+        'flat-leaf', 'flat leaf', 'curly', 'heirloom',
+        'extra virgin', 'virgin',
+        // Count/container descriptors that aren't part of the food name
+        'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
+        'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',
+        'hours', 'minutes', 'overnight', 'needed', 'necessary', 'desired',
         'for', 'and', 'with', 'in', 'to', 'of', 'or', 'then', 'if',
-        // Number words (often part of instructions like "divided into two")
         'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-        // Units (if parsing failed, these might remain)
-        'cup', 'cups', 'tbsp', 'tablespoon', 'tsp', 'teaspoon', 'pint', 'quart', 
-        'gallon', 'oz', 'ounce', 'gram', 'lb', 'pound', 'kg', 'liter', 'ml'
+        // Units that survive parsing — strip them so only the food name remains
+        'cup', 'cups', 'tbsp', 'tablespoon', 'tablespoons', 'tsp', 'teaspoon',
+        'teaspoons', 'pint', 'quart', 'gallon', 'oz', 'ounce', 'ounces',
+        'gram', 'grams', 'lb', 'pound', 'pounds', 'kg', 'liter', 'liters', 'ml',
     ];
 
-    // Remove punctuation (replace with space to avoid word merging)
-    cleaned = cleaned.replace(/[.,\/#!$%\^&*;:{}=\-_`~]/g, ' ');
-
-    // Remove digits
-    cleaned = cleaned.replace(/[0-9]/g, ' ');
-
-    // Remove words
-    for (const word of prepWords) {
-        // Remove word if it's surrounded by spaces or start/end of string
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        cleaned = cleaned.replace(regex, '');
+    for (const word of PREP_WORDS) {
+        cleaned = cleaned.replace(new RegExp(`\\b${word}\\b`, 'gi'), '');
     }
 
-    // Collapse spaces
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
 
-    // Specific Mappings/Corrections for USDA Search
-    // These help map culinary terms to the specific naming conventions used in the database
-    // or fix issues where multi-word terms (e.g. "grape tomatoes") match the wrong noun (e.g. "grape juice")
-    const termCorrections: Record<string, string> = {
-        'milk': 'milk whole',
-        'egg': 'egg whole',
-        'eggs': 'egg whole',
-        'flour': 'flour wheat all-purpose',
-        'sugar': 'sugar granulated',
-        'butter': 'butter salted',
-        'rice': 'rice white raw',
-        'white rice': 'rice white raw', 
-        'oats': 'oats rolled raw',
-        'rolled oats': 'oats rolled raw',
-        'pasta': 'pasta dry',
-        'bread': 'bread white',
-        'oil': 'oil vegetable',
-        
-        // Fixes for specific search ambiguity
-        'grape tomatoes': 'tomatoes', // Fixes match to "Grape Juice"
-        'cherry tomatoes': 'tomatoes',
-        'wheat berries': 'wheat grain', // Fixes match to generic "Berries"
-        'scallions': 'onions spring',
-        'baby spinach': 'spinach',
-        
-        // Herb normalization
-        'mint leaves': 'mint fresh',
-        'parsley leaves': 'parsley fresh',
-        'cilantro leaves': 'cilantro fresh',
-        'basil leaves': 'basil fresh'
+    // ── Ambiguity fixes only ─────────────────────────────────────────────────
+    // These are cases where the generic cleaned name reliably matches the WRONG
+    // food in USDA. Keep this list small and specific.
+    const AMBIGUITY_FIXES: Record<string, string> = {
+        'grape tomatoes':    'tomatoes',      // otherwise matches "Grape Juice"
+        'cherry tomatoes':   'tomatoes',
+        'sun dried tomatoes':'tomatoes',
+        'wheat berries':     'wheat grain',   // otherwise matches generic "Berries"
+        'scallions':         'green onions',
+        'spring onions':     'green onions',
+        'double cream':      'heavy cream',
+        'single cream':      'light cream',
+        'aubergine':         'eggplant',      // British → American
+        'courgette':         'zucchini',
+        'coriander':         'cilantro',      // British herb name → American
+        'rocket':            'arugula',
+        'minced beef':       'ground beef',
+        'minced pork':       'ground pork',
     };
 
-    if (termCorrections[cleaned]) {
-        return termCorrections[cleaned];
+    return AMBIGUITY_FIXES[cleaned] ?? cleaned;
+}
+
+/**
+ * Returns an ordered list of search terms to try against USDA/FatSecret.
+ * Tries progressively simpler terms so uncommon ingredients are still found.
+ *
+ * Examples:
+ *   "almond flour"       → ["almond flour", "almond"]
+ *   "whole wheat pasta"  → ["whole wheat pasta", "wheat pasta", "pasta"]
+ *   "kabocha squash"     → ["kabocha squash", "squash"]
+ *   "spaghetti"          → ["spaghetti"]
+ *   "miso paste"         → ["miso paste", "miso"]
+ */
+export function getSearchTerms(rawName: string): string[] {
+    const primary = cleanIngredientTerm(rawName);
+    if (!primary) return [];
+
+    const terms: string[] = [primary];
+
+    const words = primary.split(/\s+/).filter(w => w.length >= 2);
+
+    if (words.length >= 3) {
+        // Try last two words (often "adjective noun noun" → drop first adjective)
+        terms.push(words.slice(-2).join(' '));
     }
 
-    return cleaned;
+    if (words.length >= 2) {
+        // Try last word only (the core noun)
+        const lastWord = words[words.length - 1];
+        if (!terms.includes(lastWord)) terms.push(lastWord);
+    }
+
+    // Deduplicate while preserving order
+    return [...new Set(terms)];
 }

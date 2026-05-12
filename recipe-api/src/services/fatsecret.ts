@@ -79,9 +79,16 @@ export async function findNutritionForRecipe(recipeName: string): Promise<any | 
         });
 
         const data = await res.json();
-        
-        // Check if we found a food
-        const food = data.foods?.food?.[0] || data.foods?.food; // FatSecret XML-to-JSON sometimes varies if array has 1 item
+        if (data.error) {
+            const { code, message } = data.error;
+            if (code === 21) {
+                console.warn(`FatSecret IP not whitelisted (error 21). Add this machine's IP to the FatSecret developer dashboard.`);
+            } else {
+                console.warn(`FatSecret API error ${code}: ${message}`);
+            }
+            return null;
+        }
+        const food = data.foods?.food?.[0] || data.foods?.food;
         if (!food) return null;
 
         // Ideally we'd get detailed nutrition, but search result often has basic calories/macros in 'food_description'
@@ -162,9 +169,20 @@ export async function searchFatSecret(query: string): Promise<SimpleNutrition | 
         });
 
         const data = await res.json();
+        // FatSecret returns errors as { error: { code, message } } instead of HTTP error codes.
+        // Code 21 = IP not whitelisted; Code 10 = API limit exceeded.
+        if (data.error) {
+            const { code, message } = data.error;
+            if (code === 21) {
+                console.warn(`FatSecret IP not whitelisted (error 21). Add this machine's IP to the FatSecret developer dashboard.`);
+            } else {
+                console.warn(`FatSecret API error ${code}: ${message}`);
+            }
+            return null;
+        }
         const food = data.foods?.food?.[0] || data.foods?.food;
         if (!food) {
-            console.log(`DEBUG: FatSecret found no results for "${query}"`);
+            console.log(`FatSecret: no results for "${query}"`);
             return null;
         }
 

@@ -30,16 +30,29 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
 
   if (recipe.nutrition) {
     const nut: any = recipe.nutrition;
-    schema.nutrition = {
-      "@type": "NutritionInformation",
-      "calories": nut.calories ? `${Math.round(Number(nut.calories))} calories` : undefined,
-      "proteinContent": nut.protein ? `${Math.round(Number(nut.protein))} g` : undefined,
-      "fatContent": nut.fat ? `${Math.round(Number(nut.fat))} g` : undefined,
-      "carbohydrateContent": nut.carbohydrate ? `${Math.round(Number(nut.carbohydrate))} g` : undefined,
+
+    // Parse a nutrition value that may be a number (NutritionEngine output) or a string like
+    // "300 calories" / "15 g" (Schema.org format from crawler or FatSecret).
+    // parseFloat handles the string case correctly ("300 calories" → 300).
+    const parseNutVal = (v: any): number | undefined => {
+      if (typeof v === 'number') return isNaN(v) ? undefined : v;
+      if (typeof v === 'string') { const n = parseFloat(v); return isNaN(n) ? undefined : n; }
+      return undefined;
     };
-    // Remove undefined keys
-    Object.keys(schema.nutrition).forEach(key => schema.nutrition[key] === undefined && delete schema.nutrition[key]);
-    if (Object.keys(schema.nutrition).length === 1) delete schema.nutrition; 
+
+    // Schema.org uses proteinContent/fatContent/carbohydrateContent; NutritionEngine uses protein/fat/carbs.
+    const cal     = parseNutVal(nut.calories);
+    const protein = parseNutVal(nut.proteinContent ?? nut.protein);
+    const fat     = parseNutVal(nut.fatContent ?? nut.fat);
+    const carbs   = parseNutVal(nut.carbohydrateContent ?? nut.carbohydrate ?? nut.carbs);
+
+    schema.nutrition = { "@type": "NutritionInformation" };
+    if (cal     !== undefined) schema.nutrition.calories           = `${Math.round(cal)} calories`;
+    if (protein !== undefined) schema.nutrition.proteinContent     = `${Math.round(protein)} g`;
+    if (fat     !== undefined) schema.nutrition.fatContent         = `${Math.round(fat)} g`;
+    if (carbs   !== undefined) schema.nutrition.carbohydrateContent = `${Math.round(carbs)} g`;
+
+    if (Object.keys(schema.nutrition).length === 1) delete schema.nutrition;
   }
 
   // Aggregate Rating (Fake it if missing, or use quality_score if available)
@@ -51,7 +64,10 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
       };
   }
 
-  return JSON.stringify(schema);
+  // Escape < and > so a recipe name containing </script> can't break the HTML page
+  return JSON.stringify(schema)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
 };
 
 export const injectMetaTags = (html: string, recipe: Tables<'recipes'>): string => {

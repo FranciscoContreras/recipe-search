@@ -13,6 +13,7 @@ import fs from 'fs';
 import { injectMetaTags } from './services/seo';
 import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
+import { lookupBarcode } from './services/openFoodFacts';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -138,15 +139,41 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/auth/request-key', authLimiter, requestApiKey);
 
+// Refresh the recipe_stats materialized view — called on a schedule and after bulk operations
+async function refreshRecipeStats() {
+  try {
+    await supabase.rpc('refresh_materialized_view_stats');
+  } catch { /* non-critical — view will serve cached data */ }
+}
+
+// Refresh stats every 5 minutes
+setInterval(refreshRecipeStats, 5 * 60 * 1000);
+
 app.get('/health', async (req: Request, res: Response) => {
   try {
-    const { count: total } = await supabase.from('recipes').select('*', { count: 'exact', head: true });
-    const { count: verified } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'verified');
-    const { count: flagged } = await supabase.from('recipes').select('*', { count: 'exact', head: true }).eq('qa_status', 'flagged');
-    const { data: sample } = await supabase.from('recipes').select('quality_score').not('quality_score', 'is', null).limit(100);
-    const avg_score = sample && sample.length > 0 ? sample.reduce((a, b) => a + (b.quality_score || 0), 0) / sample.length : 0;
-    const { data: recent } = await supabase.from('recipes').select('id, name, qa_status, quality_score, audit_log').not('last_audited_at', 'is', null).order('last_audited_at', { ascending: false }).limit(10);
-    res.json({ stats: { total: total || 0, verified: verified || 0, flagged: flagged || 0, avg_score: avg_score }, recent: recent || [] });
+    // Read from the materialized view (single row, pre-computed) — no table scans
+    const { data: stats } = await supabase
+      .from('recipe_stats')
+      .select('total, verified, flagged, quarantined, pending, avg_quality_score, computed_at')
+      .single();
+
+    const { data: recent } = await supabase
+      .from('recipes')
+      .select('id, name, qa_status, quality_score, audit_log')
+      .not('last_audited_at', 'is', null)
+      .order('last_audited_at', { ascending: false })
+      .limit(10);
+
+    const s = stats || { total: 0, verified: 0, flagged: 0, avg_quality_score: 0 };
+    res.json({
+      stats: {
+        total:     s.total     || 0,
+        verified:  s.verified  || 0,
+        flagged:   s.flagged   || 0,
+        avg_score: parseFloat(s.avg_quality_score as any) || 0,
+      },
+      recent: recent || [],
+    });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
@@ -345,6 +372,77 @@ app.get('/nutrition/analyze', (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /nutrition/barcode:
+ *   post:
+ *     summary: Look up nutrition by product barcode (EAN-13 / UPC-A)
+ *     tags: [Nutrition]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [barcode]
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "5449000214911"
+ *               amount_g:
+ *                 type: number
+ *                 description: Optional serving weight in grams (defaults to 100g)
+ *                 example: 330
+ *     responses:
+ *       200:
+ *         description: Product nutrition data
+ *       404:
+ *         description: Barcode not found in Open Food Facts
+ */
+app.post('/nutrition/barcode', async (req: Request, res: Response) => {
+    const { barcode, amount_g } = req.body;
+    if (!barcode || typeof barcode !== 'string') {
+        return res.status(400).json({ error: 'barcode is required.' });
+    }
+    if (!/^\d{8,14}$/.test(barcode.trim())) {
+        return res.status(400).json({ error: 'barcode must be 8-14 digits (EAN-8, EAN-13, UPC-A).' });
+    }
+
+    const result = await lookupBarcode(barcode.trim());
+    if (!result) {
+        return res.status(404).json({ error: 'Product not found in Open Food Facts database.' });
+    }
+
+    const grams = typeof amount_g === 'number' && amount_g > 0 ? amount_g : 100;
+    const ratio = grams / 100;
+    const { nutrition, ...meta } = result;
+
+    return res.json({
+        ...meta,
+        amount_g: grams,
+        nutrition: {
+            calories:      Math.round(nutrition.calories      * ratio),
+            protein:       parseFloat((nutrition.protein      * ratio).toFixed(1)),
+            fat:           parseFloat((nutrition.fat          * ratio).toFixed(1)),
+            carbs:         parseFloat((nutrition.carbs        * ratio).toFixed(1)),
+            fiber:         parseFloat((nutrition.fiber        * ratio).toFixed(1)),
+            sugar:         parseFloat((nutrition.sugar        * ratio).toFixed(1)),
+            calcium_mg:    Math.round(nutrition.calcium_mg    * ratio),
+            iron_mg:       parseFloat((nutrition.iron_mg      * ratio).toFixed(2)),
+            vitamin_c_mg:  parseFloat((nutrition.vitamin_c_mg * ratio).toFixed(1)),
+        },
+        per_100g: {
+            calories: Math.round(nutrition.calories),
+            protein:  parseFloat(nutrition.protein.toFixed(1)),
+            fat:      parseFloat(nutrition.fat.toFixed(1)),
+            carbs:    parseFloat(nutrition.carbs.toFixed(1)),
+        },
+        source: 'Open Food Facts',
+    });
+});
+
+/**
+ * @swagger
  * /nutrition/analyze:
  *   post:
  *     summary: Analyze ingredients for nutritional data
@@ -374,9 +472,12 @@ app.get('/nutrition/analyze', (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/NutritionAnalysis'
  */
 app.post('/nutrition/analyze', async (req: Request, res: Response) => {
-  console.log(`DEBUG: HIT /nutrition/analyze POST Endpoint - ${new Date().toISOString()}`);
   const { ingredients } = req.body;
-  if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'Invalid payload.' });
+  if (!ingredients || !Array.isArray(ingredients)) return res.status(400).json({ error: 'ingredients must be an array of strings.' });
+  if (ingredients.length === 0) return res.status(400).json({ error: 'ingredients array cannot be empty.' });
+  if (ingredients.length > 50) return res.status(400).json({ error: 'Maximum 50 ingredients per request.' });
+  if (ingredients.some((i: unknown) => typeof i !== 'string')) return res.status(400).json({ error: 'All ingredients must be strings.' });
+  if (ingredients.some((i: string) => i.length > 500)) return res.status(400).json({ error: 'Ingredient string too long (max 500 chars).' });
 
   try {
     const result = await NutritionEngine.analyze(ingredients);
@@ -448,10 +549,30 @@ app.get('/search', async (req: Request, res: Response) => {
   res.status(200).json({ recipes: finalData, count: (data || []).length });
 });
 
+function isSafePublicUrl(rawUrl: string): boolean {
+  try {
+    const { hostname, protocol } = new URL(rawUrl);
+    if (!['http:', 'https:'].includes(protocol)) return false;
+    const h = hostname.toLowerCase();
+    // Block localhost variants
+    if (h === 'localhost' || h === '0.0.0.0' || h === '::1') return false;
+    // Block private IPv4 ranges (RFC 1918 + link-local + loopback)
+    if (/^127\./.test(h)) return false;
+    if (/^10\./.test(h)) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
+    if (/^192\.168\./.test(h)) return false;
+    if (/^169\.254\./.test(h)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 app.post('/crawl', async (req: Request, res: Response) => {
   let { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required.' });
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  if (!isSafePublicUrl(url)) return res.status(400).json({ error: 'URL must point to a public host.' });
   const { data, error } = await supabase.from('crawl_jobs').insert([{ url, status: 'pending' }]).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json({ message: 'Crawl queued', job: data });

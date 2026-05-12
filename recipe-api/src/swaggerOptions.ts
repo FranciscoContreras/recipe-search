@@ -58,7 +58,7 @@ export const swaggerOptions: Options = {
                 calories: { type: 'number' },
                 protein: { type: 'number' },
                 fat: { type: 'number' },
-                carbohydrate: { type: 'number' }
+                carbs: { type: 'number' }
               }
             }
           }
@@ -72,7 +72,7 @@ export const swaggerOptions: Options = {
                 calories: { type: 'number' },
                 protein: { type: 'number' },
                 fat: { type: 'number' },
-                carbohydrate: { type: 'number' }
+                carbs: { type: 'number' }
               }
             },
             breakdown: {

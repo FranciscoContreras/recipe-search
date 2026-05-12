@@ -103,11 +103,15 @@ async function startAuditor() {
                     }
                 }
 
-                // D. Clean Text
-                let name = recipe.name;
-                if (name && (name.includes('&amp;') || name.includes('&#039;'))) {
-                     name = name.trim(); // Simplified cleaning
-                }
+                // D. Clean Text — decode HTML entities that sneak in from crawler
+                const decodedName = recipe.name
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#039;/g, "'")
+                    .replace(/&apos;/g, "'")
+                    .trim();
 
                 // Calculate Score
                 const tempRecipe = { ...recipe, nutrition: nutritionUpdate || recipe.nutrition };
@@ -168,6 +172,10 @@ async function startAuditor() {
                     last_audited_at: new Date().toISOString(),
                     audit_log: logs
                 };
+
+                if (decodedName !== recipe.name) {
+                    updatePayload.name = decodedName;
+                }
 
                 if (nutritionUpdate) {
                     updatePayload.nutrition = nutritionUpdate;

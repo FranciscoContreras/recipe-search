@@ -4,9 +4,16 @@ import crypto from 'crypto';
 import { sendApiKeyEmail } from '../services/email';
 
 // Must use Service Role to write to api_keys table
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    console.warn('⚠️  Auth Controller: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing. Key generation will fail.');
+}
+
 const adminSupabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    SUPABASE_URL || '',
+    SERVICE_ROLE_KEY || ''
 );
 
 function generateApiKey() {

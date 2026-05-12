@@ -10,15 +10,10 @@ async function startWorker() {
 
   while (true) {
     try {
-      // 1. Fetch the oldest 'pending' job or 'cooling_down' job whose retry time has passed
-      const { data: job, error } = await supabase
-        .from('crawl_jobs')
-        .select('*')
-        .or('status.eq.pending,and(status.eq.cooling_down,next_retry_at.lte.now())')
-        .eq('is_archived', false) // Don't pick up archived jobs
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
+      // 1. Fetch the next job using UNION ALL so PostgreSQL uses the two
+      //    partial indexes (crawl_jobs_pending_poll_idx + crawl_jobs_cooling_poll_idx)
+      //    instead of seq-scanning the whole table with an OR condition.
+      const { data: job, error } = await supabase.rpc('next_crawl_job') as any;
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
         console.error('Error fetching job:', error.message);
