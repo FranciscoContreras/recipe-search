@@ -250,6 +250,11 @@ export class NutritionEngine {
         else if (['quart', 'qt'].includes(u)) volumeMl = qty * 946.35;
         else if (['gallon', 'gal'].includes(u)) volumeMl = qty * 3785.41;
 
+        // Pastry sheet units — when parse-ingredient parses "8 phyllo sheets" as unit="phyllo"
+        // or when the description contains "pastry sheets", apply per-sheet weight.
+        else if (['phyllo', 'filo'].includes(u)) weightG = qty * 10; // 1 phyllo sheet ≈ 10g
+        else if (['puff'].includes(u)) weightG = qty * 250; // 1 sheet puff pastry ≈ 250g from a 14oz block
+
         // Abstract / Count — named culinary units with known gram weights
         else if (['pinch', 'pn'].includes(u)) weightG = qty * 0.3;
         else if (['dash'].includes(u)) weightG = qty * 0.6;
@@ -407,6 +412,9 @@ export class NutritionEngine {
                 else if (lowerName.includes('tofu'))       unitWeight = 70;
                 else                                       unitWeight = 15; // fermented bean curd, etc.
             }
+            // ── Pastry sheets (description-based detection) ─────────────────────
+            else if (lowerName.includes('phyllo') || lowerName.includes('filo')) unitWeight = 10;
+            else if (lowerName.includes('puff pastry') || lowerName.includes('pastry sheet')) unitWeight = 250;
 
             return qty * unitWeight;
         }

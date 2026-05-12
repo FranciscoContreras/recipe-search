@@ -34,9 +34,14 @@ export function cleanIngredientTerm(term: string): string {
         'lengthwise', 'crosswise', 'thinly', 'thickly', 'finely', 'coarsely',
         'roughly', 'boneless', 'skinless', 'packed', 'tightly', 'loosely',
         'divided', 'separated', 'reserved', 'removed', 'discarded', 'pitted',
+        'thawed', 'defrosted', 'blanched', 'parboiled', 'marinated',
         'fresh', 'frozen', 'canned', 'dried',
         'flat-leaf', 'flat leaf', 'curly', 'heirloom',
         'extra virgin', 'virgin',
+        // Cutting / size descriptors
+        'cut', 'into', 'pieces', 'chunks', 'wedges', 'strips', 'rings',
+        // Explanatory / example phrases: "such as X, Y" → strip "such", "as"
+        'such', 'as',
         // Count/container descriptors that aren't part of the food name
         'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
         'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',
