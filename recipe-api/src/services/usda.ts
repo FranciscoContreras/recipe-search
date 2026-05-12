@@ -112,6 +112,14 @@ export async function searchUsda(query: string, preferCooked = false): Promise<U
             if (preferCooked) {
                 if (/\bcooked\b/i.test(f.description))           score += 200;
                 if (/\buncooked|raw\b/i.test(f.description))     score -= 200;
+            } else {
+                // When we want raw/dry: reward explicit raw/dry/uncooked descriptors
+                // and penalize entries that are clearly cooked even if not in the
+                // processingTerms filter (e.g., Survey FNDDS "Spaghetti" at cooked density).
+                if (/\b(dry|uncooked|raw|unenriched|enriched(?!\s+cooked))\b/i.test(f.description)) score += 100;
+                if (/\bcooked\b|\bboiled\b/i.test(f.description)) score -= 300;
+                // Prefer Foundation and SR Legacy for raw ingredients (more reliable than Survey)
+                if (f.dataType === 'Survey (FNDDS)') score -= 50;
             }
 
             return score;
