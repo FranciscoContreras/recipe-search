@@ -475,6 +475,10 @@ export class NutritionEngine {
                 else                                                 unitWeight = 15; // fermented bean curd, etc.
             }
             // ── Pastry sheets (description-based detection) ─────────────────────
+            // ── Loaf (description-based detection) ──────────────────────────────
+            // parse-ingredient puts 'loaf' in the description, not as the unit field.
+            // Check here BEFORE the generic 'bread' check which gives 30g (slice weight).
+            else if (lowerName.includes('loaf') && (lowerName.includes('bread') || lowerName.includes('sourdough') || lowerName.includes('baguette') || lowerName.includes('challah') || lowerName.includes('brioche'))) unitWeight = 500;
             else if (lowerName.includes('phyllo') || lowerName.includes('filo')) unitWeight = 10;
             else if (lowerName.includes('puff pastry') || lowerName.includes('pastry sheet')) unitWeight = 250;
 
