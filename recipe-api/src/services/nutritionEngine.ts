@@ -304,11 +304,20 @@ export class NutritionEngine {
             else if (ln.includes('cinnamon'))                           weightG = qty * 3;
             else                                                        weightG = qty * 30;
         }
-        // ── Small block / cube units ───────────────────────────────────────────────
+        // ── Strip unit ─────────────────────────────────────────────────────────────
+        else if (['strip'].includes(u)) {
+            const ln = ingredientName.toLowerCase();
+            if (ln.includes('bacon') || ln.includes('prosciutto') || ln.includes('pancetta')) weightG = qty * 15;
+            else if (ln.includes('pepper') || ln.includes('bell'))    weightG = qty * 30;
+            else                                                        weightG = qty * 20;
+        }
+        // ── Small block / cube / whole-block units ───────────────────────────────
         else if (['cube', 'block', 'square'].includes(u)) {
             const ln = ingredientName.toLowerCase();
             if      (ln.includes('bouillon') || ln.includes('stock') || ln.includes('broth')) weightG = qty * 5;
             else if (ln.includes('chocolate'))                          weightG = qty * 30;
+            // Whole tofu blocks ≈ 349g; tofu cubes (diced) ≈ 70g
+            else if (ln.includes('tofu') && u === 'block')              weightG = qty * 349;
             else if (ln.includes('tofu'))                               weightG = qty * 70;
             else                                                        weightG = qty * 15; // fermented bean curd cubes ≈ 15g each
         }
@@ -410,7 +419,8 @@ export class NutritionEngine {
             else if (lowerName.includes('turnip'))    unitWeight = 120;
             else if (lowerName.includes('parsnip'))   unitWeight = 100;
             else if (lowerName.includes('cucumber'))  unitWeight = 300;
-            else if (lowerName.includes('corn'))      unitWeight = 90;  // 1 ear shucked
+            else if (lowerName.includes('corn tortilla')) unitWeight = 35; // corn tortilla ≈ 28-40g (must check BEFORE 'corn')
+            else if (lowerName.includes('corn'))      unitWeight = 90;  // 1 ear of corn shucked
             else if (lowerName.includes('artichoke')) unitWeight = 120;
             else if (lowerName.includes('mushroom'))  unitWeight = 20;  // 1 button mushroom ≈ 18-20g
             // ── Proteins ────────────────────────────────────────────────────────
@@ -443,9 +453,10 @@ export class NutritionEngine {
             // in the description rather than the unit field, so handle it here too.
             else if (lowerName.includes('cube') || lowerName.includes('block')) {
                 if      (lowerName.includes('bouillon') || lowerName.includes('stock') || lowerName.includes('broth')) unitWeight = 5;
-                else if (lowerName.includes('chocolate'))  unitWeight = 30;
-                else if (lowerName.includes('tofu'))       unitWeight = 70;
-                else                                       unitWeight = 15; // fermented bean curd, etc.
+                else if (lowerName.includes('chocolate'))            unitWeight = 30;
+                else if (lowerName.includes('tofu') && lowerName.includes('block')) unitWeight = 349; // full tofu block
+                else if (lowerName.includes('tofu'))                 unitWeight = 70;
+                else                                                 unitWeight = 15; // fermented bean curd, etc.
             }
             // ── Pastry sheets (description-based detection) ─────────────────────
             else if (lowerName.includes('phyllo') || lowerName.includes('filo')) unitWeight = 10;
@@ -644,6 +655,18 @@ export class NutritionEngine {
 
         // Cache key includes cooking state so cooked and raw variants are stored separately
         const cacheKey = `v11:${primaryTerm.toLowerCase()}${preferCooked ? ':cooked' : ''}`;
+
+        // Non-food / inedible tool detection.
+        // Skewers, toothpicks, etc. are listed as ingredients but are never consumed.
+        // Short-circuit before any lookup to avoid OFW matching them to caloric foods.
+        const NON_FOOD_PATTERN = /\b(bamboo\s+skewer|wooden\s+skewer|metal\s+skewer|skewer|toothpick|wooden\s+pick|popsicle\s+stick|lollipop\s+stick|wooden\s+stick)\b/i;
+        if (NON_FOOD_PATTERN.test(line)) {
+            const ZERO_STATS = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0, calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0 };
+            return {
+                breakdown: { ingredient: line, parsed: { name, searchTerm: primaryTerm, weightGrams: 0, unit, qty }, cookingState, stats: ZERO_STATS, source: 'override:non-food' },
+                stats: ZERO_STATS,
+            };
+        }
 
         // Zero-calorie override for water-type ingredients.
         // USDA data for water is 0 kcal/100g but OFW sometimes caches bad matches.
@@ -899,9 +922,13 @@ export class NutritionEngine {
         // meaningful measured quantity. Cap their weight to a tiny culinary amount so they
         // don't inflate totals (e.g., "nonstick cooking spray" shouldn't add 897 kcal).
         const TRACE_PATTERN = /\b(for\s+garnish|as\s+garnish|for\s+decoration|for\s+topping|as\s+topping|for\s+greasing|to\s+grease|for\s+coating|to\s+coat|for\s+brushing|for\s+dusting|for\s+drizzling|for\s+sprinkling|as\s+needed|to\s+taste|cooking\s+spray|nonstick\s+spray|optional|if\s+desired)\b/i;
+        // "for serving" — only cap accompaniments that have NO explicit quantity at the start.
+        // "tortilla chips, for serving" (no qty) → cap; "8 tortillas ... plus more for serving" → keep.
+        const FOR_SERVING_PATTERN = /\bfor\s+serving\b|\bfor\s+dipping\b|\bfor\s+dunking\b/i;
+        const lineStartsWithNumber = /^\s*(\d|[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])/.test(line);
         // Note: qty defaults to 1, so we cannot use !qty as a "no quantity" signal.
         // Instead cap any trace/garnish ingredient that resolved to a large weight.
-        if (TRACE_PATTERN.test(line) && weightGrams > 15) {
+        if ((TRACE_PATTERN.test(line) || (FOR_SERVING_PATTERN.test(line) && !lineStartsWithNumber)) && weightGrams > 15) {
             weightGrams = 5; // 5g is a reasonable trace amount for a garnish or topping
         } else if (/\bcooking\s+spray\b/i.test(line) && weightGrams > 5) {
             weightGrams = 1; // cooking spray delivers ~0.3–1g per use
