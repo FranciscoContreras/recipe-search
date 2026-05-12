@@ -424,6 +424,20 @@ export class NutritionEngine {
         const qty:  number  = parsed.quantity ?? 1;
         const unit: string  = parsed.unitOfMeasure || '';
 
+        // 1b. Non-consumed / negligible-calorie ingredient early exit
+        //
+        // "For frying" oil: only 8-15% is absorbed by food; counting the full
+        // volume inflates pho/deep-fry recipes by 10-20×.
+        // "For stock" bones / whole poultry: used as cooking media then discarded —
+        // calorie content does not transfer to the finished dish.
+        // "Water" in broth / poaching liquid: genuinely zero calories; a bad OFW
+        // cache entry at 100 kcal/100g cannot be caught by the >900 eviction alone.
+        const FRY_OIL_PATTERN = /\bfor\s+(deep[- ]?fry|shallow[- ]?fry|pan[- ]?fry|frying|deep\s+frying)\b|\bfrying\s+oil\b/i;
+        const STOCK_PATTERN   = /\bfor\s+(stock|broth|the\s+broth|the\s+stock)\b|\bmake\s+(the\s+)?(stock|broth)\b/i;
+        const WATER_TERMS = new Set(['water', 'ice water', 'cold water', 'warm water', 'hot water',
+                                      'boiling water', 'ice', 'sparkling water', 'mineral water',
+                                      'soda water', 'carbonated water', 'filtered water']);
+
         // 2. Detect cooking state from the original line and the cleaned ingredient name
         const searchTerms = getSearchTerms(name);
         const primaryTerm = searchTerms[0] ?? name;
@@ -437,6 +451,18 @@ export class NutritionEngine {
 
         // Cache key includes cooking state so cooked and raw variants are stored separately
         const cacheKey = `v11:${primaryTerm.toLowerCase()}${preferCooked ? ':cooked' : ''}`;
+
+        // Zero-calorie override for water-type ingredients.
+        // USDA data for water is 0 kcal/100g but OFW sometimes caches bad matches.
+        // Rather than fighting cache entries, short-circuit to 0 for known zero-cal terms.
+        if (WATER_TERMS.has(primaryTerm.toLowerCase())) {
+            const wg = this.unitToGrams(unit, qty, name, cookingState);
+            const ZERO_STATS = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sugar: 0, calcium_mg: 0, iron_mg: 0, vitamin_a_mcg: 0, vitamin_c_mg: 0 };
+            return {
+                breakdown: { ingredient: line, parsed: { name, searchTerm: primaryTerm, weightGrams: wg, unit, qty }, cookingState, stats: ZERO_STATS, source: 'override:zero-cal' },
+                stats: ZERO_STATS,
+            };
+        }
 
         // 3. Cache lookup
         let nutritionInfo: UsdaNutrition | SimpleNutrition | null = null;
@@ -454,12 +480,19 @@ export class NutritionEngine {
             const serv = n?.serving_size_g || 100;
             const calPer100g = ((n?.calories ?? 0) / serv) * 100;
 
-            // Reject poisoned cache entries (calorie density that defies physics).
-            // Pure fat caps at ~884 kcal/100g; anything higher signals a bad OFW match
-            // that was cached (e.g., "milk" cached as sweetened condensed milk at 534+,
-            // or "green cabbage" cached as a coleslaw kit at 542 kcal/100g).
-            // A legitimate food can be up to ~900 kcal/100g — reject above that threshold.
-            if (calPer100g <= 900) {
+            // Ingredient-type-specific maximum calorie densities.
+            // Pure fat caps at ~884 kcal/100g — anything above that is physically impossible.
+            // For specific low-calorie ingredient types, apply tighter limits to catch
+            // bad OFW matches at moderate densities (e.g., "water" cached at 100 kcal/100g).
+            const keyLower = cacheKey.replace(/^v11:/, '').replace(/:cooked$/, '');
+            const maxCal =
+                /^water$|^(chicken|beef|vegetable)\s+broth$|^(chicken|beef|vegetable)\s+stock$|^broth$|^stock$/.test(keyLower) ? 15 :
+                /broth|stock/.test(keyLower)                         ? 30  :
+                /\bcabbage\b|\blettuce\b|\bspinach\b|\bkale\b/.test(keyLower) ? 100 :
+                /\bmilk\b/.test(keyLower)                            ? 80  :  // whole milk ~61; oat milk ~47; condensed would be >300
+                900; // hard physical limit for everything else
+
+            if (calPer100g <= maxCal) {
                 nutritionInfo = n;
                 source        = cached.source;
             } else {
@@ -548,8 +581,33 @@ export class NutritionEngine {
         //    For cooked grains/legumes, unitToGrams uses cooked-density table for volumes.
         const portions = (nutritionInfo as any).portions as { measure: string; gramWeight: number }[] | undefined;
 
-        const portionWeight = this.resolveWeightFromPortions(portions ?? [], unit, qty);
-        let weightGrams     = portionWeight ?? this.unitToGrams(unit, qty, name, cookingState);
+        const portionWeight  = this.resolveWeightFromPortions(portions ?? [], unit, qty);
+        const heuristicWeight = this.unitToGrams(unit, qty, name, cookingState);
+
+        // Choose between portion-derived and heuristic weights.
+        // Normally portion data (from USDA detail endpoint) is more accurate.
+        // Exception: for count-based small items (cookies, crackers, chips…),
+        // USDA "1 medium serving" often means N items (e.g., 3 cookies = 45g),
+        // which inflates the per-item weight. When the portion-derived per-item
+        // weight is >3× our heuristic AND our heuristic says <50g per item,
+        // trust the heuristic instead.
+        const METRIC_UNIT_SET = new Set(['g','gram','kg','kilogram','oz','ounce','lb','pound',
+                                         'ml','milliliter','l','liter','cup','tbsp','tablespoon',
+                                         'tbs','tb','tsp','teaspoon','fl','pint','pt','quart','qt','gallon','gal']);
+        const isCountBased = !METRIC_UNIT_SET.has(unit.toLowerCase().replace(/s$/, ''));
+
+        let weightGrams: number;
+        if (portionWeight !== null) {
+            const perItemPortion   = portionWeight   / Math.max(qty, 1);
+            const perItemHeuristic = heuristicWeight / Math.max(qty, 1);
+            if (isCountBased && perItemPortion > perItemHeuristic * 3 && perItemHeuristic < 50) {
+                weightGrams = heuristicWeight; // prefer our per-item table for small count foods
+            } else {
+                weightGrams = portionWeight;
+            }
+        } else {
+            weightGrams = heuristicWeight;
+        }
 
         // 6a. Trace / garnish override
         // Ingredients listed as "for garnish", "for greasing", "to taste" etc. have no
@@ -562,6 +620,19 @@ export class NutritionEngine {
             weightGrams = 1; // cooking spray delivers ~0.3–1g per use
         } else if (/\bfor\s+garnish\b|\bas\s+garnish\b/i.test(line) && weightGrams > 10) {
             weightGrams = 2; // garnish items: 1–3g
+        }
+
+        // 6b. Frying oil — only 8-15% is absorbed by food; count 10% of measured volume.
+        // "6 cups oil for deep frying" contributes ~1,000 kcal, not ~11,000 kcal.
+        if (FRY_OIL_PATTERN.test(line)) {
+            weightGrams = weightGrams * 0.10;
+        }
+
+        // 6c. Stock / broth-making ingredients — bones and whole poultry used to make
+        // broth are discarded after cooking; their calories do not transfer to the broth.
+        // Zero out weight (the broth itself is typically a separate ingredient line).
+        if (STOCK_PATTERN.test(line)) {
+            weightGrams = 0;
         }
 
         // 7. Compute contribution  (USDA nutrients are per 100 g)
