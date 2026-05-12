@@ -657,15 +657,14 @@ export class NutritionEngine {
         let source    = nutritionInfo ? 'baseline' : 'usda';
         let usedTerm  = primaryTerm;
 
-        // 4. Cache lookup (no-op when baseline matched because if(cached) won't set
-        //    nutritionInfo again, and the api-chain's if(!nutritionInfo) will skip)
-        const { data: cached } = await supabase
+        // 4. Cache lookup — fully skipped when baseline already matched.
+        const { data: cached } = nutritionInfo ? { data: null } : await supabase
             .from('ingredient_cache')
             .select('*')
             .eq('term', cacheKey)
             .single();
 
-        if (cached) {
+        if (cached && !nutritionInfo) {
             const n = cached.nutrition as any;
             const serv = n?.serving_size_g || 100;
             const calPer100g = ((n?.calories ?? 0) / serv) * 100;
