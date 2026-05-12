@@ -304,8 +304,12 @@ export class NutritionEngine {
             else if (lowerName.includes('apricot'))   unitWeight = 35;
             else if (lowerName.includes('fig'))       unitWeight = 40;
             else if (lowerName.includes('date'))      unitWeight = 7;   // medjool date ≈ 24g; deglet ≈ 7g
-            else if (lowerName.includes('strawberry'))unitWeight = 12;  // 1 medium strawberry ≈ 12g
-            else if (lowerName.includes('cherry'))    unitWeight = 8;
+            else if (lowerName.includes('strawberr'))  unitWeight = 12;  // strawberry / strawberries (plural 'y→ies' breaks .includes('strawberry'))
+            else if (lowerName.includes('cherr'))     unitWeight = 8;   // cherry / cherries (plural 'y→ies' breaks .includes('cherry'))
+            else if (lowerName.includes('blueberr'))  unitWeight = 2;   // blueberry ≈ 2g each
+            else if (lowerName.includes('raspberr'))  unitWeight = 4;
+            else if (lowerName.includes('blackberr')) unitWeight = 5;
+            else if (lowerName.includes('marshmallow')) unitWeight = 7; // large marshmallow ≈ 7g; mini ≈ 1g
             // ── Vegetables ──────────────────────────────────────────────────────
             else if (lowerName.includes('romaine'))   unitWeight = 500; // 1 head romaine ≈ 500g
             else if (lowerName.includes('lettuce'))   unitWeight = 400; // 1 head generic lettuce
@@ -550,16 +554,20 @@ export class NutritionEngine {
             // bad OFW matches at moderate densities (e.g., "water" cached at 100 kcal/100g,
             // "cauliflower" cached as cauliflower gratin at 75 kcal/100g).
             const keyLower = cacheKey.replace(/^v11:/, '').replace(/:cooked$/, '');
+            // NOTE: No trailing \b on ingredient roots — "onion" must also match "onions",
+            // "tomato" must match "tomatoes", "cherr" must match "cherries", etc.
             const maxCal =
                 // Near-zero-calorie liquids
                 /^water$|^(chicken|beef|vegetable)\s+broth$|^(chicken|beef|vegetable)\s+stock$|^broth$|^stock$/.test(keyLower) ? 15 :
                 /broth|stock/.test(keyLower)                         ? 30  :
-                // Low-calorie non-starchy vegetables (raw ≤30, cooked with oil ≤60)
-                /\bcauliflower\b|\bbroccoli\b|\bzucchini\b|\bcucumber\b|\bcelery\b|\bradish\b|\basparagus\b|\bartichoke\b/.test(keyLower) ? 60 :
-                /\bcabbage\b|\blettuce\b|\bspinach\b|\bkale\b|\bbok choy\b|\bchard\b/.test(keyLower) ? 60 :
-                /\btomato\b|\bpepper\b|\bonion\b|\bcarrot\b|\bgreen bean\b/.test(keyLower) ? 80  :
-                // Dairy — condensed/evaporated are high; whole milk ~61; heavy cream ~334
-                /\bmilk\b/.test(keyLower)                            ? 80  :
+                // Low-calorie non-starchy vegetables (raw ≤30 kcal/100g, cooked with oil ≤60)
+                /cauliflower|broccoli|zucchini|courgette|cucumber|celery|radish|asparagus|artichoke/.test(keyLower) ? 60 :
+                /cabbage|lettuce|spinach|kale|bok.?choy|chard/.test(keyLower) ? 60 :
+                // Moderate-calorie veg (starchy or slightly denser; raw ≤80 kcal/100g)
+                /squash|pumpkin|eggplant|aubergine|turnip|parsnip|beet/.test(keyLower) ? 80 :
+                /tomato|pepper|onion|carrot|green.?bean|mushroom|corn/.test(keyLower)  ? 80 :
+                // Dairy — condensed/evaporated are legitimately high; whole milk ~61
+                /\bmilk/.test(keyLower)                              ? 80  :
                 900; // hard physical limit for everything else
 
             if (calPer100g <= maxCal) {
