@@ -45,6 +45,8 @@ export function cleanIngredientTerm(term: string): string {
         // Recipe instruction words that survive parenthetical removal
         // "see note", "see headnote" → "note" / "see" end up as search terms
         'see', 'note', 'headnote',
+        // Vegetable prep state words not already covered
+        'root', 'roots', 'ends', 'trimmed', 'off',
         // Count/container descriptors that aren't part of the food name
         'stalk', 'stalks', 'sprig', 'sprigs', 'bunch', 'bunches', 'floret', 'florets',
         'about', 'plus', 'more', 'optional', 'garnish', 'taste', 'serving',
@@ -95,6 +97,14 @@ export function cleanIngredientTerm(term: string): string {
         // Root vegetables — USDA has specific entries but generic searches miss them
         'daikon':            'daikon radish',   // prevents matching tiny garden "Radishes, raw"
         'daikon radish':     'daikon radish',
+        // Seeds with non-English names
+        'pepitas':           'pumpkin seeds',   // USDA lists these as "pumpkin seeds" not "pepitas"
+        // Small potato varieties — USDA doesn't have "mini/baby potato"; prevents FatSecret
+        // from matching processed products (potato gems, hash browns) at 300+ kcal/100g
+        'mini potato':       'potato',
+        'baby potato':       'potato',
+        'new potato':        'potato',
+        'fingerling':        'potato',
         // Meat
         'minced beef':       'ground beef',
         'minced pork':       'ground pork',
