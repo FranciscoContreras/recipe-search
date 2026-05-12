@@ -14,7 +14,7 @@ import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 import { lookupBarcode } from './services/openFoodFacts';
 import { isSafePublicUrl } from './utils/url';
-import { inferDishContext, resolveContext, DISH_CONTEXT_DESCRIPTIONS, DishContext } from './utils/cookingState';
+import { resolveContext, resolveCookingState, DISH_CONTEXT_DESCRIPTIONS, DishContext } from './utils/cookingState';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -108,8 +108,9 @@ app.get('/sitemap.xml', async (req, res) => {
 app.get('/recipe/:id', async (req, res) => {
   const { id } = req.params;
   
-  // 1. Fetch Data
-  const { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).single();
+  // 1. Fetch Data — exclude quarantined/rejected so they don't get SEO meta injection
+  const { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id)
+      .neq('qa_status', 'quarantined').neq('qa_status', 'rejected').single();
   
   if (error || !recipe) {
       return res.status(404).sendFile(path.join(__dirname, '../public/index.html')); // Fallback or 404 page
@@ -318,7 +319,7 @@ app.get('/recipes/:id', async (req: Request, res: Response) => {
   if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
       const start = Date.now();
       // Fire-and-forget: enrich in background without blocking the response
-      NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients)
+      NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients as string[])
         .then(async (result) => {
             const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
             await supabase.from('recipes').update({ nutrition }).eq('id', id);
@@ -342,7 +343,7 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   const enrichedRecipes = await Promise.all(recipes.map(async (recipe) => {
       if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
           try {
-              const result = await NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients);
+              const result = await NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients as string[]);
               const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
               updates.push({ id: recipe.id, nutrition });
               return { ...recipe, nutrition };

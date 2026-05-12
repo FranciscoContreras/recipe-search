@@ -342,7 +342,7 @@
         lucide.createIcons();
 
         // --- Helpers ---
-        const API_KEY = 'sk_526390a62deaa8738374629838e5e4582663047bdc0832ca4377e4d36aa74c86';
+        const API_KEY = 'sk_5d6eb8b29096a32bfdfd4a6ca5c6c2476e1e4f0c2353ac290411715155cac10f';
         const api = {
             search: async (q) => (await fetch(`/search?q=${encodeURIComponent(q)}`, { headers: { 'x-api-key': API_KEY } })).json(),
             getRecipes: async () => (await fetch('/recipes', { headers: { 'x-api-key': API_KEY } })).json(),

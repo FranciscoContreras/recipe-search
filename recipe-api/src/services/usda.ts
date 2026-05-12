@@ -37,7 +37,6 @@ export interface UsdaNutrition {
 }
 
 export async function searchUsda(query: string, preferCooked = false): Promise<UsdaNutrition | null> {
-    console.log(`DEBUG: USDA Searching for "${query}"`);
     if (!API_KEY) {
         console.warn('USDA API Key missing.');
         return null;
@@ -46,16 +45,11 @@ export async function searchUsda(query: string, preferCooked = false): Promise<U
     try {
         const encodedQuery = encodeURIComponent(query);
         const url = `${BASE_URL}/foods/search?api_key=${API_KEY}&query=${encodedQuery}&dataType=Foundation,SR%20Legacy,Survey%20(FNDDS)&pageSize=5`;
-        
-        console.log(`DEBUG: Fetching URL: ${url.replace(API_KEY, '***')}`);
 
         const searchRes = await axios.get(url);
         const foods = searchRes.data.foods || [];
-        
-        if (foods.length === 0) {
-            console.log(`DEBUG: USDA found no results for "${query}"`);
-            return null;
-        }
+
+        if (foods.length === 0) return null;
 
         // 1. Filter out Branded if possible
         let candidates = foods.filter((f: any) => f.dataType !== 'Branded');
@@ -121,8 +115,6 @@ export async function searchUsda(query: string, preferCooked = false): Promise<U
         }
 
         if (!foodCandidate) return null;
-
-        console.log(`DEBUG: Selected Food Candidate: ${foodCandidate.description} (ID: ${foodCandidate.fdcId})`);
 
         // 4. Fetch Full Details (for Portions)
         const detailsUrl = `${BASE_URL}/food/${foodCandidate.fdcId}?api_key=${API_KEY}`;

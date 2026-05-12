@@ -96,7 +96,7 @@ async function startAuditor() {
                     try {
                         const result = await NutritionEngine.analyzeRecipe(
                             recipe.name,
-                            recipe.recipe_ingredients,
+                            recipe.recipe_ingredients as string[],
                         );
                         // Store flat total + metadata so recipe.nutrition.calories still works
                         nutritionUpdate = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
