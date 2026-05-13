@@ -592,21 +592,24 @@ export class NutritionEngine {
         qty: number,
         cachedServingGrams?: number,
     ): number | null {
-        // ── 0. Enriched cache hit — pre-resolved from USDA/CNF/FRIDA/AUSNUT/LLM ─
-        if (cachedServingGrams && cachedServingGrams > 0) {
-            return cachedServingGrams * qty;
-        }
-
-        if (!portions || portions.length === 0) return null;
-
         const u = unit ? unit.toLowerCase().replace(/s$/, '') : '';
 
-        // Volume and weight units are handled by unitToGrams — don't override them here
+        // Volume and weight units are handled by unitToGrams — MUST check before
+        // cachedServingGrams. "400g cherry tomatoes" has qty=400, unit=g: applying
+        // cachedServingGrams first would give 400 × serving_g = absurd weight.
         const METRIC_UNITS = new Set(['g','gram','kg','kilogram','oz','ounce','lb','pound',
                               'ml','milliliter','l','liter','cup','tbsp','tablespoon',
                               'tbs','tb','tsp','teaspoon','fl','pint','pt','quart',
                               'qt','gallon','gal']);
         if (METRIC_UNITS.has(u)) return null;
+
+        // ── 0. Enriched cache hit — pre-resolved from USDA/CNF/FRIDA/AUSNUT/LLM ─
+        // Only applied for count-based ingredients (unit not in METRIC_UNITS above).
+        if (cachedServingGrams && cachedServingGrams > 0) {
+            return cachedServingGrams * qty;
+        }
+
+        if (!portions || portions.length === 0) return null;
 
         // Portions that represent whole-package/container measures — exclude these for
         // count-based resolution (e.g. "1 package = 454g" when we want "1 slice = 8g").
