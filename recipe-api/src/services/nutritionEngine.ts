@@ -5,6 +5,7 @@ import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
 import { lookupBaseline } from './baselineNutrition';
 import { cleanIngredientTerm, getSearchTerms } from '../utils/cleaning';
 import { detectCookingState, resolveCookingState, resolveContext, getCookedDensity, CookingState, DishContext } from '../utils/cookingState';
+import { enrichServingGrams, extractServingFromPortions } from './servingEnrichment';
 
 /**
  * Returns true when the ingredient string looks like a packaged or branded product.
@@ -570,73 +571,122 @@ export class NutritionEngine {
     }
 
     /**
-     * Resolve weight for an ingredient that has a count/size-based unit (or no unit)
-     * using the USDA portion table returned with the food detail.
+     * Resolve weight using USDA portion data (and serving_grams from enriched cache).
      *
-     * Priority:
-     *  1. Explicit size qualifier match (medium, large, small, whole, piece, stalk, head…)
-     *  2. Any "medium" or "whole" portion as a general default for count items
+     * The previous implementation only matched "medium/whole/piece/item/each" in USDA
+     * portion descriptions — silently missing "slice cooked", "strip", "cookie", "cracker",
+     * "ear", "clove", etc. that USDA actually provides. This rewrite uses the full
+     * vocabulary of per-item portion types so we get e.g. "1 slice, cooked = 8g" for
+     * bacon instead of falling through to the hardcoded table.
      *
-     * Returns null if no usable portion is found — caller falls back to unitToGrams.
+     * Resolution order:
+     *   1. Enriched cache serving_grams (pre-resolved, most reliable)
+     *   2. Direct unit match against USDA portion descriptions
+     *   3. Per-item portion scan with full vocabulary, excluding containers/packages
+     *
+     * Returns null if nothing matches — caller falls back to unitToGrams heuristic.
      */
     private static resolveWeightFromPortions(
         portions: { measure: string; gramWeight: number }[],
         unit: string,
         qty: number,
+        cachedServingGrams?: number,
     ): number | null {
+        // ── 0. Enriched cache hit — pre-resolved from USDA/CNF/FRIDA/AUSNUT/LLM ─
+        if (cachedServingGrams && cachedServingGrams > 0) {
+            return cachedServingGrams * qty;
+        }
+
         if (!portions || portions.length === 0) return null;
 
         const u = unit ? unit.toLowerCase().replace(/s$/, '') : '';
 
         // Volume and weight units are handled by unitToGrams — don't override them here
-        const METRIC_UNITS = ['g','gram','kg','kilogram','oz','ounce','lb','pound',
+        const METRIC_UNITS = new Set(['g','gram','kg','kilogram','oz','ounce','lb','pound',
                               'ml','milliliter','l','liter','cup','tbsp','tablespoon',
                               'tbs','tb','tsp','teaspoon','fl','pint','pt','quart',
-                              'qt','gallon','gal'];
-        if (METRIC_UNITS.includes(u)) return null;
+                              'qt','gallon','gal']);
+        if (METRIC_UNITS.has(u)) return null;
 
-        // Size qualifiers to match against USDA portion descriptions
-        const SIZE_KEYWORDS: [string, string[]][] = [
-            [u,        [u]],                           // exact match on the unit string
-            ['large',  ['large', 'xl', 'extra large']],
-            ['medium', ['medium', 'med']],
-            ['small',  ['small', 'sm']],
-            ['whole',  ['whole', 'item', 'piece', 'each']],
-            ['stalk',  ['stalk', 'stem', 'spear']],
-            ['head',   ['head']],
-            ['bunch',  ['bunch', 'bundle']],
-            ['slice',  ['slice', 'piece']],
-            ['leaf',   ['leaf', 'leave']],
-            ['sprig',  ['sprig']],
-            ['clove',  ['clove']],
-            ['ear',    ['ear']],
-        ];
+        // Portions that represent whole-package/container measures — exclude these for
+        // count-based resolution (e.g. "1 package = 454g" when we want "1 slice = 8g").
+        const CONTAINER_SIGNALS = /\b(package|pkg|bag|box|container|can|jar|bottle|case|carton|pouch|tray|dozen|pound|lb|ounce|oz)\b/i;
 
-        for (const [key, synonyms] of SIZE_KEYWORDS) {
-            if (!key || key.length < 2) continue;
-            const matched = portions.find(p =>
-                synonyms.some(s => p.measure.toLowerCase().includes(s))
-            );
-            if (matched) return matched.gramWeight * qty;
+        // ── 1. Direct unit match ────────────────────────────────────────────────
+        // When the unit is a named portion type (slice, strip, clove, ear, etc.)
+        // find USDA portions that mention that exact type, excluding containers.
+        const UNIT_SYNONYMS: Record<string, string[]> = {
+            slice:       ['slice'],
+            strip:       ['strip'],
+            piece:       ['piece', 'item', 'each'],
+            whole:       ['whole', 'item', 'each'],
+            medium:      ['medium', 'med'],
+            large:       ['large', 'xl', 'extra-large'],
+            small:       ['small', 'sm'],
+            head:        ['head'],
+            bunch:       ['bunch', 'bundle'],
+            stalk:       ['stalk', 'stem', 'spear', 'rib'],
+            leaf:        ['leaf', 'leave'],
+            clove:       ['clove'],
+            ear:         ['ear'],
+            sprig:       ['sprig'],
+            wedge:       ['wedge'],
+            cube:        ['cube'],
+            scoop:       ['scoop'],
+            cookie:      ['cookie', 'biscuit'],
+            cracker:     ['cracker'],
+            patty:       ['patty'],
+            fillet:      ['fillet', 'filet'],
+            breast:      ['breast'],
+            thigh:       ['thigh'],
+            drumstick:   ['drumstick', 'leg'],
+        };
+
+        if (u && u.length >= 2) {
+            const synonyms = UNIT_SYNONYMS[u] ?? [u];
+            const directMatch = portions
+                .filter(p => !CONTAINER_SIGNALS.test(p.measure))
+                .find(p => synonyms.some(s => p.measure.toLowerCase().includes(s)));
+            if (directMatch) return directMatch.gramWeight * qty;
         }
 
-        // Fall through: no size qualifier — for a plain count ("2 apples") use medium.
-        // Sort by gramWeight ascending so we prefer individual-item portions over
-        // container/package-level portions (e.g., "1 cookie" at 11g beats "1 package" at 487g).
-        const matchingPortions = portions
+        // ── 2. Per-item portion scan ────────────────────────────────────────────
+        // For count-based items (unit="" or size modifier), scan for any USDA portion
+        // that describes a single food item — using a vocabulary much broader than the
+        // old "medium/whole/piece" filter.
+        const PER_ITEM_SIGNALS = new RegExp(
+            '\\b(1|one|single)\\s+' +
+            '(medium|large|small|whole|piece|item|each|slice|strip|cookie|cracker|' +
+             'chip|bite|scoop|portion|serving|leaf|clove|ear|stalk|stem|spear|rib|' +
+             'wedge|cube|patty|fillet|filet|breast|thigh|drumstick|leg|head|bunch|' +
+             'bundle|link|sausage|strip|rind|sprig)' +
+            '|\\b(slice|strip|cookie|cracker|medium|large|small|whole|piece|each|item)\\b',
+            'i'
+        );
+
+        const perItemPortions = portions
             .filter(p => {
-                const pm = p.measure.toLowerCase();
-                return pm.includes('medium') || pm.includes('whole') || pm.includes('piece') ||
-                       pm.includes('item') || pm.includes('each');
+                const m = p.measure;
+                return PER_ITEM_SIGNALS.test(m) && !CONTAINER_SIGNALS.test(m) && p.gramWeight < 600;
             })
             .sort((a, b) => a.gramWeight - b.gramWeight);
 
-        // Reject implausibly large "per item" weights when we have a high item count.
-        // If qty > 3 and every matching portion is >150g, it's almost certainly a
-        // container measure, not a single-item measure — fall back to unitToGrams.
-        const MAX_PER_ITEM_G = qty > 3 ? 150 : 2000;
-        const best = matchingPortions.find(p => p.gramWeight <= MAX_PER_ITEM_G);
-        if (best) return best.gramWeight * qty;
+        if (perItemPortions.length === 0) return null;
+
+        // Prefer size-matched portion when the unit is a size qualifier
+        if (u === 'large' || u === 'small') {
+            const sizeMatch = perItemPortions.find(p => new RegExp(`\\b${u}\\b`, 'i').test(p.measure));
+            if (sizeMatch) return sizeMatch.gramWeight * qty;
+        }
+
+        // Prefer "medium" as the neutral default; otherwise use the smallest per-item weight
+        const mediumMatch = perItemPortions.find(p => /\bmedium\b/i.test(p.measure));
+        const best = mediumMatch ?? perItemPortions[0];
+
+        // Final plausibility gate: if we have many items and the per-item weight is large,
+        // it's probably a container measure that slipped past CONTAINER_SIGNALS.
+        const MAX_PER_ITEM_G = qty > 3 ? 150 : 500;
+        if (best.gramWeight <= MAX_PER_ITEM_G) return best.gramWeight * qty;
 
         return null;
     }
@@ -819,6 +869,12 @@ export class NutritionEngine {
 
         if (cached && !nutritionInfo) {
             const n = cached.nutrition as any;
+            // Carry enriched serving data forward so weight resolution uses it
+            const cachedServingGrams: number | undefined = (cached as any).serving_grams ?? undefined;
+            if (cachedServingGrams) {
+                // Attach to nutritionInfo-to-be so resolveWeightFromPortions can use it
+                if (n && !n._serving_grams) n._serving_grams = cachedServingGrams;
+            }
             const serv = n?.serving_size_g || 100;
             const calPer100g = ((n?.calories ?? 0) / serv) * 100;
 
@@ -986,11 +1042,41 @@ export class NutritionEngine {
         }
 
         // 6. Weight calculation
-        //    Priority: explicit metric unit → USDA portion data → unitToGrams heuristic
-        //    For cooked grains/legumes, unitToGrams uses cooked-density table for volumes.
+        //    Priority:
+        //      a. Enriched cache serving_grams (resolved from USDA/CNF/FRIDA/AUSNUT/LLM)
+        //      b. USDA foodPortions with full per-item vocabulary matching
+        //      c. unitToGrams heuristic (kept as last resort)
         const portions = (nutritionInfo as any).portions as { measure: string; gramWeight: number }[] | undefined;
 
-        const portionWeight  = this.resolveWeightFromPortions(portions ?? [], unit, qty);
+        // Enriched serving data — set during cache read (cachedServingGrams) or extracted
+        // from USDA portions at write time. Passed into resolveWeightFromPortions as priority 0.
+        const cachedServingGrams: number | undefined = (nutritionInfo as any)._serving_grams ?? undefined;
+
+        // If we don't have cached serving_grams yet and USDA returned portions, try to
+        // extract it now so it can be written back to the cache for next time.
+        if (!cachedServingGrams && portions && portions.length > 0 && source === 'usda') {
+            const extracted = extractServingFromPortions(portions, unit, cookingState);
+            if (extracted) {
+                // Write back async — does not block the response
+                // (cast: serving_grams added by migration, Supabase types regenerated on next pull)
+                ;(supabase as any).from('ingredient_cache')
+                    .update({
+                        serving_grams:       extracted.serving_grams,
+                        serving_description: extracted.serving_description,
+                    })
+                    .eq('term', cacheKey)
+                    .then();
+            }
+        }
+
+        // Kick off background enrichment for any source that didn't provide serving data.
+        // This populates the cache for all future requests — no user ever waits for it.
+        if (!cachedServingGrams) {
+            enrichServingGrams(cacheKey, name, unit, cookingState, portions)
+                .catch(() => {});
+        }
+
+        const portionWeight   = this.resolveWeightFromPortions(portions ?? [], unit, qty, cachedServingGrams);
         const heuristicWeight = this.unitToGrams(unit, qty, name, cookingState);
 
         // Choose between portion-derived and heuristic weights.

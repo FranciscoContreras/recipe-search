@@ -17,17 +17,21 @@ const BASE_BARCODE = 'https://world.openfoodfacts.org/api/v2/product';
 const USER_AGENT   = 'RecipeBaseAPI/1.0 (https://recipe-base.wearemachina.com)';
 
 export interface OffNutrition {
-    calories:      number;
-    protein:       number;
-    fat:           number;
-    carbs:         number;
-    fiber:         number;
-    sugar:         number;
-    calcium_mg:    number;
-    iron_mg:       number;
-    vitamin_a_mcg: number;
-    vitamin_c_mg:  number;
-    serving_size_g: number;
+    calories:           number;
+    protein:            number;
+    fat:                number;
+    carbs:              number;
+    fiber:              number;
+    sugar:              number;
+    calcium_mg:         number;
+    iron_mg:            number;
+    vitamin_a_mcg:      number;
+    vitamin_c_mg:       number;
+    serving_size_g:     number;
+    // Per-item serving data — used by servingEnrichment pipeline to resolve
+    // count-based weights without falling back to the hardcoded heuristic table.
+    serving_quantity?:  number;  // grams per one stated serving (e.g. 8 for "1 slice = 8g")
+    serving_size_text?: string;  // raw serving description (e.g. "1 slice (8g)")
 }
 
 // ─── Relevance guard ──────────────────────────────────────────────────────────
@@ -121,24 +125,38 @@ async function lookupLocalBarcode(barcode: string): Promise<any | null> {
 
 // ─── Live API helpers ─────────────────────────────────────────────────────────
 
-export function extractNutrients(nutriments: any): OffNutrition | null {
+export function extractNutrients(nutriments: any, product?: any): OffNutrition | null {
     if (!nutriments) return null;
 
     const cal = parseFloat(nutriments['energy-kcal_100g'] ?? nutriments['energy_100g'] ?? 0);
     if (!cal && cal !== 0) return null;
 
+    // Extract per-serving data when available — key for count-based weight resolution.
+    // OFW product objects carry serving_size (string) and serving_quantity (number, grams).
+    let serving_quantity: number | undefined;
+    let serving_size_text: string | undefined;
+    if (product) {
+        const rawQty = parseFloat(product.serving_quantity ?? '');
+        if (!isNaN(rawQty) && rawQty > 0 && rawQty < 1000) {
+            serving_quantity  = rawQty;
+            serving_size_text = product.serving_size ?? undefined;
+        }
+    }
+
     return {
-        calories:       cal,
-        protein:        parseFloat(nutriments['proteins_100g']      ?? 0),
-        fat:            parseFloat(nutriments['fat_100g']            ?? 0),
-        carbs:          parseFloat(nutriments['carbohydrates_100g']  ?? 0),
-        fiber:          parseFloat(nutriments['fiber_100g']          ?? 0),
-        sugar:          parseFloat(nutriments['sugars_100g']         ?? 0),
-        calcium_mg:     parseFloat(nutriments['calcium_100g']        ?? 0) * 1000,
-        iron_mg:        parseFloat(nutriments['iron_100g']           ?? 0) * 1000,
-        vitamin_a_mcg:  parseFloat(nutriments['vitamin-a_100g']      ?? 0) * 1_000_000,
-        vitamin_c_mg:   parseFloat(nutriments['vitamin-c_100g']      ?? 0) * 1000,
-        serving_size_g: 100,
+        calories:          cal,
+        protein:           parseFloat(nutriments['proteins_100g']      ?? 0),
+        fat:               parseFloat(nutriments['fat_100g']            ?? 0),
+        carbs:             parseFloat(nutriments['carbohydrates_100g']  ?? 0),
+        fiber:             parseFloat(nutriments['fiber_100g']          ?? 0),
+        sugar:             parseFloat(nutriments['sugars_100g']         ?? 0),
+        calcium_mg:        parseFloat(nutriments['calcium_100g']        ?? 0) * 1000,
+        iron_mg:           parseFloat(nutriments['iron_100g']           ?? 0) * 1000,
+        vitamin_a_mcg:     parseFloat(nutriments['vitamin-a_100g']      ?? 0) * 1_000_000,
+        vitamin_c_mg:      parseFloat(nutriments['vitamin-c_100g']      ?? 0) * 1000,
+        serving_size_g:    100,
+        serving_quantity,
+        serving_size_text,
     };
 }
 
@@ -163,7 +181,7 @@ async function searchLiveAPI(query: string): Promise<OffNutrition | null> {
         const data = await res.json();
         for (const product of (data.products ?? [])) {
             if (!isRelevantOffResult(product.product_name, query)) continue;
-            const nutrition = extractNutrients(product.nutriments);
+            const nutrition = extractNutrients(product.nutriments, product);
             if (nutrition && nutrition.calories > 0) return nutrition;
         }
         return null;
@@ -222,7 +240,7 @@ export async function lookupBarcode(barcode: string): Promise<{
         const product = data.product;
         if (!product) return null;
 
-        const nutrition = extractNutrients(product.nutriments);
+        const nutrition = extractNutrients(product.nutriments, product);
         if (!nutrition) return null;
 
         return {
