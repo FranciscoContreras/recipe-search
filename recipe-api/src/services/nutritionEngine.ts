@@ -438,6 +438,9 @@ export class NutritionEngine {
             else if (lowerName.includes('romaine'))   unitWeight = 500; // 1 head romaine ≈ 500g
             else if (lowerName.includes('lettuce'))   unitWeight = 400; // 1 head generic lettuce
             else if (lowerName.includes('cabbage'))   unitWeight = 900;
+            // Green onion/scallion (10-15g each) MUST come before generic 'onion' (110g)
+            else if (lowerName.includes('green onion') || lowerName.includes('scallion') ||
+                     lowerName.includes('spring onion'))  unitWeight = 12; // 1 green onion ≈ 10-15g
             else if (lowerName.includes('onion'))     unitWeight = 110;
             else if (lowerName.includes('carrot'))    unitWeight = 60;
             // ── Starchy roots & tubers ──────────────────────────────────────────
@@ -491,7 +494,10 @@ export class NutritionEngine {
             else if (lowerName.includes('meatball'))  unitWeight = 30;  // standard meatball ≈ 30g
             // ── Bread & baked goods ─────────────────────────────────────────────
             // ── Cured/smoked meats ──────────────────────────────────────────────
-            else if (lowerName.includes('bacon') && (lowerName.includes('strip') || lowerName.includes('rasher') || lowerName.includes('slice'))) unitWeight = 15; // 1 bacon strip ≈ 15g raw
+            // 1 cooked bacon strip ≈ 8g (cooked, to match USDA 541 kcal/100g cooked-bacon value).
+            // Raw strips are ~15g but shrink ~45% during cooking. Using raw weight × cooked density
+            // overcounts by ~1.9×. Cooked weight (8g) × 541/100 = 43 kcal per strip, which matches.
+            else if (lowerName.includes('bacon') && (lowerName.includes('strip') || lowerName.includes('rasher') || lowerName.includes('slice'))) unitWeight = 8;
             else if (lowerName.includes('bacon'))       unitWeight = 30;  // 1 piece/slice bacon
             // ── Bread forms — order: most specific first ──────────────────────────
             // "loaf" MUST come before the generic "bread" check (30g/slice) because
