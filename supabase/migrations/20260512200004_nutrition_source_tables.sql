@@ -120,34 +120,47 @@ RETURNS TABLE(
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT serving_grams, serving_description, 'cnf'::TEXT, food_name
-    FROM public.cnf_foods
-    WHERE fts @@ plainto_tsquery('english', query_text)
-      AND serving_grams IS NOT NULL
-      AND serving_grams > 0
-    ORDER BY ts_rank(fts, plainto_tsquery('english', query_text)) DESC
-    LIMIT 1
+    -- Each subquery wrapped in a lateral to allow per-source LIMIT + ORDER BY.
+    -- Returns up to 3 rows (one per source) so the caller can cross-validate.
+    SELECT c.serving_grams, c.serving_description, 'cnf'::TEXT AS source_table, c.food_name
+    FROM (
+        SELECT serving_grams, serving_description, food_name,
+               ts_rank(fts, plainto_tsquery('english', query_text)) AS rank
+        FROM public.cnf_foods
+        WHERE fts @@ plainto_tsquery('english', query_text)
+          AND serving_grams IS NOT NULL
+          AND serving_grams > 0
+        ORDER BY rank DESC
+        LIMIT 1
+    ) c
 
     UNION ALL
 
-    SELECT serving_grams, serving_description, 'frida'::TEXT, food_name
-    FROM public.frida_foods
-    WHERE fts @@ plainto_tsquery('english', query_text)
-      AND serving_grams IS NOT NULL
-      AND serving_grams > 0
-    ORDER BY ts_rank(fts, plainto_tsquery('english', query_text)) DESC
-    LIMIT 1
+    SELECT f.serving_grams, f.serving_description, 'frida'::TEXT, f.food_name
+    FROM (
+        SELECT serving_grams, serving_description, food_name,
+               ts_rank(fts, plainto_tsquery('english', query_text)) AS rank
+        FROM public.frida_foods
+        WHERE fts @@ plainto_tsquery('english', query_text)
+          AND serving_grams IS NOT NULL
+          AND serving_grams > 0
+        ORDER BY rank DESC
+        LIMIT 1
+    ) f
 
     UNION ALL
 
-    SELECT serving_grams, serving_description, 'ausnut'::TEXT, food_name
-    FROM public.ausnut_foods
-    WHERE fts @@ plainto_tsquery('english', query_text)
-      AND serving_grams IS NOT NULL
-      AND serving_grams > 0
-    ORDER BY ts_rank(fts, plainto_tsquery('english', query_text)) DESC
-    LIMIT 1
+    SELECT a.serving_grams, a.serving_description, 'ausnut'::TEXT, a.food_name
+    FROM (
+        SELECT serving_grams, serving_description, food_name,
+               ts_rank(fts, plainto_tsquery('english', query_text)) AS rank
+        FROM public.ausnut_foods
+        WHERE fts @@ plainto_tsquery('english', query_text)
+          AND serving_grams IS NOT NULL
+          AND serving_grams > 0
+        ORDER BY rank DESC
+        LIMIT 1
+    ) a
 
-    ORDER BY 1  -- smallest gram weight first when sources disagree (conservative)
-    LIMIT 3;    -- return all three so caller can pick best
+    ORDER BY serving_grams ASC;  -- conservative: smallest plausible value first
 $$;
