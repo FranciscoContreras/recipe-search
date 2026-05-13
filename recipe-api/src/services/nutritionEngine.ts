@@ -368,6 +368,19 @@ export class NutritionEngine {
                 return qty * 150;
             }
 
+            // ── "N leaves [vegetable]" — parse-ingredient sometimes puts "leaves" into the
+            // ingredient name (e.g. "2 leaves lettuce" → unit="", name="leaves lettuce"),
+            // which would otherwise match the whole-head check below (2×400g=800g).
+            // A single lettuce/romaine leaf ≈ 8g; basil/mint/bay leaf ≈ 0.5g.
+            if (lowerName.includes('leaf') || lowerName.includes('leaves')) {
+                if (lowerName.includes('basil') || lowerName.includes('mint') ||
+                    lowerName.includes('sage') || lowerName.includes('bay'))  return qty * 0.5;
+                if (lowerName.includes('lettuce') || lowerName.includes('romaine') ||
+                    lowerName.includes('spinach') || lowerName.includes('kale') ||
+                    lowerName.includes('chard') || lowerName.includes('collard') ||
+                    lowerName.includes('cabbage') || lowerName.includes('bok choy')) return qty * 8;
+            }
+
             // ── "N [size] [vegetable] head" — when parse-ingredient puts the size as the unit
             // (e.g. "1 medium broccoli head" → unit=medium, name="broccoli head") the 'head'
             // unit table above is not consulted. Detect here.
