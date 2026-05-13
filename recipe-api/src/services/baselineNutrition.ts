@@ -230,6 +230,26 @@ const BASELINE_TABLE: Record<string, BaselineEntry> = {
     'kidney beans':          [333,  22.5,   1.1,  60.0,  25.0,  2.2],
     'white beans':           [335,  23.4,   0.9,  60.3,  28.8,  1.3],
     'cannellini beans':      [335,  23.4,   0.9,  60.3,  28.8,  1.3],
+    // ─── Cooked grain/legume variants ─────────────────────────────────────────
+    // When a recipe explicitly says "cooked white rice" or "cooked pasta", the cooking
+    // state is detected and we look up "cooked " + term first. These use cooked-weight
+    // calorie densities (~1/3 of dry for rice/pasta due to water absorption).
+    'cooked white rice':     [121,   2.7,   0.3,  26.7,   0.4,  0],   // USDA 1 cup = 200g = 242 kcal
+    'cooked brown rice':     [112,   2.6,   0.9,  23.0,   1.8,  0],
+    'cooked rice':           [121,   2.7,   0.3,  26.7,   0.4,  0],
+    'cooked jasmine rice':   [121,   2.7,   0.3,  26.7,   0.4,  0],
+    'cooked basmati rice':   [121,   2.7,   0.3,  26.7,   0.4,  0],
+    'cooked pasta':          [131,   5.0,   1.1,  25.1,   1.8,  0.5],
+    'cooked spaghetti':      [131,   5.0,   1.1,  25.1,   1.8,  0.5],
+    'cooked penne':          [131,   5.0,   1.1,  25.1,   1.8,  0.5],
+    'cooked noodles':        [138,   4.7,   2.1,  25.0,   1.2,  0],
+    'cooked egg noodles':    [138,   4.7,   2.1,  25.0,   1.2,  0],
+    'cooked quinoa':         [120,   4.4,   1.9,  21.3,   2.8,  0],
+    'cooked oats':           [ 71,   2.5,   1.5,  12.0,   1.7,  0],   // cooked rolled oats ≈ 71 kcal/100g
+    'cooked lentils':        [116,   9.0,   0.4,  20.1,   7.9,  1.8],
+    'cooked chickpeas':      [164,   8.9,   2.6,  27.4,   7.6,  4.8],
+    'cooked black beans':    [132,   8.9,   0.5,  23.7,   8.7,  0.3],
+    'cooked kidney beans':   [127,   8.7,   0.5,  22.8,   7.4,  0.3],
     'white rice':            [365,   7.1,   0.7,  80.0,   1.3,  0.1],
     'jasmine rice':          [365,   7.1,   0.7,  80.0,   1.3,  0.1],
     'basmati rice':          [356,   8.7,   0.6,  77.8,   1.4,  0.1],

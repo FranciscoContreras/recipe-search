@@ -68,6 +68,8 @@ const DENSITY_TABLE: Record<string, number> = {
     'wheat berries':   0.80,
     'quinoa':          0.75,
     'couscous':        0.60,
+    'egg noodles':     0.31,  // dry: 1 cup ≈ 75g (very light); cooked uses COOKED_VOLUME_GRAMS
+    'rice noodles':    0.35,  // dry: 1 cup ≈ 84g
     'rice':            0.85,  // raw: ~185g / cup
     'chia seeds':      0.69,
     'flaxseed':        0.62,
@@ -178,6 +180,8 @@ const DENSITY_TABLE: Record<string, number> = {
     'cauliflower':     0.38,  // florets: 1 cup ≈ 91g
     'mushroom':        0.30,  // sliced: 1 cup ≈ 70g
     'asparagus':       0.57,  // chopped: 1 cup ≈ 134g
+    'snap peas':       0.41,  // sugar snap peas: 1 cup ≈ 98g (hollow pods, much lighter than shelled peas)
+    'snow peas':       0.37,  // 1 cup ≈ 87g
     'peas':            0.73,  // shelled: 1 cup ≈ 145g
     'corn':            0.63,  // kernels: 1 cup ≈ 149g
     'beet':            0.68,  // diced: 1 cup ≈ 136g
@@ -335,6 +339,10 @@ export class NutritionEngine {
             else if (ln.includes('lasagna') || ln.includes('pasta'))   weightG = qty * 25;
             else if (ln.includes('phyllo') || ln.includes('filo'))     weightG = qty * 10;
             else if (ln.includes('bay'))                                weightG = qty * 0.5;
+            // Leafy greens: a single leaf is ~7-10g, not 800g (OFW returns bag weights)
+            else if (ln.includes('lettuce') || ln.includes('romaine') || ln.includes('spinach') ||
+                     ln.includes('kale') || ln.includes('chard') || ln.includes('cabbage') ||
+                     ln.includes('collard') || ln.includes('bok choy'))  weightG = qty * 8;
             else                                                        weightG = qty * 5;
         }
         // ── Can / tin units ───────────────────────────────────────────────────────
@@ -349,6 +357,30 @@ export class NutritionEngine {
         else {
             // No unit (e.g. "2 apples") or unknown unit — count-based assumptions
             const lowerName = ingredientName.toLowerCase();
+
+            // ── Vegetable peppers — must come BEFORE spice check to prevent "bell pepper"
+            // being matched by the 'pepper' spice keyword (returns 2g instead of 150g).
+            if (lowerName.includes('bell pepper') || lowerName.includes('sweet pepper') ||
+                (lowerName.includes('pepper') && (lowerName.includes('red') || lowerName.includes('green') ||
+                 lowerName.includes('yellow') || lowerName.includes('orange') || lowerName.includes('poblano') ||
+                 lowerName.includes('jalapeño') || lowerName.includes('jalapeno') || lowerName.includes('anaheim') ||
+                 lowerName.includes('serrano') || lowerName.includes('banana pepper')))) {
+                return qty * 150;
+            }
+
+            // ── "N [size] [vegetable] head" — when parse-ingredient puts the size as the unit
+            // (e.g. "1 medium broccoli head" → unit=medium, name="broccoli head") the 'head'
+            // unit table above is not consulted. Detect here.
+            if (lowerName.includes('head')) {
+                if (lowerName.includes('broccoli'))                           return qty * 350;
+                if (lowerName.includes('cauliflower'))                        return qty * 600;
+                if (lowerName.includes('cabbage'))                            return qty * 900;
+                if (lowerName.includes('romaine') || lowerName.includes('lettuce')) return qty * 500;
+                if (lowerName.includes('garlic'))                             return qty * 40;
+                if (lowerName.includes('celery'))                             return qty * 454;
+                if (lowerName.includes('fennel'))                             return qty * 250;
+                if (lowerName.includes('bok choy') || lowerName.includes('bok choi')) return qty * 400;
+            }
 
             const spiceKeywords = ['salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'turmeric',
                                    'oregano', 'thyme', 'rosemary', 'basil', 'parsley', 'cilantro',
@@ -749,7 +781,13 @@ export class NutritionEngine {
         //    Consulted FIRST, before the cache and any external API, so these results
         //    are immune to USDA rate limits, OFW mismatches, and cache poisoning.
         //    All downstream if(!nutritionInfo) guards naturally skip when this hits.
-        let nutritionInfo: UsdaNutrition | SimpleNutrition | null = lookupBaseline(primaryTerm);
+        //    When cookingState is 'cooked', try "cooked <term>" first so that ingredients
+        //    like "cooked white rice" use cooked-weight calorie density (~121 kcal/100g)
+        //    rather than the dry-grain value (~365 kcal/100g).
+        let nutritionInfo: UsdaNutrition | SimpleNutrition | null =
+            preferCooked
+                ? (lookupBaseline('cooked ' + primaryTerm) ?? lookupBaseline(primaryTerm))
+                : lookupBaseline(primaryTerm);
         let source    = nutritionInfo ? 'baseline' : 'usda';
         let usedTerm  = primaryTerm;
 
