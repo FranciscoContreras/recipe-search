@@ -101,10 +101,16 @@ async function insertBatch(
     }
 
     const colList = columns.map((c) => `"${c}"`).join(',');
+    // ON CONFLICT DO NOTHING (no target) catches conflicts on ANY unique
+    // constraint — important because api_keys has a unique partial index on
+    // (owner_email) WHERE is_active, and the demo-key migration pre-populates
+    // a row that would otherwise collide. The unused `pk` arg is kept in the
+    // signature for documentation.
+    void pk;
     const sql = `
         INSERT INTO "${table}" (${colList})
         VALUES ${valuesSql.join(',')}
-        ON CONFLICT ("${pk}") DO NOTHING
+        ON CONFLICT DO NOTHING
     `;
     await client.query(sql, params);
 }
