@@ -8,5 +8,17 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/scripts/check_cache.ts",
+    "src/scripts/clear_cache.ts",
+    "src/scripts/clear_bad_cache.ts",
+    "src/scripts/fix_nyt_images.ts",
+    "src/scripts/nutrition_audit_check.ts",
+    "src/scripts/sync_ausnut.ts",
+    "src/scripts/sync_cnf.ts",
+    "src/scripts/sync_frida.ts"
+  ]
 }

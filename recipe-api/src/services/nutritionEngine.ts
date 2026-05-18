@@ -1,4 +1,10 @@
-import { supabase } from '../supabaseClient';
+import {
+    getCachedIngredient,
+    upsertIngredientCache,
+    updateIngredientCacheServing,
+    deleteIngredientCache,
+} from '../db/queries';
+import { track } from '../utils/background';
 import { searchUsda, UsdaNutrition } from './usda';
 import { searchFatSecret, SimpleNutrition } from './fatsecret';
 import { searchOpenFoodFacts, OffNutrition } from './openFoodFacts';
@@ -864,11 +870,7 @@ export class NutritionEngine {
         let usedTerm  = primaryTerm;
 
         // 4. Cache lookup — fully skipped when baseline already matched.
-        const { data: cached } = nutritionInfo ? { data: null } : await supabase
-            .from('ingredient_cache')
-            .select('*')
-            .eq('term', cacheKey)
-            .single();
+        const cached = nutritionInfo ? null : await getCachedIngredient(cacheKey);
 
         if (cached && !nutritionInfo) {
             const n = cached.nutrition as any;
@@ -933,7 +935,7 @@ export class NutritionEngine {
 
             if (calPer100g < minCal || calPer100g > maxCal) {
                 // Evict the bad entry so the next pass re-queries correctly.
-                supabase.from('ingredient_cache').delete().eq('term', cacheKey).then();
+                track(deleteIngredientCache(cacheKey));
             } else {
                 nutritionInfo = n;
                 source        = cached.source;
@@ -952,9 +954,7 @@ export class NutritionEngine {
                     const usdaData = await searchUsda(term, preferCooked);
                     if (usdaData) {
                         nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
-                        supabase.from('ingredient_cache')
-                            .upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' })
-                            .then();
+                        track(upsertIngredientCache(cacheKey, usdaData, 'usda'));
                         break;
                     }
                 }
@@ -994,9 +994,7 @@ export class NutritionEngine {
                         }
                         if (offPlausible) {
                             nutritionInfo = offData as any; source = 'openfoodfacts'; usedTerm = term;
-                            supabase.from('ingredient_cache')
-                                .upsert({ term: cacheKey, nutrition: offData as any, source: 'openfoodfacts' })
-                                .then();
+                            track(upsertIngredientCache(cacheKey, offData, 'openfoodfacts'));
                             break;
                         }
                     }
@@ -1009,9 +1007,7 @@ export class NutritionEngine {
                     const usdaData = await searchUsda(term, preferCooked);
                     if (usdaData) {
                         nutritionInfo = usdaData; source = 'usda'; usedTerm = term;
-                        supabase.from('ingredient_cache')
-                            .upsert({ term: cacheKey, nutrition: usdaData as any, source: 'usda' })
-                            .then();
+                        track(upsertIngredientCache(cacheKey, usdaData, 'usda'));
                         break;
                     }
                 }
@@ -1023,9 +1019,7 @@ export class NutritionEngine {
                     const fsData = await searchFatSecret(term);
                     if (fsData) {
                         nutritionInfo = fsData; source = 'fatsecret'; usedTerm = term;
-                        supabase.from('ingredient_cache')
-                            .upsert({ term: cacheKey, nutrition: fsData as any, source: 'fatsecret' })
-                            .then();
+                        track(upsertIngredientCache(cacheKey, fsData, 'fatsecret'));
                         break;
                     }
                 }
@@ -1061,14 +1055,11 @@ export class NutritionEngine {
             const extracted = extractServingFromPortions(portions, unit, cookingState);
             if (extracted) {
                 // Write back async — does not block the response
-                // (cast: serving_grams added by migration, Supabase types regenerated on next pull)
-                ;(supabase as any).from('ingredient_cache')
-                    .update({
-                        serving_grams:       extracted.serving_grams,
-                        serving_description: extracted.serving_description,
-                    })
-                    .eq('term', cacheKey)
-                    .then();
+                track(updateIngredientCacheServing(
+                    cacheKey,
+                    extracted.serving_grams,
+                    extracted.serving_description,
+                ));
             }
         }
 

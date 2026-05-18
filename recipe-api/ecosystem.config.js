@@ -9,10 +9,12 @@ module.exports = {
       "NODE_ENV": "production",
     },
     max_memory_restart: "500M",
-  }, {
+  },
+  // Workers: 2 (was 4) post self-host. See docs/runbooks/memory_baseline.md.
+  {
     name: "recipe-worker",
     script: "./dist/worker.js",
-    instances: 4, // Run 4 workers, one per CPU
+    instances: 2, // Down from 4 — LISTEN/NOTIFY drains the queue faster than polling did
     exec_mode: "fork", // Use fork mode for individual instance management
     env: {
       "NODE_ENV": "production",
@@ -24,12 +26,6 @@ module.exports = {
     },
     env_1: {
       "INSTANCE_ID": "1",
-    },
-    env_2: {
-      "INSTANCE_ID": "2",
-    },
-    env_3: {
-      "INSTANCE_ID": "3",
     }
   }, {
     name: "recipe-auditor",

@@ -29,7 +29,13 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
-import { supabase } from '../supabaseClient';
+import {
+    lookupServingSize,
+    searchOffServingSize,
+    getCachedIngredient,
+    updateIngredientCacheServing,
+} from '../db/queries';
+import { track } from '../utils/background';
 import { CookingState } from '../utils/cookingState';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -93,15 +99,12 @@ export function extractServingFromPortions(
 
 async function queryMirrorDatabases(ingredientName: string): Promise<ServingResult | null> {
     try {
-        const { data, error } = await (supabase as any)
-            .rpc('lookup_serving_size', { query_text: ingredientName });
-
-        if (error || !data || (data as any[]).length === 0) return null;
+        const data = await lookupServingSize(ingredientName);
+        if (!data || data.length === 0) return null;
 
         // The RPC returns rows ordered by confidence; pick the best non-outlier value.
         // When two sources agree closely (within 30%), high confidence. Use the median.
-        const rows = (data as Array<{ serving_grams: number; serving_description: string; source_table: string; food_name: string }>)
-            .filter(r => r.serving_grams > 0 && r.serving_grams < 1000);
+        const rows = data.filter(r => r.serving_grams > 0 && r.serving_grams < 1000);
 
         if (rows.length === 0) return null;
 
@@ -128,20 +131,13 @@ async function queryMirrorDatabases(ingredientName: string): Promise<ServingResu
 
 async function queryOffServing(ingredientName: string): Promise<ServingResult | null> {
     try {
-        const { data, error } = await supabase
-            .from('off_products')
-            .select('product_name, serving_quantity, serving_size_text')
-            .textSearch('fts', ingredientName, { type: 'websearch', config: 'english' })
-            .not('serving_quantity', 'is', null)
-            .gt('serving_quantity', 0)
-            .lt('serving_quantity', 600)   // exclude bulk/package sizes
-            .limit(3)
-            .order('serving_quantity', { ascending: true });
+        const data = await searchOffServingSize(ingredientName);
+        if (!data || data.length === 0) return null;
 
-        if (error || !data || data.length === 0) return null;
-
-        // Use the smallest serving that matches (most likely per-item, not per-package)
-        const best = (data as any[])[0];
+        // Use the smallest serving that matches (most likely per-item, not per-package).
+        // searchOffServingSize already orders by serving_quantity ASC.
+        const best = data[0];
+        if (!best.serving_quantity) return null;
         return {
             serving_grams:       best.serving_quantity,
             serving_description: best.serving_size_text || `1 serving (${best.serving_quantity}g)`,
@@ -214,14 +210,9 @@ export async function enrichServingGrams(
     cookingState:   CookingState,
     usdaPortions?:  Array<{ measure: string; gramWeight: number }>,
 ): Promise<ServingResult | null> {
-    // Check if already enriched (cast to any — serving_grams column added by migration)
-    const { data: existing } = await (supabase as any)
-        .from('ingredient_cache')
-        .select('serving_grams')
-        .eq('term', cacheKey)
-        .single();
-
-    if ((existing as any)?.serving_grams) return null; // already done
+    // Check if already enriched
+    const existing = await getCachedIngredient(cacheKey);
+    if (existing?.serving_grams) return null; // already done
 
     // Work through the source chain
     let result: ServingResult | null = null;
@@ -248,14 +239,12 @@ export async function enrichServingGrams(
 
     if (!result) return null;
 
-    // Persist to cache (cast to any — column added by migration, types not yet regenerated)
-    await (supabase as any)
-        .from('ingredient_cache')
-        .update({
-            serving_grams:       result.serving_grams,
-            serving_description: result.serving_description,
-        })
-        .eq('term', cacheKey);
+    // Persist to cache in the background — never blocks the response.
+    track(updateIngredientCacheServing(
+        cacheKey,
+        result.serving_grams,
+        result.serving_description,
+    ));
 
     return result;
 }

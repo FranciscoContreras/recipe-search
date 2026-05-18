@@ -1,6 +1,5 @@
 import { CheerioCrawler } from 'crawlee';
-import { supabase } from './supabaseClient';
-import { Database } from './database.types';
+import { upsertRecipeByUrl, updateCrawlJobStatus } from './db/queries';
 import { calculateScore } from './utils/scoring';
 import path from 'path';
 
@@ -240,15 +239,12 @@ export class RecipeCrawlerService {
                     continue; 
                 }
 
-                const { error } = await supabase
-                  .from('recipes')
-                  .upsert({ ...recipeData, quality_score: qualityScore }, { onConflict: 'url' });
-
-                if (error) {
-                  log.error(`Failed to save recipe: ${error.message}`);
-                } else {
-                  foundInPage++; 
+                try {
+                  await upsertRecipeByUrl({ ...recipeData, quality_score: qualityScore });
+                  foundInPage++;
                   pageRecipesFound++;
+                } catch (err: any) {
+                  log.error(`Failed to save recipe: ${err.message}`);
                 }
               }
             }
@@ -287,16 +283,16 @@ export class RecipeCrawlerService {
   }
 
   private async updateJobStatus(status: JobStatus, count?: number, log?: string, nextRetryAt?: string) {
-    const update: any = { status, updated_at: new Date().toISOString() };
-    if (count !== undefined) update.recipes_found = count;
-    if (log) update.log = log;
-    if (nextRetryAt) update.next_retry_at = nextRetryAt;
+    const update: Record<string, unknown> = { status };
+    if (count !== undefined)     update.recipes_found = count;
+    if (log)                     update.log           = log;
+    if (nextRetryAt)             update.next_retry_at = nextRetryAt;
 
-    await supabase.from('crawl_jobs').update(update).eq('id', this.jobId);
+    await updateCrawlJobStatus(this.jobId, update);
   }
 
   private async updateJobProgress(count: number) {
-    await supabase.from('crawl_jobs').update({ recipes_found: count }).eq('id', this.jobId);
+    await updateCrawlJobStatus(this.jobId, { recipes_found: count });
   }
 
 }

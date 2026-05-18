@@ -1,8 +1,8 @@
 
-import { Tables } from '../database.types';
+import type { Recipe } from '../db/types';
 import escapeHtml from 'escape-html';
 
-export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
+export const generateRecipeSchema = (recipe: Recipe): string => {
   const schema: any = {
     "@context": "https://schema.org/",
     "@type": "Recipe",
@@ -70,7 +70,7 @@ export const generateRecipeSchema = (recipe: Tables<'recipes'>): string => {
     .replace(/>/g, '\\u003e');
 };
 
-export const injectMetaTags = (html: string, recipe: Tables<'recipes'>): string => {
+export const injectMetaTags = (html: string, recipe: Recipe): string => {
   const rawTitle = `${recipe.name} - Recipe Base`;
   const rawDesc = recipe.description || `Learn how to make ${recipe.name} with verified nutrition facts.`;
   const rawImage = recipe.image || 'https://recipe-base.wearemachina.com/logo-black.svg';

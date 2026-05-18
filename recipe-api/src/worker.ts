@@ -1,74 +1,104 @@
+/**
+ * Crawl worker — LISTEN/NOTIFY edition.
+ *
+ * Pre-migration: tight polling loop that hit `next_crawl_job()` every 5–60 s,
+ * generating ~5M RPC calls/day across 4 workers.
+ *
+ * Post-migration: a single LISTEN client wakes us up the instant a new
+ * crawl_jobs row lands (trigger lives in self_host_compat migration). A 60 s
+ * fallback poll catches anything we miss (dropped notifications, restart races,
+ * cooling_down rows whose retry deadline has just elapsed).
+ *
+ * Each "wake" drains every available job sequentially in this process before
+ * going back to sleep. Multiple PM2 instances run in parallel — Postgres'
+ * SELECT … FOR UPDATE SKIP LOCKED guarantees each job is claimed exactly once.
+ */
+
+import { createListenClient } from './db/listenClient';
+import { claimNextCrawlJobAtomic } from './db/queries';
 import { RecipeCrawlerService } from './crawler';
-import { supabase } from './supabaseClient';
+import { drainBackground } from './utils/background';
 
-const BASE_POLL_INTERVAL = 5000; // Start at 5 seconds
-const MAX_POLL_INTERVAL = 60000; // Max wait 1 minute
-let currentPollInterval = BASE_POLL_INTERVAL;
+const FALLBACK_POLL_MS = 60_000; // safety net for missed notifications
 
-async function startWorker() {
-  console.log('Worker started. Polling for jobs...');
+let shuttingDown = false;
+let processing   = false;
 
-  while (true) {
+/**
+ * Atomically claim and process pending jobs until the queue is empty.
+ * Re-entrancy guard (`processing`) keeps a flood of NOTIFYs from running
+ * the drain loop in parallel within a single process.
+ */
+async function tryClaimAndProcess(): Promise<void> {
+    if (processing || shuttingDown) return;
+    processing = true;
     try {
-      // 1. Fetch the next job using UNION ALL so PostgreSQL uses the two
-      //    partial indexes (crawl_jobs_pending_poll_idx + crawl_jobs_cooling_poll_idx)
-      //    instead of seq-scanning the whole table with an OR condition.
-      const { data: job, error } = await supabase.rpc('next_crawl_job') as any;
+        while (!shuttingDown) {
+            const job = await claimNextCrawlJobAtomic();
+            if (!job) break;
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
-        console.error('Error fetching job:', error.message);
-      }
+            // `retry_count` is incremented by the auditor when scheduling
+            // auto-repair crawls. The crawler tunes concurrency / retries
+            // based on whether this is a retry attempt — pass that through
+            // for parity with the old polling worker semantics.
+            const isRetry = job.retry_count > 0;
 
-      if (job) {
-        // Reset poll interval when we find work
-        currentPollInterval = BASE_POLL_INTERVAL;
-        console.log(`Picking up job ${job.id} for ${job.url} (Status: ${job.status})`);
+            console.log(
+                `[worker] Claimed job ${job.id} for ${job.url}` +
+                (isRetry ? ` (retry #${job.retry_count})` : ''),
+            );
 
-        const isRetry = job.status === 'cooling_down';
-        
-        // 2. Mark as 'processing' (claim it)
-        const { error: claimError } = await supabase
-          .from('crawl_jobs')
-          .update({ 
-            status: 'processing', 
-            next_retry_at: null, // Clear retry time
-            retry_count: isRetry ? job.retry_count + 1 : job.retry_count, // Increment if it's a retry
-            updated_at: new Date().toISOString() 
-          })
-          .eq('id', job.id);
-
-        if (claimError) {
-          console.error('Error claiming job:', claimError.message);
-          // Don't backoff here, maybe another worker took it, try again soon
-          continue;
+            try {
+                const crawler = new RecipeCrawlerService(job.id, job.url, isRetry);
+                await crawler.start();
+                console.log(`[worker] Finished ${job.id}`);
+            } catch (e) {
+                console.error(`[worker] Job ${job.id} threw:`, e);
+            }
         }
-
-        // 3. Execute the crawl
-        const crawler = new RecipeCrawlerService(job.id, job.url, isRetry);
-        
-        // We await here so the worker handles one job at a time (sequential per worker)
-        // To run parallel jobs, you launch multiple worker processes via PM2.
-        await crawler.start(); 
-        
-        console.log(`Job ${job.id} finished.`);
-      } else {
-        // No jobs, increase wait time (Exponential Backoff)
-        // Add random jitter (0-2000ms) to prevent multiple workers from waking up in lockstep
-        const jitter = Math.floor(Math.random() * 2000);
-        console.log(`No jobs found. Waiting ${(currentPollInterval / 1000).toFixed(1)}s...`);
-        
-        await new Promise(resolve => setTimeout(resolve, currentPollInterval + jitter));
-        
-        // Increase interval for next time, up to max
-        currentPollInterval = Math.min(currentPollInterval * 1.5, MAX_POLL_INTERVAL);
-      }
-
-    } catch (err) {
-      console.error('Worker loop error:', err);
-      // Wait a bit to avoid tight error loops
-      await new Promise(resolve => setTimeout(resolve, BASE_POLL_INTERVAL));
+    } finally {
+        processing = false;
     }
-  }
 }
 
-startWorker();
+async function main(): Promise<void> {
+    console.log(`[worker] Instance ${process.env.INSTANCE_ID ?? '?'} starting`);
+
+    // Drain anything already pending before subscribing — covers the case where
+    // jobs were inserted while the worker was offline.
+    await tryClaimAndProcess();
+
+    // Subscribe to the 'crawl_jobs_new' channel. The DB trigger fires NOTIFY
+    // for every newly-inserted pending row, so any new POST /crawl wakes us up.
+    const listen = await createListenClient('crawl_jobs_new', () => {
+        tryClaimAndProcess().catch((e) =>
+            console.error('[worker] notify handler error:', e),
+        );
+    });
+
+    // Safety-net poll. We expect to do almost no work here — notifications
+    // cover the happy path. The poll matters when:
+    //   • a notification was dropped (TCP reset, OS hiccup)
+    //   • a cooling_down job's next_retry_at just became reachable
+    const fallback = setInterval(() => {
+        tryClaimAndProcess().catch((e) =>
+            console.error('[worker] fallback poll err', e),
+        );
+    }, FALLBACK_POLL_MS);
+
+    const shutdown = async (sig: string) => {
+        console.log(`[worker] ${sig} received — shutting down`);
+        shuttingDown = true;
+        clearInterval(fallback);
+        await listen.close();
+        await drainBackground();
+        process.exit(0);
+    };
+    process.on('SIGTERM', () => { void shutdown('SIGTERM'); });
+    process.on('SIGINT',  () => { void shutdown('SIGINT'); });
+}
+
+main().catch((e) => {
+    console.error('[worker] fatal', e);
+    process.exit(1);
+});

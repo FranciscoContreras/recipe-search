@@ -34,3 +34,9 @@ recipe-api/public/access.html
 recipe-api/public/admin.html
 recipe-api/src/scripts/generate_key.ts
 recipe-api/src/scripts/test_keys.ts
+
+# Stray Supabase CLI install in supabase/ (the CLI is now installed system-wide)
+supabase/node_modules/
+supabase/package.json
+supabase/package-lock.json
+

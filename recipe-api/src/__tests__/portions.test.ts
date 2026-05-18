@@ -7,12 +7,13 @@
 // causing Foundation Food portions (measure='serving') to return arbitrary
 // gram weights (e.g. 304g Florida avocado) for count-based ingredients.
 
-jest.mock('../supabaseClient', () => ({
-  supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }) }),
-    rpc: () => Promise.resolve({ data: null, error: null }),
-  },
+jest.mock('../db/queries', () => ({
+  getCachedIngredient:          jest.fn().mockResolvedValue(null),
+  upsertIngredientCache:        jest.fn().mockResolvedValue(undefined),
+  updateIngredientCacheServing: jest.fn().mockResolvedValue(undefined),
+  deleteIngredientCache:        jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock('../utils/background', () => ({ track: () => {} }));
 
 import { NutritionEngine } from '../services/nutritionEngine';
 

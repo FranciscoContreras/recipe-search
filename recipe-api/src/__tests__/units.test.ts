@@ -1,14 +1,15 @@
 // NutritionEngine.unitToGrams and parseQuantity are now public static so they can be
 // tested directly without mocking the database or external APIs.
 
-// Supabase is imported by nutritionEngine at module load; mock it to avoid needing
-// real credentials in CI.
-jest.mock('../supabaseClient', () => ({
-  supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }) }),
-    rpc: () => Promise.resolve({ data: null, error: null }),
-  },
+// db/queries is imported by nutritionEngine at module load; mock it to avoid
+// needing a real DATABASE_URL or live Postgres in CI.
+jest.mock('../db/queries', () => ({
+  getCachedIngredient:          jest.fn().mockResolvedValue(null),
+  upsertIngredientCache:        jest.fn().mockResolvedValue(undefined),
+  updateIngredientCacheServing: jest.fn().mockResolvedValue(undefined),
+  deleteIngredientCache:        jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock('../utils/background', () => ({ track: () => {} }));
 
 import { NutritionEngine } from '../services/nutritionEngine';
 

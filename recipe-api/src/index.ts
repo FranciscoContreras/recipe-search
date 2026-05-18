@@ -3,10 +3,30 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { supabase } from './supabaseClient';
-import { TablesInsert } from './database.types';
+import {
+  // Recipes
+  getRecipeForSsr,
+  getRecipesByIds,
+  listRecipes,
+  listRecipesDefault,
+  insertRecipe,
+  updateRecipeNutrition,
+  updateRecipeNutritionsBatch,
+  searchRecipesHybrid,
+  streamPublicRecipesForSitemap,
+  getRecipeStats,
+  getRecentlyAudited,
+  // Crawl jobs
+  createCrawlJob,
+  listActiveCrawlJobs,
+  listArchivedCrawlJobs,
+  getCrawlJobById,
+  archiveCrawlJob,
+  archiveAllActiveCrawlJobs,
+} from './db/queries';
+import { track } from './utils/background';
+import type { Recipe } from './db/types';
 import { NutritionEngine } from './services/nutritionEngine';
-import { RecipeCrawlerService } from './crawler';
 import path from 'path';
 import fs from 'fs';
 import { injectMetaTags } from './services/seo';
@@ -14,7 +34,7 @@ import { apiKeyAuth } from './middleware/auth';
 import { requestApiKey } from './controllers/authController';
 import { lookupBarcode } from './services/openFoodFacts';
 import { isSafePublicUrl } from './utils/url';
-import { resolveContext, resolveCookingState, DISH_CONTEXT_DESCRIPTIONS, DishContext } from './utils/cookingState';
+import { resolveContext, resolveCookingState, DISH_CONTEXT_DESCRIPTIONS } from './utils/cookingState';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerOptions } from './swaggerOptions';
@@ -79,30 +99,19 @@ app.get('/sitemap.xml', async (req, res) => {
     res.write(`  <url><loc>https://recipe-base.wearemachina.com${page}</loc><changefreq>daily</changefreq></url>\n`);
   });
 
-  // Dynamic Recipes (Stream from DB)
-  // Fetch in chunks to avoid memory issues if DB is huge, but for now standard pagination is fine
-  const limit = 1000;
-  let offset = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    const { data: recipes, error } = await supabase
-      .from('recipes')
-      .select('id, updated_at')
-      .neq('qa_status', 'quarantined')
-      .neq('qa_status', 'rejected')
-      .range(offset, offset + limit - 1);
-
-    if (error || !recipes || recipes.length === 0) {
-      hasMore = false;
-    } else {
-      recipes.forEach(r => {
-        const date = r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString();
-        res.write(`  <url><loc>https://recipe-base.wearemachina.com/recipe/${r.id}</loc><lastmod>${date}</lastmod></url>\n`);
-      });
-      offset += limit;
-      if (recipes.length < limit) hasMore = false;
-    }
+  // Dynamic Recipes (stream from DB in batches of 1000)
+  try {
+    await streamPublicRecipesForSitemap({
+      batchSize: 1000,
+      onBatch:   async (recipes) => {
+        for (const r of recipes) {
+          const date = r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString();
+          res.write(`  <url><loc>https://recipe-base.wearemachina.com/recipe/${r.id}</loc><lastmod>${date}</lastmod></url>\n`);
+        }
+      },
+    });
+  } catch (e) {
+    console.error('Sitemap stream error:', e);
   }
 
   res.write('</urlset>');
@@ -112,12 +121,10 @@ app.get('/sitemap.xml', async (req, res) => {
 // SEO-Optimized Recipe Details (SSR Injection)
 app.get('/recipe/:id', async (req, res) => {
   const { id } = req.params;
-  
-  // 1. Fetch Data — exclude quarantined/rejected so they don't get SEO meta injection
-  const { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id)
-      .neq('qa_status', 'quarantined').neq('qa_status', 'rejected').single();
-  
-  if (error || !recipe) {
+
+  // 1. Fetch Data — excludes quarantined/rejected (handled inside getRecipeForSsr)
+  const recipe = await getRecipeForSsr(id);
+  if (!recipe) {
       return res.status(404).sendFile(path.join(__dirname, '../public/index.html')); // Fallback or 404 page
   }
 
@@ -128,7 +135,7 @@ app.get('/recipe/:id', async (req, res) => {
 
       // 3. Inject Meta & Schema
       const finalHtml = injectMetaTags(html, recipe);
-      
+
       res.send(finalHtml);
   });
 });
@@ -146,32 +153,15 @@ app.get('/', (req: Request, res: Response) => {
 
 app.post('/auth/request-key', authLimiter, requestApiKey);
 
-// Refresh the recipe_stats materialized view — called on a schedule and after bulk operations
-async function refreshRecipeStats() {
-  try {
-    await supabase.rpc('refresh_materialized_view_stats');
-  } catch { /* non-critical — view will serve cached data */ }
-}
-
-// Refresh immediately on startup, then every 5 minutes.
-// Without the immediate call, /health returns stale zeros for the first 5 minutes.
-refreshRecipeStats();
-setInterval(refreshRecipeStats, 5 * 60 * 1000);
+// stats refresh handled by pg_cron job 'refresh-recipe-stats'
 
 app.get('/health', async (req: Request, res: Response) => {
   try {
     // Read from the materialized view (single row, pre-computed) — no table scans
-    const { data: stats } = await supabase
-      .from('recipe_stats')
-      .select('total, verified, flagged, quarantined, pending, avg_quality_score, computed_at')
-      .single();
-
-    const { data: recent } = await supabase
-      .from('recipes')
-      .select('id, name, qa_status, quality_score, audit_log')
-      .not('last_audited_at', 'is', null)
-      .order('last_audited_at', { ascending: false })
-      .limit(10);
+    const [stats, recent] = await Promise.all([
+      getRecipeStats(),
+      getRecentlyAudited(10),
+    ]);
 
     const s = stats || { total: 0, verified: 0, flagged: 0, avg_quality_score: 0 };
     res.json({
@@ -219,14 +209,17 @@ app.use(apiKeyAuth);
  *         description: Server error
  */
 app.post('/recipes', async (req: Request, res: Response) => {
-  const newRecipe: TablesInsert<'recipes'> = req.body;
+  const newRecipe: Partial<Recipe> = req.body;
   if (!newRecipe.name) {
     return res.status(400).json({ error: 'Recipe name is required.' });
   }
 
-  const { data, error } = await supabase.from('recipes').insert([newRecipe]).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
+  try {
+    const inserted = await insertRecipe(newRecipe);
+    res.status(201).json([inserted]);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /**
@@ -277,20 +270,15 @@ app.post('/recipes', async (req: Request, res: Response) => {
 app.get('/recipes', async (req: Request, res: Response) => {
   console.log(`[GET] /recipes - Page: ${req.query.page}, Limit: ${req.query.limit} - ${new Date().toISOString()}`);
   const isFull = req.query.full === 'true';
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 50;
-  const offset = (page - 1) * limit;
+  const page   = parseInt(req.query.page as string)  || 1;
+  const limit  = parseInt(req.query.limit as string) || 50;
 
-  const selectFields = isFull ? '*' : 'id, name, image, description, cook_time, prep_time';
-  const { data, error, count } = await supabase
-    .from('recipes')
-    .select(selectFields, { count: 'exact' })
-    .neq('qa_status', 'quarantined')
-    .neq('qa_status', 'rejected')
-    .range(offset, offset + limit - 1);
-
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json({ recipes: data, count, page, limit });
+  try {
+    const { rows, count } = await listRecipes({ page, limit, full: isFull });
+    res.status(200).json({ recipes: rows, count, page, limit });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /**
@@ -320,19 +308,21 @@ app.get('/recipes', async (req: Request, res: Response) => {
  */
 app.get('/recipes/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
-  let { data: recipe, error } = await supabase.from('recipes').select('*').eq('id', id).neq('qa_status', 'quarantined').neq('qa_status', 'rejected').single();
-  if (error || !recipe) return res.status(404).json({ error: 'Recipe not found' });
+  const recipe = await getRecipeForSsr(id);
+  if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
 
   if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
       const start = Date.now();
-      // Fire-and-forget: enrich in background without blocking the response
-      NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients as string[])
-        .then(async (result) => {
-            const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
-            await supabase.from('recipes').update({ nutrition }).eq('id', id);
-            console.log(`[JIT] Enriched ${id} (${result.dishContext}) in ${Date.now() - start}ms`);
-        })
-        .catch((err) => console.error(`[JIT] Error for ${id}:`, err));
+      // Fire-and-forget: enrich in background without blocking the response.
+      // `track()` ensures the update completes on SIGTERM and any error is logged.
+      track(
+        NutritionEngine.analyzeRecipe(recipe.name, recipe.recipe_ingredients as string[])
+          .then(async (result) => {
+              const nutrition = { ...result.total, dishContext: result.dishContext, source: result.source, analyzedAt: result.analyzedAt };
+              await updateRecipeNutrition(id, nutrition);
+              console.log(`[JIT] Enriched ${id} (${result.dishContext}) in ${Date.now() - start}ms`);
+          })
+      );
   }
   res.status(200).json(recipe);
 });
@@ -342,11 +332,15 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'Invalid payload.' });
   if (ids.length > 50) return res.status(400).json({ error: 'Batch limit exceeded.' });
 
-  const { data: recipes, error } = await supabase.from('recipes').select('*').in('id', ids).neq('qa_status', 'quarantined').neq('qa_status', 'rejected');
-  if (error) return res.status(500).json({ error: error.message });
+  let recipes: Recipe[];
+  try {
+    recipes = await getRecipesByIds(ids);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
 
-  const updates: any[] = [];
-  
+  const updates: Array<{ id: string; nutrition: unknown }> = [];
+
   const enrichedRecipes = await Promise.all(recipes.map(async (recipe) => {
       if (!recipe.nutrition && Array.isArray(recipe.recipe_ingredients) && recipe.recipe_ingredients.length > 0) {
           try {
@@ -360,8 +354,11 @@ app.post('/recipes/enrich', async (req: Request, res: Response) => {
   }));
 
   if (updates.length > 0) {
-      const { error: updateError } = await supabase.rpc('update_recipe_nutritions', { payload: updates });
-      if (updateError) console.error('Batch update error:', updateError);
+      try {
+          await updateRecipeNutritionsBatch(updates);
+      } catch (e: any) {
+          console.error('Batch update error:', e);
+      }
   }
 
   res.status(200).json({ recipes: enrichedRecipes, count: enrichedRecipes.length });
@@ -635,25 +632,37 @@ app.post('/nutrition/cooking-states', async (req: Request, res: Response) => {
  *                   type: integer
  */
 app.get('/search', async (req: Request, res: Response) => {
-  const query = (req.query.q as string) || '';
-  const ingredientsParam = req.query.ingredients as string;
-  const matchAll = req.query.match_all === 'true';
-  const isFull = req.query.full === 'true';
-  const ingredients = ingredientsParam ? ingredientsParam.split(',').map(i => i.trim()) : undefined;
+  const query             = (req.query.q as string) || '';
+  const ingredientsParam  = req.query.ingredients as string;
+  const matchAll          = req.query.match_all === 'true';
+  const isFull            = req.query.full === 'true';
+  const ingredients       = ingredientsParam ? ingredientsParam.split(',').map(i => i.trim()) : undefined;
 
   if (!query && !ingredients) {
-    const selectFields = isFull ? '*' : 'id, name, image, description, cook_time, prep_time';
-    const { data, count, error } = await supabase.from('recipes').select(selectFields, { count: 'exact' }).neq('qa_status', 'quarantined').neq('qa_status', 'rejected').limit(50);
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ recipes: data, count });
+    try {
+      const rows = await listRecipesDefault({ full: isFull, limit: 50 });
+      return res.status(200).json({ recipes: rows, count: rows.length });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
   }
 
-  // @ts-ignore
-  const { data, error } = await supabase.rpc('search_recipes_hybrid', { search_term: query, filter_ingredients: ingredients, match_all_ingredients: matchAll });
-  if (error) return res.status(500).json({ error: error.message });
-
-  const finalData = isFull ? data : (data || []).map((r: any) => ({ id: r.id, name: r.name, image: r.image, description: r.description, cook_time: r.cook_time, prep_time: r.prep_time }));
-  res.status(200).json({ recipes: finalData, count: (data || []).length });
+  try {
+    const data = await searchRecipesHybrid(query, ingredients ?? null, matchAll);
+    const finalData = isFull
+      ? data
+      : (data || []).map((r: any) => ({
+          id:          r.id,
+          name:        r.name,
+          image:       r.image,
+          description: r.description,
+          cook_time:   r.cook_time,
+          prep_time:   r.prep_time,
+        }));
+    res.status(200).json({ recipes: finalData, count: (data || []).length });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 
@@ -662,41 +671,56 @@ app.post('/crawl', async (req: Request, res: Response) => {
   if (!url) return res.status(400).json({ error: 'URL is required.' });
   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   if (!isSafePublicUrl(url)) return res.status(400).json({ error: 'URL must point to a public host.' });
-  const { data, error } = await supabase.from('crawl_jobs').insert([{ url, status: 'pending' }]).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json({ message: 'Crawl queued', job: data });
+  try {
+    const job = await createCrawlJob(url);
+    res.status(201).json({ message: 'Crawl queued', job });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/jobs', async (req: Request, res: Response) => {
-  const { data, error } = await supabase.from('crawl_jobs').select('*').eq('is_archived', false).order('created_at', { ascending: false }).limit(20);
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json(data);
+app.get('/jobs', async (_req: Request, res: Response) => {
+  try {
+    const jobs = await listActiveCrawlJobs();
+    res.status(200).json(jobs);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.get('/jobs/archived', async (req: Request, res: Response) => {
-  const { data, error } = await supabase.from('crawl_jobs').select('*').eq('is_archived', true).order('updated_at', { ascending: false }).limit(5);
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json(data);
+app.get('/jobs/archived', async (_req: Request, res: Response) => {
+  try {
+    const jobs = await listArchivedCrawlJobs();
+    res.status(200).json(jobs);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/jobs/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { data, error } = await supabase.from('crawl_jobs').select('*').eq('id', id).single();
-  if (error) return res.status(404).json({ error: 'Job not found' });
-  res.status(200).json(data);
+  const job = await getCrawlJobById(id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.status(200).json(job);
 });
 
 app.delete('/jobs/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { error } = await supabase.from('crawl_jobs').update({ is_archived: true, status: 'failed', log: 'Archived/Stopped by user', updated_at: new Date().toISOString() }).eq('id', id);
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json({ message: 'Job archived.' });
+  try {
+    await archiveCrawlJob(id, 'Archived/Stopped by user');
+    res.status(200).json({ message: 'Job archived.' });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
-app.delete('/jobs', async (req: Request, res: Response) => {
-  const { error } = await supabase.from('crawl_jobs').update({ is_archived: true, status: 'failed', log: 'Archived/Stopped by user', updated_at: new Date().toISOString() }).eq('is_archived', false);
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(200).json({ message: 'All jobs archived.' });
+app.delete('/jobs', async (_req: Request, res: Response) => {
+  try {
+    await archiveAllActiveCrawlJobs('Archived/Stopped by user');
+    res.status(200).json({ message: 'All jobs archived.' });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.listen(port, () => {

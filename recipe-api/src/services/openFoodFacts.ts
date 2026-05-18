@@ -2,14 +2,17 @@
  * Open Food Facts — packaged product nutrition.
  *
  * Query priority:
- *  1. Local off_products table (Supabase) — populated by sync_off.ts, sub-ms, no 503s
- *  2. Live OFF API  — fallback for products not yet in local mirror
+ *  1. Local off_products table on the VPS (`off_mirror` DB via offDbClient) —
+ *     populated by sync_off.ts, sub-ms via Unix socket, no 503s.
+ *  2. Live OFF API — fallback for products not yet in local mirror.
  *
- * The local table is the primary source once sync_off.ts has been run.
+ * After the self-host migration, off_products lives ONLY in the `off_mirror`
+ * database; the legacy Supabase fallback has been removed (the table never
+ * existed there outside Pro-tier setups).
+ *
  * Run `npx ts-node src/scripts/sync_off.ts full` once, then weekly deltas.
  */
 
-import { supabase } from '../supabaseClient';
 import { offLookupBarcode as offVpsBarcode, offSearchByName as offVpsSearch, OffRow } from '../offDbClient';
 
 const BASE_SEARCH  = 'https://world.openfoodfacts.org/cgi/search.pl';
@@ -83,44 +86,25 @@ function offRowToNutrition(row: OffRow | any): OffNutrition {
     };
 }
 
-/** Search local off_products — tries VPS PostgreSQL first, then Supabase. */
+/** Search local off_products via the VPS off_mirror Postgres. */
 async function searchLocal(query: string): Promise<OffNutrition | null> {
-    // 1. VPS PostgreSQL (fastest — local socket on the production server)
+    // VPS PostgreSQL (fastest — local socket on the production server).
+    // Supabase fallback removed — off_products lives only in off_mirror via
+    // offDbClient.ts. If the local VPS lookup misses, fall through to the live
+    // OFF API below.
     const vpsRow = await offVpsSearch(query);
     if (vpsRow && isRelevantOffResult(vpsRow.product_name, query)) {
         return offRowToNutrition(vpsRow);
     }
-
-    // 2. Supabase fallback (if off_products exists there — requires Pro plan)
-    const { data, error } = await supabase
-        .from('off_products')
-        .select('product_name, calories_100g, protein_100g, fat_100g, carbs_100g, fiber_100g, sugar_100g, calcium_100g, iron_100g, vitamin_c_100g')
-        .textSearch('fts', query, { type: 'websearch', config: 'english' })
-        .not('calories_100g', 'is', null)
-        .gt('calories_100g', 0)
-        .limit(1)
-        .single();
-
-    if (error || !data) return null;
-    if (!isRelevantOffResult((data as any).product_name, query)) return null;
-    return offRowToNutrition(data);
+    return null;
 }
 
-/** Look up by barcode — tries VPS PostgreSQL first, then Supabase. */
-async function lookupLocalBarcode(barcode: string): Promise<any | null> {
-    // 1. VPS PostgreSQL
-    const vpsRow = await offVpsBarcode(barcode);
-    if (vpsRow) return vpsRow;
-
-    // 2. Supabase fallback
-    const { data, error } = await supabase
-        .from('off_products')
-        .select('*')
-        .eq('code', barcode)
-        .single();
-
-    if (error || !data) return null;
-    return data;
+/** Look up by barcode in the VPS off_mirror Postgres. */
+async function lookupLocalBarcode(barcode: string): Promise<OffRow | null> {
+    // VPS PostgreSQL (sub-millisecond indexed lookup).
+    // Supabase fallback removed — off_products lives only in off_mirror via
+    // offDbClient.ts. If this misses, the caller falls through to the live OFF API.
+    return offVpsBarcode(barcode);
 }
 
 // ─── Live API helpers ─────────────────────────────────────────────────────────

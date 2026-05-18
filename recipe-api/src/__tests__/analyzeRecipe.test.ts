@@ -5,14 +5,13 @@
 //   2. Defensive filtering of null / non-string ingredient entries
 //   3. Provenance metadata (dishContext, source, analyzedAt)
 
-jest.mock('../supabaseClient', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
-      upsert: () => ({ then: () => {} }),
-    }),
-  },
+jest.mock('../db/queries', () => ({
+  getCachedIngredient:          jest.fn().mockResolvedValue(null),
+  upsertIngredientCache:        jest.fn().mockResolvedValue(undefined),
+  updateIngredientCacheServing: jest.fn().mockResolvedValue(undefined),
+  deleteIngredientCache:        jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock('../utils/background', () => ({ track: () => {} }));
 
 jest.mock('../services/baselineNutrition', () => ({ lookupBaseline: jest.fn().mockReturnValue(null) }));
 jest.mock('../services/usda',          () => ({ searchUsda:          jest.fn() }));

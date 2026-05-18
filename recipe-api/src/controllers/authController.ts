@@ -1,24 +1,11 @@
 import { Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { sendApiKeyEmail } from '../services/email';
-
-// Must use Service Role to write to api_keys table
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    console.warn('⚠️  Auth Controller: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing. Key generation will fail.');
-}
-
-const adminSupabase = createClient(
-    SUPABASE_URL || '',
-    SERVICE_ROLE_KEY || ''
-);
+import { pool } from '../db/queries';
 
 function generateApiKey() {
     const rawKey = 'sk_' + crypto.randomBytes(32).toString('hex');
-    const hash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const hash   = crypto.createHash('sha256').update(rawKey).digest('hex');
     return { rawKey, hash };
 }
 
@@ -57,38 +44,34 @@ export async function requestApiKey(req: Request, res: Response) {
     requestLog.set(ip, Date.now());
 
     try {
-        // 3. Deactivate any existing active keys for this user (overwrite behavior)
-        // We use canonicalEmail to prevent "user+1@..." and "user+2@..." exploits
-        await adminSupabase
-            .from('api_keys')
-            .update({ is_active: false })
-            .eq('owner_email', canonicalEmail);
+        // 3. Deactivate any existing active keys for this user (overwrite behavior).
+        // We use canonicalEmail to prevent "user+1@..." and "user+2@..." exploits.
+        await pool.query(
+            `UPDATE api_keys SET is_active = false WHERE owner_email = $1`,
+            [canonicalEmail],
+        );
 
         // 4. Generate New Key
         const { rawKey, hash } = generateApiKey();
 
-        // 5. Store in DB
-        // We store the canonicalEmail to enforce the unique constraint and anti-spam
-        const { error: dbError } = await adminSupabase
-            .from('api_keys')
-            .insert([{
-                owner_name: email, // Keep original email as name for reference
-                owner_email: canonicalEmail, 
-                key_hash: hash,
-                is_active: true
-            }]);
-
-        if (dbError) {
+        // 5. Store in DB. Store canonicalEmail to enforce the unique constraint and anti-spam.
+        try {
+            await pool.query(
+                `INSERT INTO api_keys (owner_name, owner_email, key_hash, is_active)
+                 VALUES ($1, $2, $3, true)`,
+                [email, canonicalEmail, hash],
+            );
+        } catch (dbError) {
             console.error('DB Insert Error:', dbError);
             return res.status(500).json({ error: 'Failed to generate key.' });
         }
 
-        // 6. Send Email (To the original requested email)
+        // 6. Send Email (to the original requested email)
         const sent = await sendApiKeyEmail(email, rawKey);
 
         if (!sent) {
             // Rollback (delete key) if email fails
-            await adminSupabase.from('api_keys').delete().eq('key_hash', hash);
+            await pool.query(`DELETE FROM api_keys WHERE key_hash = $1`, [hash]);
             return res.status(500).json({ error: 'Failed to send email. Please try again.' });
         }
 
