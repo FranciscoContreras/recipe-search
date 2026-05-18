@@ -121,26 +121,37 @@ edit_shared_preload() {
 echo "==> updating shared_preload_libraries"
 edit_shared_preload "$PG_CONF"
 
-# Set cron.database_name idempotently.
-echo "==> setting cron.database_name = 'recipe_base'"
-if [[ $DRY_RUN -eq 1 ]]; then
-    echo "[dry-run] would set cron.database_name = 'recipe_base' in $PG_CONF"
-else
-    if grep -qE "^[[:space:]]*cron\.database_name[[:space:]]*=" "$PG_CONF"; then
-        # Replace the existing line.
-        awk '
-            /^[[:space:]]*cron\.database_name[[:space:]]*=/ {
-                print "cron.database_name = \047recipe_base\047"; next
-            }
+# Set or replace a single GUC line idempotently.
+#   set_guc <name> <quoted-value>
+# Example: set_guc cron.database_name "'recipe_base'"
+set_guc() {
+    local name="$1" value="$2"
+    if [[ $DRY_RUN -eq 1 ]]; then
+        echo "[dry-run] would set ${name} = ${value} in $PG_CONF"
+        return 0
+    fi
+    if grep -qE "^[[:space:]]*${name//./\\.}[[:space:]]*=" "$PG_CONF"; then
+        awk -v n="$name" -v v="$value" '
+            $0 ~ "^[[:space:]]*" n "[[:space:]]*=" { print n " = " v; next }
             { print }
         ' "$PG_CONF" > "${PG_CONF}.new"
         mv "${PG_CONF}.new" "$PG_CONF"
         chown --reference="$BACKUP" "$PG_CONF"
         chmod --reference="$BACKUP" "$PG_CONF"
     else
-        printf "cron.database_name = 'recipe_base'\n" >> "$PG_CONF"
+        printf "%s = %s\n" "$name" "$value" >> "$PG_CONF"
     fi
-fi
+}
+
+# pg_cron config:
+#   cron.database_name           — which DB owns the cron schema (only one per cluster)
+#   cron.host                    — unix-socket path so pg_cron auths via peer
+#   cron.use_background_workers  — skip the libpq layer entirely (avoids any
+#                                  pg_hba.conf surprises)
+echo "==> setting cron.* config"
+set_guc cron.database_name           "'recipe_base'"
+set_guc cron.host                    "'/var/run/postgresql'"
+set_guc cron.use_background_workers  "on"
 
 echo "==> restarting $PG_SERVICE"
 run "systemctl restart $PG_SERVICE"
@@ -165,13 +176,13 @@ else
     INSTALLED_PKGS="$(dpkg -l postgresql-16-cron postgresql-16-pgvector 2>/dev/null \
         | awk '/^ii/ {printf "  %-30s %s\n", $2, $3}')"
     SPL_LINE="$(grep -E '^[[:space:]]*shared_preload_libraries[[:space:]]*=' "$PG_CONF" | tail -1 || true)"
-    CRON_DB_LINE="$(grep -E '^[[:space:]]*cron\.database_name[[:space:]]*=' "$PG_CONF" | tail -1 || true)"
+    CRON_LINES="$(grep -E '^[[:space:]]*cron\.' "$PG_CONF" | tail -5 || true)"
     echo " Postgres version : $PG_VERSION"
     echo " Installed packages:"
     echo "${INSTALLED_PKGS:-  (none)}"
     echo " postgresql.conf:"
     echo "   $SPL_LINE"
-    echo "   $CRON_DB_LINE"
+    echo "$CRON_LINES" | sed 's/^/   /'
     echo " Backup of conf saved to: $BACKUP"
 fi
 echo "==============================================================="
