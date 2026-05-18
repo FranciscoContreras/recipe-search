@@ -24,7 +24,8 @@ import {
   archiveCrawlJob,
   archiveAllActiveCrawlJobs,
 } from './db/queries';
-import { track } from './utils/background';
+import { track, inflightCount } from './utils/background';
+import { pool } from './db/pool';
 import type { Recipe } from './db/types';
 import { NutritionEngine } from './services/nutritionEngine';
 import path from 'path';
@@ -157,6 +158,12 @@ app.post('/auth/request-key', authLimiter, requestApiKey);
 
 app.get('/health', async (req: Request, res: Response) => {
   try {
+    // Measure DB latency with a trivial round-trip — caller (cron health
+    // check) reads `db_latency_ms` to decide whether to alert.
+    const t0 = Date.now();
+    await pool.query('SELECT 1');
+    const db_latency_ms = Date.now() - t0;
+
     // Read from the materialized view (single row, pre-computed) — no table scans
     const [stats, recent] = await Promise.all([
       getRecipeStats(),
@@ -171,6 +178,13 @@ app.get('/health', async (req: Request, res: Response) => {
         flagged:   s.flagged   || 0,
         avg_score: parseFloat(s.avg_quality_score as any) || 0,
       },
+      db_latency_ms,
+      pool: {
+        total:   pool.totalCount,
+        idle:    pool.idleCount,
+        waiting: pool.waitingCount,
+      },
+      background_inflight: inflightCount(),
       recent: recent || [],
     });
   } catch (e: any) { res.status(500).json({ error: e.message }); }
