@@ -8,8 +8,14 @@
 # Reads passwords from env (preferred):
 #   RECIPE_APP_PASSWORD       — password for the LOGIN role recipe_app
 #   RECIPE_READONLY_PASSWORD  — password for the LOGIN role recipe_readonly
+#   RECIPE_OWNER_PASSWORD     — password for the LOGIN role recipe_owner
+#                               (used by migrate.ts to apply schema changes)
 # If unset, generates them with `openssl rand -base64 24` and prints them at the
 # end so the operator can copy them into recipe-api/.env.
+#
+# Also creates Supabase-compat stub roles (anon, authenticated, service_role)
+# as NOLOGIN so historical migrations that GRANT to them apply cleanly. The
+# 20260517000000_self_host_compat.sql migration REVOKEs everything from them.
 #
 # Run as: root. The script shells out to `sudo -u postgres psql` for the actual
 # SQL work, so the postgres OS user must exist (default after installing
@@ -26,6 +32,7 @@ DB_NAME="recipe_base"
 PSQL_SUPER=(sudo -u postgres psql -v ON_ERROR_STOP=1)
 GENERATED_APP=0
 GENERATED_RO=0
+GENERATED_OWNER=0
 
 if [[ -z "${RECIPE_APP_PASSWORD:-}" ]]; then
     RECIPE_APP_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
@@ -35,27 +42,42 @@ if [[ -z "${RECIPE_READONLY_PASSWORD:-}" ]]; then
     RECIPE_READONLY_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
     GENERATED_RO=1
 fi
+if [[ -z "${RECIPE_OWNER_PASSWORD:-}" ]]; then
+    RECIPE_OWNER_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
+    GENERATED_OWNER=1
+fi
 
 # Convenience wrapper.
 psql_super() {
     "${PSQL_SUPER[@]}" "$@"
 }
 
-echo "==> creating roles (idempotent)"
-# recipe_owner — NOLOGIN, owns everything.
+echo "==> creating Supabase-compat stub roles (NOLOGIN)"
+# Historical Supabase migrations GRANT to anon/authenticated/service_role.
+# Create them as inert NOLOGIN roles so the GRANTs apply; the self-host compat
+# migration (20260517000000) REVOKEs everything from them at the end.
 psql_super -tAc "DO \$\$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'recipe_owner') THEN
-        CREATE ROLE recipe_owner NOLOGIN;
-    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')          THEN CREATE ROLE anon NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role')  THEN CREATE ROLE service_role NOLOGIN; END IF;
 END\$\$;"
 
-# Defensive: refuse passwords with single quotes or backslashes; the generator
-# strips those anyway. Without this guard a malicious password could break out
-# of the SQL literal below.
-case "$RECIPE_APP_PASSWORD$RECIPE_READONLY_PASSWORD" in
+# Same case-guard as below.
+case "$RECIPE_APP_PASSWORD$RECIPE_READONLY_PASSWORD$RECIPE_OWNER_PASSWORD" in
     *\'*|*\\*) echo "passwords must not contain ' or \\" >&2; exit 1 ;;
 esac
+
+echo "==> creating recipe_owner (LOGIN, owns the schema; used by migrate.ts)"
+psql_super -tAc "DO \$do\$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'recipe_owner') THEN
+        EXECUTE 'CREATE ROLE recipe_owner LOGIN PASSWORD ' || quote_literal('${RECIPE_OWNER_PASSWORD}');
+    ELSE
+        EXECUTE 'ALTER ROLE recipe_owner LOGIN PASSWORD ' || quote_literal('${RECIPE_OWNER_PASSWORD}');
+    END IF;
+END
+\$do\$;"
 
 # recipe_app — LOGIN, runs the API.
 # Note: psql client variables (`-v foo=bar`) are NOT visible inside DO blocks.
@@ -152,12 +174,14 @@ echo
 echo " Connection strings (copy these into recipe-api/.env):"
 echo "   DATABASE_URL=postgresql://recipe_app:${RECIPE_APP_PASSWORD}@localhost:5432/${DB_NAME}"
 echo "   READONLY_URL=postgresql://recipe_readonly:${RECIPE_READONLY_PASSWORD}@localhost:5432/${DB_NAME}"
+echo "   OWNER_URL=postgresql://recipe_owner:${RECIPE_OWNER_PASSWORD}@localhost:5432/${DB_NAME}   (used by migrate.ts only)"
 echo
-if [[ $GENERATED_APP -eq 1 || $GENERATED_RO -eq 1 ]]; then
+if [[ $GENERATED_APP -eq 1 || $GENERATED_RO -eq 1 || $GENERATED_OWNER -eq 1 ]]; then
     echo " NOTE: the following passwords were auto-generated this run."
     echo "       Store them now — they will NOT be shown again."
-    [[ $GENERATED_APP -eq 1 ]] && echo "   recipe_app       : ${RECIPE_APP_PASSWORD}"
-    [[ $GENERATED_RO  -eq 1 ]] && echo "   recipe_readonly  : ${RECIPE_READONLY_PASSWORD}"
+    [[ $GENERATED_APP   -eq 1 ]] && echo "   recipe_app       : ${RECIPE_APP_PASSWORD}"
+    [[ $GENERATED_RO    -eq 1 ]] && echo "   recipe_readonly  : ${RECIPE_READONLY_PASSWORD}"
+    [[ $GENERATED_OWNER -eq 1 ]] && echo "   recipe_owner     : ${RECIPE_OWNER_PASSWORD}"
 fi
 echo "==============================================================="
 echo
