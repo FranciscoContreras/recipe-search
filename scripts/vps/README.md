@@ -45,7 +45,7 @@ sudo install -m 0755 -o root -g root scripts/vps/05_health_check.sh   /usr/local
 
 ```cron
 # Nightly pg_dump of recipe_base + off_mirror (zstd-compressed).
-# Logs land in syslog (cron) + /home/avion/backups/recipe_base/last-failure.txt on error.
+# Logs land in syslog (cron) + /var/backups/recipe_base/last-failure.txt on error.
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 MAILTO=""
@@ -78,7 +78,7 @@ HEALTHCHECK_WEBHOOK=""
 
 | Var | Default | Used by |
 |---|---|---|
-| `BACKUP_DEST` | `/home/avion/backups/recipe_base` | 03, 04 |
+| `BACKUP_DEST` | `/var/backups/recipe_base` | 03, 04 |
 | `DB_PRIMARY` | `recipe_base` | 03 |
 | `DB_OFF` | `off_mirror` | 03 |
 | `ZSTD_LEVEL` | `19` | 03 |

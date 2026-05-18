@@ -11,7 +11,7 @@
 #
 set -euo pipefail
 
-BACKUP_DEST="${BACKUP_DEST:-/home/avion/backups/recipe_base}"
+BACKUP_DEST="${BACKUP_DEST:-/var/backups/recipe_base}"
 LIVE_DB="${LIVE_DB:-recipe_base}"
 VERIFY_DB="${VERIFY_DB:-recipe_base_verify}"
 

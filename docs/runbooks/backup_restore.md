@@ -6,7 +6,7 @@ backups produced by `scripts/vps/03_backup_nightly.sh`.
 ## Where the backups live
 
 ```
-/home/avion/backups/recipe_base/
+/var/backups/recipe_base/
 ├── daily/         YYYY-MM-DD.dump.zst       (kept 14 days)
 ├── weekly/        YYYY-MM-DD.dump.zst       (kept 8 weeks; only Sundays)
 ├── monthly/       YYYY-MM-DD.dump.zst       (kept 12 months; only 1st of month)
@@ -27,15 +27,15 @@ just large.
 ## Quick inventory
 
 ```bash
-ls -lh /home/avion/backups/recipe_base/daily/   | tail -20
-ls -lh /home/avion/backups/recipe_base/weekly/  | tail -20
-ls -lh /home/avion/backups/recipe_base/monthly/ | tail -20
+ls -lh /var/backups/recipe_base/daily/   | tail -20
+ls -lh /var/backups/recipe_base/weekly/  | tail -20
+ls -lh /var/backups/recipe_base/monthly/ | tail -20
 
 # Most-recent successful run summary:
 grep '\[recipe-backup\] OK' /var/log/recipe-backup.log | tail -5
 
 # Most-recent failure (if any):
-cat /home/avion/backups/recipe_base/last-failure.txt 2>/dev/null \
+cat /var/backups/recipe_base/last-failure.txt 2>/dev/null \
     || echo "no recent failure"
 ```
 
@@ -47,7 +47,7 @@ that table into the live DB (or into a temp DB to inspect first).
 ### Inspect a dump's contents without restoring
 
 ```bash
-DUMP=/home/avion/backups/recipe_base/daily/2026-05-17.dump.zst
+DUMP=/var/backups/recipe_base/daily/2026-05-17.dump.zst
 zstd -dc "$DUMP" | pg_restore --list | head -50
 ```
 
@@ -58,7 +58,7 @@ This prints the TOC (table of contents). Each line is `<id>; <oid> <oid> <type>
 ### Restore one table into the live DB
 
 ```bash
-DUMP=/home/avion/backups/recipe_base/daily/2026-05-17.dump.zst
+DUMP=/var/backups/recipe_base/daily/2026-05-17.dump.zst
 
 # 1. Get a fresh row count to know what you're replacing.
 sudo -u postgres psql -d recipe_base -c "SELECT count(*) FROM recipes;"
@@ -104,7 +104,7 @@ good day.
 ### Restore over the existing recipe_base (destructive)
 
 ```bash
-DUMP=/home/avion/backups/recipe_base/daily/2026-05-17.dump.zst
+DUMP=/var/backups/recipe_base/daily/2026-05-17.dump.zst
 
 # 1. Stop the app to prevent writes.
 pm2 stop recipe-api recipe-worker recipe-auditor
@@ -260,7 +260,7 @@ dumps off via the recovery console, dd image, or just `scp`:
 
 ```bash
 # From a recovery shell / rescue boot:
-scp /home/avion/backups/recipe_base/daily/<latest>.dump.zst \
+scp /var/backups/recipe_base/daily/<latest>.dump.zst \
     user@another-host:/var/backups/
 
 # On the new host, install Postgres 16 + extensions:

@@ -9,7 +9,7 @@
 # Intended user: postgres (so .pgpass is not required for local socket auth).
 # Run directly: sudo -u postgres /usr/local/bin/recipe-backup-nightly.sh
 #
-# Layout under ${BACKUP_DEST} (default /home/avion/backups/recipe_base):
+# Layout under ${BACKUP_DEST} (default /var/backups/recipe_base — owned by postgres):
 #   daily/YYYY-MM-DD.dump.zst
 #   weekly/YYYY-MM-DD.dump.zst        (Sundays, kept 8 weeks)
 #   monthly/YYYY-MM-DD.dump.zst       (1st of month, kept 12 months)
@@ -25,7 +25,7 @@
 #
 set -euo pipefail
 
-BACKUP_DEST="${BACKUP_DEST:-/home/avion/backups/recipe_base}"
+BACKUP_DEST="${BACKUP_DEST:-/var/backups/recipe_base}"
 DB_PRIMARY="${DB_PRIMARY:-recipe_base}"
 DB_OFF="${DB_OFF:-off_mirror}"
 ZSTD_LEVEL="${ZSTD_LEVEL:-19}"
