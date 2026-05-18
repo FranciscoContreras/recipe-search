@@ -57,55 +57,67 @@ function parseArgs(argv: string[]): CliArgs {
     return { extractionDir: path.resolve(dir) };
 }
 
-async function nonGeneratedColumns(client: Client, table: string): Promise<string[]> {
-    const { rows } = await client.query<{ column_name: string }>(`
-        SELECT column_name
+interface ColumnInfo {
+    name:      string;
+    dataType:  string;  // information_schema.columns.data_type, e.g. 'jsonb', 'ARRAY', 'text', 'uuid'
+    udtName:   string;  // pg-internal type, e.g. '_text' for text[], 'jsonb', 'uuid'
+}
+
+async function nonGeneratedColumns(client: Client, table: string): Promise<ColumnInfo[]> {
+    const { rows } = await client.query<{ column_name: string; data_type: string; udt_name: string }>(`
+        SELECT column_name, data_type, udt_name
           FROM information_schema.columns
          WHERE table_schema = 'public'
            AND table_name   = $1
            AND COALESCE(is_generated, 'NEVER') <> 'ALWAYS'
          ORDER BY ordinal_position
     `, [table]);
-    return rows.map((r) => r.column_name);
+    return rows.map((r) => ({ name: r.column_name, dataType: r.data_type, udtName: r.udt_name }));
+}
+
+// Encode a JS value into the form pg's parameterized query expects, given
+// the target column type.
+//   - jsonb / json columns: stringify objects/arrays so Postgres parses the
+//     text as JSON (driver otherwise sends JS arrays as Postgres arrays).
+//   - ARRAY columns (text[], etc.): pass JS arrays directly; the driver
+//     emits the right Postgres array literal.
+//   - everything else: pass-through.
+function encodeValue(v: unknown, col: ColumnInfo): unknown {
+    if (v === null || v === undefined) return null;
+    if (col.dataType === 'jsonb' || col.dataType === 'json') {
+        return typeof v === 'string' ? v : JSON.stringify(v);
+    }
+    return v;
 }
 
 async function insertBatch(
     client: Client,
     table: string,
     pk: string,
-    columns: string[],
+    columns: ColumnInfo[],
     rows: any[],
 ): Promise<void> {
     if (rows.length === 0) return;
 
-    // Build VALUES placeholders and a flat param array.
+    // Build VALUES placeholders and a flat param array, with explicit casts
+    // for jsonb columns so Postgres knows the text we're sending is JSON.
     const params: any[] = [];
     const valuesSql: string[] = [];
     for (const row of rows) {
         const placeholders: string[] = [];
         for (const col of columns) {
-            let v = row[col];
-            // pg accepts arrays and objects directly for jsonb/array columns,
-            // but Postgres needs JSON strings for jsonb to avoid double-encoding
-            // when the column type is jsonb. Stringify objects/arrays so the
-            // generic $N::jsonb cast (where present) works. For text[]/jsonb[]
-            // the driver handles JS arrays natively, so we only stringify the
-            // top-level value when it's an object (not array of scalars).
-            if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-                v = JSON.stringify(v);
-            }
-            params.push(v);
-            placeholders.push(`$${params.length}`);
+            params.push(encodeValue(row[col.name], col));
+            const cast = (col.dataType === 'jsonb' || col.dataType === 'json') ? '::jsonb' : '';
+            placeholders.push(`$${params.length}${cast}`);
         }
         valuesSql.push(`(${placeholders.join(',')})`);
     }
 
-    const colList = columns.map((c) => `"${c}"`).join(',');
+    const colList = columns.map((c) => `"${c.name}"`).join(',');
     // ON CONFLICT DO NOTHING (no target) catches conflicts on ANY unique
     // constraint — important because api_keys has a unique partial index on
     // (owner_email) WHERE is_active, and the demo-key migration pre-populates
-    // a row that would otherwise collide. The unused `pk` arg is kept in the
-    // signature for documentation.
+    // a row that would otherwise collide.
     void pk;
     const sql = `
         INSERT INTO "${table}" (${colList})
