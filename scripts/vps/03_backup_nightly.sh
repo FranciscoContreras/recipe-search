@@ -87,7 +87,30 @@ find "$WEEKLY_DIR"  -maxdepth 1 -type f -name '*.dump.zst' -mtime +56   -delete 
 find "$MONTHLY_DIR" -maxdepth 1 -type f -name '*.dump.zst' -mtime +366  -delete || true   # 12 mo
 find "$OFF_DIR"     -maxdepth 1 -type f -name '*.dump.zst' -mtime +14   -delete || true
 
+# ---- Offsite sync (optional, idempotent) ----
+# Activated by setting BACKUP_REMOTE in the cron env (or this script's env).
+# Expected format: rclone remote spec, e.g.
+#   BACKUP_REMOTE=backblaze:recipe-base-backups
+#   BACKUP_REMOTE=r2:recipe-base-backups
+# Requires `rclone` installed and the remote configured in
+# /root/.config/rclone/rclone.conf (run `rclone config` once).
+OFFSITE_NOTE=""
+if [[ -n "${BACKUP_REMOTE:-}" ]]; then
+    if command -v rclone >/dev/null 2>&1; then
+        # Mirror the whole tree (cheap — only changed files transfer thanks to
+        # rclone's modtime + size check). Keep cloud retention deeper than local
+        # by NOT --delete'ing the remote.
+        if rclone copy --quiet "$BACKUP_DEST" "${BACKUP_REMOTE}/recipe_base" 2>/dev/null; then
+            OFFSITE_NOTE=" offsite=ok"
+        else
+            OFFSITE_NOTE=" offsite=FAIL"
+        fi
+    else
+        OFFSITE_NOTE=" offsite=skipped(no-rclone)"
+    fi
+fi
+
 # ---- Summary ----
 SIZE_HUMAN="$(du -h "$DUMP_PRIMARY" | awk '{print $1}')"
 ELAPSED=$(( SECONDS - START_TS ))
-echo "[recipe-backup] OK ${DATE} size=${SIZE_HUMAN} elapsed=${ELAPSED}s"
+echo "[recipe-backup] OK ${DATE} size=${SIZE_HUMAN} elapsed=${ELAPSED}s${OFFSITE_NOTE}"
