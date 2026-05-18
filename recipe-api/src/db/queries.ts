@@ -274,6 +274,30 @@ export async function searchRecipesHybrid(
     return rows;
 }
 
+// Semantic search via pgvector — caller computes the query embedding via
+// `getEmbeddingProvider().embed(query)`, passes the vector here.
+// Returns recipes ranked by cosine similarity (1.0 = identical, 0 = orthogonal).
+// Public-status filter is applied; the HNSW index handles the rest.
+export interface RecipeWithScore extends Recipe { similarity: number }
+export async function searchRecipesSemantic(
+    queryEmbeddingLiteral: string,  // e.g. "[0.1,0.2,...]" — use toPgVectorLiteral()
+    limit:                 number,
+    client?:               PoolClient,
+): Promise<RecipeWithScore[]> {
+    const { rows } = await run<RecipeWithScore>(
+        client,
+        `SELECT ${RECIPE_COLUMNS_LIST},
+                1 - (embedding <=> $1::vector) AS similarity
+           FROM recipes
+          WHERE embedding IS NOT NULL
+            AND qa_status NOT IN ('quarantined', 'rejected')
+          ORDER BY embedding <=> $1::vector
+          LIMIT $2`,
+        [queryEmbeddingLiteral, limit],
+    );
+    return rows;
+}
+
 // Replaces: src/index.ts:646  fallback "no query" path on /search
 export async function listRecipesDefault(
     opts:   { full: boolean; limit?: number },

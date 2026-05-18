@@ -107,9 +107,21 @@ Migrations live in `supabase/migrations/` (legacy directory name; we keep it). T
 
 Key SQL-side functions still in use:
 
-- `search_recipes_hybrid` — combines pgvector semantic search with full-text search
+- `search_recipes_hybrid` — combines pg_trgm fuzzy match with `tsvector` full-text search
 - `update_recipe_nutritions` — batch upsert for nutrition data
 - `audit_pending_batch(n)` — picks the next `n` un-audited recipes, runs the audit logic inline, marks them done (defined in the self-host compat migration)
+
+### Semantic search (`POST /search/semantic`)
+
+`pgvector` is installed and the `recipes.embedding vector(1536)` column + HNSW
+index are created by migration `20260518000003_add_recipe_embeddings.sql`.
+The endpoint embeds the query string (default provider: OpenAI
+`text-embedding-3-small`) and returns recipes ranked by cosine similarity.
+
+Activating requires `OPENAI_API_KEY` in the production `.env` and a one-time
+backfill: `npx ts-node src/scripts/backfill_embeddings.ts` (~5 min, ~$0.10
+for 23K recipes). The endpoint returns `503` until activated. Full runbook:
+`docs/runbooks/embeddings.md`.
 
 ### Deployment
 
@@ -128,6 +140,8 @@ Required in `recipe-api/.env` (see `recipe-api/.env.example` for a working templ
 - `RESEND_API_KEY`
 - `PORT` (defaults to 3000; production uses 3034 via PM2)
 - `HEALTHCHECK_WEBHOOK` (optional) — used by `scripts/vps/05_health_check.sh` to POST failure events.
+- `OPENAI_API_KEY` (optional — required only if you want `POST /search/semantic`). See `docs/runbooks/embeddings.md`.
+- `BACKUP_REMOTE` (optional — rclone destination for offsite backup sync, e.g. `r2:recipe-base-backups`). See `docs/runbooks/offsite_backups.md`.
 
 ### Nutrition source chain (in lookup order)
 

@@ -13,6 +13,7 @@ import {
   updateRecipeNutrition,
   updateRecipeNutritionsBatch,
   searchRecipesHybrid,
+  searchRecipesSemantic,
   streamPublicRecipesForSitemap,
   getRecipeStats,
   getRecentlyAudited,
@@ -24,6 +25,7 @@ import {
   archiveCrawlJob,
   archiveAllActiveCrawlJobs,
 } from './db/queries';
+import { getEmbeddingProvider, toPgVectorLiteral } from './services/embeddings';
 import { track, inflightCount } from './utils/background';
 import { pool } from './db/pool';
 import type { Recipe } from './db/types';
@@ -675,6 +677,70 @@ app.get('/search', async (req: Request, res: Response) => {
         }));
     res.status(200).json({ recipes: finalData, count: (data || []).length });
   } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * @swagger
+ * /search/semantic:
+ *   post:
+ *     summary: Semantic recipe search via pgvector embeddings
+ *     description: |
+ *       Embeds the query string and ranks recipes by cosine similarity to the
+ *       resulting vector. Requires the recipe embedding backfill to have run
+ *       (src/scripts/backfill_embeddings.ts) and the OPENAI_API_KEY env to be set.
+ *       Recipes without embeddings are silently excluded.
+ *     tags: [Search]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [query]
+ *             properties:
+ *               query: { type: string, example: "warm winter stew with root vegetables" }
+ *               limit: { type: integer, default: 10, maximum: 50 }
+ *     responses:
+ *       200:
+ *         description: Recipes ranked by semantic similarity (descending)
+ */
+app.post('/search/semantic', async (req: Request, res: Response) => {
+  const { query, limit } = req.body ?? {};
+  if (!query || typeof query !== 'string') {
+    return res.status(400).json({ error: 'query (string) is required.' });
+  }
+  if (query.length > 1000) {
+    return res.status(400).json({ error: 'query too long (max 1000 chars).' });
+  }
+  const k = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
+
+  try {
+    const provider = getEmbeddingProvider();
+    const vec      = await provider.embed(query);
+    const rows     = await searchRecipesSemantic(toPgVectorLiteral(vec), k);
+    res.status(200).json({
+      recipes: rows.map(r => ({
+        id:          r.id,
+        name:        r.name,
+        image:       r.image,
+        description: r.description,
+        cook_time:   r.cook_time,
+        prep_time:   r.prep_time,
+        similarity:  Number(r.similarity?.toFixed(4) ?? 0),
+      })),
+      count: rows.length,
+      query,
+      model: provider.model,
+    });
+  } catch (e: any) {
+    if (e.message?.includes('OPENAI_API_KEY')) {
+      return res.status(503).json({ error: 'Semantic search not configured. See docs/runbooks/embeddings.md.' });
+    }
+    console.error('Semantic search error:', e);
     res.status(500).json({ error: e.message });
   }
 });
