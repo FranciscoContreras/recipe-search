@@ -1,20 +1,22 @@
 /**
  * Embeddings — provider-agnostic interface so the app can swap from OpenAI to
- * Voyage, Cohere, Ollama, etc. without touching call sites.
+ * Google, Voyage, Cohere, Ollama, etc. without touching call sites.
  *
  * Default provider: OpenAI text-embedding-3-small (1536 dims). Cheap (~$0.02
  * per million tokens — backfilling our 23K recipes costs roughly one cent).
  *
- * Required env (default provider):
- *   OPENAI_API_KEY  — sk-... key from https://platform.openai.com/api-keys
+ * Required env (depending on provider):
+ *   OPENAI_API_KEY  — sk-... from https://platform.openai.com/api-keys
+ *   GOOGLE_API_KEY  — AIza... from https://aistudio.google.com/apikey
  *
  * Optional env:
- *   EMBEDDING_PROVIDER=openai|voyage|ollama   (default: openai)
- *   EMBEDDING_MODEL=text-embedding-3-small    (provider-specific default if unset)
- *   EMBEDDING_DIMENSIONS=1536                  (must match the migration's vector(N))
+ *   EMBEDDING_PROVIDER=openai|google|ollama    (default: openai)
+ *   EMBEDDING_MODEL=text-embedding-3-small     (provider-specific default if unset)
+ *   EMBEDDING_DIMENSIONS=1536                   (must match the migration's vector(N))
  *
- * If you change providers, run the migration to re-size the vector column AND
- * re-run the backfill — the dimensionalities are not interchangeable.
+ * Switching providers WITHIN the same dimensionality (e.g. 1536) is free —
+ * just change EMBEDDING_PROVIDER and re-backfill. Switching dims requires
+ * an ALTER TABLE recipes ALTER COLUMN embedding TYPE vector(NEW_DIMS).
  */
 
 export interface EmbeddingProvider {
@@ -76,6 +78,50 @@ class OpenAIEmbedding implements EmbeddingProvider {
     }
 }
 
+// ─── Google (Gemini) provider ────────────────────────────────────────────────
+
+class GoogleEmbedding implements EmbeddingProvider {
+    readonly name       = 'google';
+    readonly model:      string;
+    readonly dimensions: number;
+    private readonly apiKey: string;
+
+    constructor(apiKey: string, model = 'gemini-embedding-001', dimensions = 1536) {
+        this.apiKey     = apiKey;
+        this.model      = model;
+        this.dimensions = dimensions;
+    }
+
+    async embed(text: string): Promise<number[]> {
+        const out = await this.embedBatch([text]);
+        return out[0];
+    }
+
+    async embedBatch(texts: string[]): Promise<number[][]> {
+        if (texts.length === 0) return [];
+        // batchEmbedContents accepts up to 100 requests per call.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:batchEmbedContents?key=${this.apiKey}`;
+        const body = {
+            requests: texts.map((t) => ({
+                model:                `models/${this.model}`,
+                content:              { parts: [{ text: t }] },
+                outputDimensionality: this.dimensions,
+            })),
+        };
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body),
+        });
+        if (!res.ok) {
+            const detail = await res.text();
+            throw new Error(`Google embeddings ${res.status}: ${detail.slice(0, 500)}`);
+        }
+        const json = await res.json() as { embeddings: { values: number[] }[] };
+        return json.embeddings.map((e) => e.values);
+    }
+}
+
 // ─── Provider selector ───────────────────────────────────────────────────────
 
 let cachedProvider: EmbeddingProvider | null = null;
@@ -99,8 +145,22 @@ export function getEmbeddingProvider(): EmbeddingProvider {
         return cachedProvider;
     }
 
+    if (which === 'google' || which === 'gemini') {
+        const key = process.env.GOOGLE_API_KEY;
+        if (!key) {
+            throw new Error(
+                'GOOGLE_API_KEY is required for the google embedding provider. ' +
+                'Get one at https://aistudio.google.com/apikey, set it in recipe-api/.env.',
+            );
+        }
+        const model = process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001';
+        const dims  = process.env.EMBEDDING_DIMENSIONS ? parseInt(process.env.EMBEDDING_DIMENSIONS, 10) : 1536;
+        cachedProvider = new GoogleEmbedding(key, model, dims);
+        return cachedProvider;
+    }
+
     // Future providers (voyage, cohere, ollama) plug in here.
-    throw new Error(`Unknown EMBEDDING_PROVIDER='${which}'. Supported: openai.`);
+    throw new Error(`Unknown EMBEDDING_PROVIDER='${which}'. Supported: openai, google.`);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

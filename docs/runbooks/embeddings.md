@@ -32,25 +32,39 @@ sudo -u postgres psql -d recipe_base -c "\d recipes" | grep embedding
 
 ### 2. Pick a provider
 
-Default: **OpenAI `text-embedding-3-small`** (1536 dimensions, $0.02 per
-million tokens). Set in `recipe-api/.env`:
+**Option A — OpenAI `text-embedding-3-small`** (1536 dims, $0.02/1M tokens, default):
 
 ```env
+EMBEDDING_PROVIDER=openai            # the default; can omit
 OPENAI_API_KEY=sk-proj-...
-# Optional overrides:
-# EMBEDDING_PROVIDER=openai
-# EMBEDDING_MODEL=text-embedding-3-small
-# EMBEDDING_DIMENSIONS=1536
 ```
 
-To use a different model, also update the migration's `vector(N)` to match the
-new dimensionality, then re-run the backfill.
+**Option B — Google `gemini-embedding-001`** (1536 dims via Matryoshka,
+$0.15/1M tokens — pricier per token but free if you have AI Studio credits):
 
-### 3. Backfill (~5 min, ~$0.10 for 23K recipes)
+```env
+EMBEDDING_PROVIDER=google
+GOOGLE_API_KEY=AIza...               # get one at https://aistudio.google.com/apikey
+```
+
+Both default to 1536 dimensions, matching the existing `vector(1536)` column —
+swap providers freely via `EMBEDDING_PROVIDER` and re-run the backfill, no
+schema change needed.
+
+To use a different dimensionality, update the migration's `vector(N)` AND set
+`EMBEDDING_DIMENSIONS=N`, then re-run the backfill.
+
+### 3. Backfill (~5 min, ~$0.12 OpenAI / ~$0.86 Google for 23K recipes)
 
 ```bash
+# OpenAI:
 DATABASE_URL=postgresql://recipe_app:<pw>@localhost:5432/recipe_base \
 OPENAI_API_KEY=sk-... \
+  npx ts-node src/scripts/backfill_embeddings.ts
+
+# Google:
+DATABASE_URL=postgresql://recipe_app:<pw>@localhost:5432/recipe_base \
+EMBEDDING_PROVIDER=google GOOGLE_API_KEY=AIza... \
   npx ts-node src/scripts/backfill_embeddings.ts
 ```
 
@@ -114,10 +128,12 @@ backfill via cron — runs nightly, embeds anything new since yesterday:
 Token usage per recipe (name + description + ingredients): ~200-300 tokens
 average. For 23K recipes:
 
-| Model | Cost / 1M tokens | One-time backfill | Per new recipe |
+| Provider / Model | Cost / 1M tokens | One-time backfill | Per new recipe |
 |---|---|---|---|
-| `text-embedding-3-small` (default) | $0.02 | ~$0.10 | trivial |
-| `text-embedding-3-large` | $0.13 | ~$0.65 | trivial |
+| OpenAI `text-embedding-3-small` (default) | $0.020 | ~$0.12 | trivial |
+| OpenAI `text-embedding-3-large` | $0.130 | ~$0.75 | trivial |
+| Google `gemini-embedding-001` | $0.150 | ~$0.86 | trivial |
+| Google `text-embedding-004` | $0.025 | ~$0.14 | trivial |
 
 Query cost: same per-call rate, ~$0.000001 per `/search/semantic` request.
 Negligible.
