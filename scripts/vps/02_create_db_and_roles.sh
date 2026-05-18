@@ -50,28 +50,33 @@ BEGIN
     END IF;
 END\$\$;"
 
+# Defensive: refuse passwords with single quotes or backslashes; the generator
+# strips those anyway. Without this guard a malicious password could break out
+# of the SQL literal below.
+case "$RECIPE_APP_PASSWORD$RECIPE_READONLY_PASSWORD" in
+    *\'*|*\\*) echo "passwords must not contain ' or \\" >&2; exit 1 ;;
+esac
+
 # recipe_app — LOGIN, runs the API.
-psql_super -v app_pw="$RECIPE_APP_PASSWORD" -tAc "DO \$do\$
-DECLARE
-    pw text := current_setting('app_pw');
+# Note: psql client variables (`-v foo=bar`) are NOT visible inside DO blocks.
+# We shell-substitute into a SQL literal; the case-guard above blocks injection.
+psql_super -tAc "DO \$do\$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'recipe_app') THEN
-        EXECUTE format('CREATE ROLE recipe_app LOGIN PASSWORD %L', pw);
+        EXECUTE 'CREATE ROLE recipe_app LOGIN PASSWORD ' || quote_literal('${RECIPE_APP_PASSWORD}');
     ELSE
-        EXECUTE format('ALTER ROLE recipe_app LOGIN PASSWORD %L', pw);
+        EXECUTE 'ALTER ROLE recipe_app LOGIN PASSWORD ' || quote_literal('${RECIPE_APP_PASSWORD}');
     END IF;
 END
 \$do\$;"
 
 # recipe_readonly — LOGIN, for ad-hoc psql sessions and reporting.
-psql_super -v ro_pw="$RECIPE_READONLY_PASSWORD" -tAc "DO \$do\$
-DECLARE
-    pw text := current_setting('ro_pw');
+psql_super -tAc "DO \$do\$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'recipe_readonly') THEN
-        EXECUTE format('CREATE ROLE recipe_readonly LOGIN PASSWORD %L', pw);
+        EXECUTE 'CREATE ROLE recipe_readonly LOGIN PASSWORD ' || quote_literal('${RECIPE_READONLY_PASSWORD}');
     ELSE
-        EXECUTE format('ALTER ROLE recipe_readonly LOGIN PASSWORD %L', pw);
+        EXECUTE 'ALTER ROLE recipe_readonly LOGIN PASSWORD ' || quote_literal('${RECIPE_READONLY_PASSWORD}');
     END IF;
 END
 \$do\$;"
