@@ -24,15 +24,18 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
+// PostgREST requires the order column to exist on the target table.
+// Each entry pairs a table with a stable PK-based ordering so the dump is
+// deterministic (matters for verify_migration.ts SHA-256 comparison).
 const TABLES = [
-    'recipes',
-    'crawl_jobs',
-    'ingredient_cache',
-    'off_products',
-    'cnf_foods',
-    'frida_foods',
-    'ausnut_foods',
-    'api_keys',
+    { name: 'recipes',          order: 'id.asc' },
+    { name: 'crawl_jobs',       order: 'created_at.asc,id.asc' },
+    { name: 'ingredient_cache', order: 'term.asc' },        // PK is `term`
+    { name: 'off_products',     order: 'code.asc' },        // PK is `code`
+    { name: 'cnf_foods',        order: 'food_code.asc' },   // PK is `food_code`
+    { name: 'frida_foods',      order: 'food_id.asc' },     // PK is `food_id`
+    { name: 'ausnut_foods',     order: 'food_id.asc' },     // PK is `food_id`
+    { name: 'api_keys',         order: 'created_at.asc,id.asc' },
 ] as const;
 
 const PAGE_SIZE      = 1000;
@@ -71,8 +74,9 @@ async function fetchPage(
     apiKey:  string,
     from:    number,
     to:      number,
+    order:   string,
 ): Promise<PageResult> {
-    const url = `${baseUrl}/rest/v1/${encodeURIComponent(table)}?select=*&order=created_at.asc,id.asc`;
+    const url = `${baseUrl}/rest/v1/${encodeURIComponent(table)}?select=*&order=${encodeURIComponent(order)}`;
 
     let lastErr: unknown = null;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -165,6 +169,7 @@ async function extractTable(
     baseUrl: string,
     apiKey:  string,
     table:   string,
+    order:   string,
     outDir:  string,
 ): Promise<TableSummary> {
     const file   = path.join(outDir, `${table}.ndjson`);
@@ -178,7 +183,7 @@ async function extractTable(
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const to   = from + PAGE_SIZE - 1;
-            const page = await fetchPage(baseUrl, table, apiKey, from, to);
+            const page = await fetchPage(baseUrl, table, apiKey, from, to, order);
 
             if (declared === null && page.totalCount !== null) declared = page.totalCount;
 
@@ -226,14 +231,14 @@ async function main(): Promise<void> {
     console.log(`[extract] source: ${SUPABASE_URL}`);
 
     const summaries: TableSummary[] = [];
-    for (const table of TABLES) {
-        console.log(`[extract] ${table}…`);
+    for (const { name, order } of TABLES) {
+        console.log(`[extract] ${name}…`);
         try {
-            const s = await extractTable(SUPABASE_URL, SUPABASE_SERVICE_ROLE, table, args.output);
+            const s = await extractTable(SUPABASE_URL, SUPABASE_SERVICE_ROLE, name, order, args.output);
             summaries.push(s);
         } catch (err: any) {
-            console.error(`[extract] ${table} FAILED: ${err.message}`);
-            summaries.push({ table, rowCount: 0, declaredTotal: null, file: `${table}.ndjson`, ...{ error: err.message } as object });
+            console.error(`[extract] ${name} FAILED: ${err.message}`);
+            summaries.push({ table: name, rowCount: 0, declaredTotal: null, file: `${name}.ndjson`, ...{ error: err.message } as object });
         }
     }
 
